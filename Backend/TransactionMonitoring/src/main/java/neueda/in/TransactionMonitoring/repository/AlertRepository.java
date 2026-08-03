@@ -12,6 +12,9 @@ import java.util.List;
 @Repository
 public interface AlertRepository extends JpaRepository<Alert, Long> {
 
+    // Person 3 usage — duplicate prevention for same rule + transaction
+    boolean existsByRuleIdAndTransaction_TransactionId(Long ruleId, Long transactionId);
+
     /**
      * Person 1 usage — fetch all alerts linked to a transaction.
      * Checks both:
@@ -35,4 +38,5 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
     // Fetch open alerts count (used by dashboard — Person 2 but shared)
     long countByAlertStatus(AlertStatus alertStatus);
 }
+
 
