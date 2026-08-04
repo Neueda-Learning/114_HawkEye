@@ -145,6 +145,16 @@ public class RuleService {
 				request.getChangeReason(),
 				changeSummary);
 
+		eventPublisher.publishEvent(new RuleChangedEvent(
+				this,
+				"RULE_UPDATED",
+				updated.getId(),
+				updated.getName(),
+				request.getPerformedBy(),
+				request.getChangeReason(),
+				updated.getUpdatedAt()
+		));
+
 		return ruleMapper.toRuleActionResponse(updated, "Rule updated successfully");
 	}
 
@@ -254,4 +264,3 @@ public class RuleService {
 		return spec;
 	}
 }
-
