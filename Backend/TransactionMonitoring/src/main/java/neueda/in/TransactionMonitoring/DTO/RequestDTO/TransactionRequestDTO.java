@@ -1,4 +1,4 @@
-package neueda.in.TransactionMonitoring.dto.request;
+package neueda.in.TransactionMonitoring.DTO.RequestDTO;
 
 import jakarta.validation.constraints.*;
 import lombok.*;

@@ -1,4 +1,4 @@
-package neueda.in.TransactionMonitoring.dto.response;
+package neueda.in.TransactionMonitoring.DTO.ResponseDTO;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;

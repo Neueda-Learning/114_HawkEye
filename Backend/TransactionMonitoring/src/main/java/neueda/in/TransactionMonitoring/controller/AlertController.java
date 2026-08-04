@@ -9,7 +9,7 @@ import neueda.in.TransactionMonitoring.DTO.ResponseDTO.AlertAuditTrailResponseDT
 import neueda.in.TransactionMonitoring.DTO.ResponseDTO.AlertResponseDTO;
 import neueda.in.TransactionMonitoring.DTO.ResponseDTO.AlertStatsResponseDTO;
 import neueda.in.TransactionMonitoring.DTO.ResponseDTO.PagedResponseDTO;
-import neueda.in.TransactionMonitoring.dto.response.TransactionResponseDTO;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.TransactionResponseDTO;
 import neueda.in.TransactionMonitoring.enums.AlertStatus;
 import neueda.in.TransactionMonitoring.enums.Severity;
 import neueda.in.TransactionMonitoring.service.AlertService;
