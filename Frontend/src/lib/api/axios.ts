@@ -1,6 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
+// Prefer same-origin by default; Vite proxy forwards /api to backend in local dev.
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/';
 
 // ─── Axios Instance ───────────────────────────────────────────────────────────
 export const apiClient = axios.create({
