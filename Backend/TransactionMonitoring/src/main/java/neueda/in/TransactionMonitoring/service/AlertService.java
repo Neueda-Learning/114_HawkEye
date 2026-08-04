@@ -97,7 +97,13 @@ public class AlertService {
 		}
 
 		AlertResponseDTO response = toResponseDTO(saved, rule.getName());
+		log.info("🎉 Alert created — alertId={}, ruleId={}, severity={}, account={}", 
+			saved.getAlertId(), rule.getId(), request.getSeverity(), request.getAccountId());
+		
+		log.info("📢 Publishing AlertCreatedEvent for alertId={}", saved.getAlertId());
 		eventPublisher.publishEvent(new AlertCreatedEvent(this, response));
+		log.info("✅ AlertCreatedEvent published successfully");
+		
 		return response;
 	}
 

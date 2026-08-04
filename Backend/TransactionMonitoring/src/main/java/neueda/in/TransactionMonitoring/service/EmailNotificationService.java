@@ -3,7 +3,6 @@ package neueda.in.TransactionMonitoring.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import neueda.in.TransactionMonitoring.config.EmailNotificationProperties;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -16,11 +15,14 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty(prefix = "notification.email", name = "enabled", havingValue = "true")
 public class EmailNotificationService {
 
     private final JavaMailSender mailSender;
     private final EmailNotificationProperties properties;
+
+    public boolean isEnabled() {
+        return properties.isEnabled();
+    }
 
     public void sendTransactionNotification(String subject, String body) {
         send(subject, body, resolveRecipients(properties.getTransactionRecipients()));

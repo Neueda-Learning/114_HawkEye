@@ -8,7 +8,6 @@ import neueda.in.TransactionMonitoring.event.AlertCreatedEvent;
 import neueda.in.TransactionMonitoring.event.RuleChangedEvent;
 import neueda.in.TransactionMonitoring.event.TransactionRecordedEvent;
 import neueda.in.TransactionMonitoring.repository.TransactionRepository;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -19,7 +18,6 @@ import java.time.format.DateTimeFormatter;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty(prefix = "notification.email", name = "enabled", havingValue = "true")
 public class NotificationEventListener {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -30,8 +28,14 @@ public class NotificationEventListener {
     @Async("notificationExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onTransactionRecorded(TransactionRecordedEvent event) {
+        log.info("TransactionRecordedEvent listener triggered for transactionId={}", event.getTransactionId());
         try {
-          Transaction transaction = transactionRepository.findDetailedById(event.getTransactionId()).orElse(null);
+            if (!emailNotificationService.isEnabled()) {
+                log.debug("Email notifications disabled, skipping transaction notification");
+                return;
+            }
+            
+            Transaction transaction = transactionRepository.findDetailedById(event.getTransactionId()).orElse(null);
             if (transaction == null) {
                 log.warn("Skipping transaction email. Transaction not found for id={}", event.getTransactionId());
                 return;
@@ -60,7 +64,13 @@ public class NotificationEventListener {
     @Async("notificationExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onAlertCreated(AlertCreatedEvent event) {
+        log.info("AlertCreatedEvent listener triggered for alertId={}", event.getAlertResponseDTO() != null ? event.getAlertResponseDTO().getAlertId() : "unknown");
         try {
+            if (!emailNotificationService.isEnabled()) {
+                log.debug("Email notifications disabled, skipping alert notification");
+                return;
+            }
+            
             AlertResponseDTO alert = event.getAlertResponseDTO();
             if (alert == null) {
                 return;
@@ -88,7 +98,13 @@ public class NotificationEventListener {
     @Async("notificationExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onRuleChanged(RuleChangedEvent event) {
+        log.info("RuleChangedEvent listener triggered for ruleId={}, eventType={}", event.getRuleId(), event.getEventType());
         try {
+            if (!emailNotificationService.isEnabled()) {
+                log.debug("Email notifications disabled, skipping rule notification");
+                return;
+            }
+            
             String subject = "Rule Change - " + event.getEventType() + " - " + event.getRuleName();
             String body = String.format(
                     "A rule configuration has changed.%n%nEvent Type: %s%nRule ID: %s%nRule Name: %s%nChanged By: %s%nReason: %s%nChanged At: %s%n",
