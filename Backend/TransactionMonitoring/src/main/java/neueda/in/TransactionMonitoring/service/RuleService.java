@@ -176,6 +176,20 @@ public class RuleService {
 				request.getReason(),
 				"Status changed from " + previousStatus + " to " + newStatus);
 
+		String eventReason = request.getReason();
+		if (eventReason == null || eventReason.isBlank()) {
+			eventReason = "Status changed from " + previousStatus + " to " + newStatus;
+		}
+		eventPublisher.publishEvent(new RuleChangedEvent(
+				this,
+				"RULE_STATUS_CHANGED",
+				updated.getId(),
+				updated.getName(),
+				request.getPerformedBy(),
+				eventReason,
+				updated.getUpdatedAt()
+		));
+
 		String message = newStatus == RuleStatus.ACTIVE ? "Rule activated successfully" : "Rule deactivated successfully";
 		return ruleMapper.toRuleActionResponse(updated, message);
 	}
