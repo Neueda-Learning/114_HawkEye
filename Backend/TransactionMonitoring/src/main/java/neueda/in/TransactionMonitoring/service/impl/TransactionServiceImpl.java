@@ -217,25 +217,25 @@ public class TransactionServiceImpl implements TransactionService {
                 .collect(Collectors.toList());
     }
 
-  private List<Alert> findAlertsForTransaction(Long transactionId) {
-    Map<Long, Alert> unique = new LinkedHashMap<>();
+    private List<Alert> findAlertsForTransaction(Long transactionId) {
+        Map<Long, Alert> unique = new LinkedHashMap<>();
 
-    for (Alert alert : alertRepository.findByTransaction_TransactionIdOrderByCreatedAtDesc(transactionId)) {
-      unique.putIfAbsent(alert.getAlertId(), alert);
+        for (Alert alert : alertRepository.findByTransaction_TransactionIdOrderByCreatedAtDesc(transactionId)) {
+            unique.putIfAbsent(alert.getAlertId(), alert);
+        }
+
+        for (AlertTransaction link : alertTransactionRepository.findByTransaction_TransactionIdOrderByLinkedAtDesc(transactionId)) {
+            Alert linkedAlert = link.getAlert();
+            if (linkedAlert != null) {
+                unique.putIfAbsent(linkedAlert.getAlertId(), linkedAlert);
+            }
+        }
+
+        return unique.values().stream()
+                .sorted(Comparator.comparing(Alert::getCreatedAt,
+                        Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+                .toList();
     }
-
-    for (AlertTransaction link : alertTransactionRepository.findByTransaction_TransactionIdOrderByLinkedAtDesc(transactionId)) {
-      Alert linkedAlert = link.getAlert();
-      if (linkedAlert != null) {
-        unique.putIfAbsent(linkedAlert.getAlertId(), linkedAlert);
-      }
-    }
-
-    return unique.values().stream()
-        .sorted(Comparator.comparing(Alert::getCreatedAt,
-            Comparator.nullsLast(Comparator.naturalOrder())).reversed())
-        .toList();
-  }
 
     // ────────────────────────────────────────────────────────────────────────
     // Private mappers

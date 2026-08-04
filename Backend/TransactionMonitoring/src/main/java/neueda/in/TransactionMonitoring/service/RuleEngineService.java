@@ -46,6 +46,7 @@ public class RuleEngineService {
     /**
      * Triggered automatically when Person 1 publishes a TransactionRecordedEvent.
      */
+    // listener for TransactionRecordedEvent published by TransactionService
     @EventListener
     public void onTransactionRecorded(TransactionRecordedEvent event) {
         log.info("TransactionRecordedEvent received — transactionId={}", event.getTransactionId());
