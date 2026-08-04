@@ -1,9 +1,9 @@
 package neueda.in.TransactionMonitoring.enums;
 
 public enum RuleType {
-    AMOUNT_THRESHOLD,
-    VELOCITY,
-    NEW_PAYEE,
-    DAILY_LIMIT
+	AMOUNT_THRESHOLD,
+	VELOCITY,
+	NEW_PAYEE,
+	DAILY_LIMIT
 }
 

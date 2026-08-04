@@ -2,20 +2,20 @@ package neueda.in.TransactionMonitoring.repository;
 
 import neueda.in.TransactionMonitoring.entity.Rule;
 import neueda.in.TransactionMonitoring.enums.RuleStatus;
-import neueda.in.TransactionMonitoring.enums.RuleType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
+import java.util.Optional;
 
-@Repository
-public interface RuleRepository extends JpaRepository<Rule, Long> {
+public interface RuleRepository extends JpaRepository<Rule, Long>, JpaSpecificationExecutor<Rule> {
 
-    /** Fetch all active rules for evaluation */
-    List<Rule> findByStatus(RuleStatus status);
+	boolean existsByNameIgnoreCaseAndStatusNot(String name, RuleStatus status);
 
-    /** Fetch active rules by type */
-    List<Rule> findByRuleTypeAndStatus(RuleType ruleType, RuleStatus status);
+	boolean existsByNameIgnoreCaseAndIdNotAndStatusNot(String name, Long id, RuleStatus status);
+
+	Optional<Rule> findByIdAndStatusNot(Long id, RuleStatus status);
+
+	List<Rule> findAllByStatusOrderByUpdatedAtDesc(RuleStatus status);
 }
-
 
