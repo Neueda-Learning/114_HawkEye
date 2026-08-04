@@ -52,7 +52,7 @@ export default function AlertHistoryPage() {
                     <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{alert.ruleName}</td>
                     <td className="px-4 py-3 font-mono text-xs text-gray-500">{alert.accountId}</td>
                     <td className="px-4 py-3 text-xs text-gray-400">{alert.closedAt ? formatDate(alert.closedAt) : '—'}</td>
-                    <td className="px-4 py-3 max-w-[180px] truncate text-xs text-gray-400">{alert.closedReason ?? '—'}</td>
+                    <td className="px-4 py-3 max-w-[180px] truncate text-xs text-gray-400">{alert.resolutionNotes ?? '—'}</td>
                   </tr>
                 ))}
               </tbody>

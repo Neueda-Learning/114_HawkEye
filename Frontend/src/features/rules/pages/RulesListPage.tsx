@@ -34,7 +34,7 @@ export default function RulesListPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => deleteRule(id),
+    mutationFn: (id: number) => deleteRule(id, user?.email ?? 'admin', 'Deleted from rules list'),
     onSuccess: () => {
       toast.success('Rule deleted');
       setDeleteTarget(null);

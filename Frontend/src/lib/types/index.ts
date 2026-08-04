@@ -137,21 +137,19 @@ export interface Alert {
   alertId: number;
   ruleId: number;
   ruleName: string;
-  ruleType: RuleType;
   accountId: string;
-  accountName: string;
   transactionId: number;
   alertStatus: AlertStatus;
   severity: Severity;
   alertMessage: string;
   alertDetails: Record<string, unknown> | null;
+  resolutionNotes: string | null;  // Backend has resolutionNotes not closedReason
   createdAt: string;
+  updatedAt: string;
   acknowledgedAt: string | null;
   investigatingAt: string | null;
   closedAt: string | null;
-  closedReason: string | null;
-  closedBy: string | null;
-  updatedAt: string;
+  dismissedAt: string | null;  // Backend has dismissedAt
 }
 
 export interface AlertListParams {

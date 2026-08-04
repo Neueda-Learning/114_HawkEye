@@ -49,26 +49,12 @@ export default function AlertStatsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Alert Trend */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
-          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">Alert Trend (7 days)</h2>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(v: string) => v.slice(5)} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Line type="monotone" dataKey="count" stroke="#1a4fff" strokeWidth={2} dot={{ r: 3 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
         {/* Alerts by Status (Pie) */}
         <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
           <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">Alerts by Status</h2>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={280}>
             <PieChart>
-              <Pie data={statusPieData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+              <Pie data={statusPieData} cx="50%" cy="50%" outerRadius={100} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
                 {statusPieData.map((entry) => (
                   <Cell key={entry.name} fill={STATUS_COLORS[entry.name] ?? '#ccc'} />
                 ))}
@@ -78,37 +64,27 @@ export default function AlertStatsPage() {
           </ResponsiveContainer>
         </div>
 
-        {/* Alerts by Severity (Bar) */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
-          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">Alerts by Severity</h2>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={severityData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                {severityData.map((entry) => (
-                  <Cell key={entry.name} fill={SEVERITY_COLORS[entry.name] ?? '#ccc'} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
         {/* Summary Table */}
         <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
-          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">Summary</h2>
-          <div className="space-y-2">
+          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">Status Breakdown</h2>
+          <div className="space-y-3">
             {statusPieData.map((item) => (
               <div key={item.name} className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full" style={{ backgroundColor: STATUS_COLORS[item.name] }} />
-                  <span className="text-gray-600 dark:text-gray-400">{item.name}</span>
+                <div className="flex items-center gap-3">
+                  <span className="h-4 w-4 rounded-full" style={{ backgroundColor: STATUS_COLORS[item.name] }} />
+                  <span className="font-medium text-gray-700 dark:text-gray-300">{item.name}</span>
                 </div>
-                <span className="font-semibold text-gray-900 dark:text-white">{item.value}</span>
+                <span className="font-bold text-gray-900 dark:text-white">{item.value}</span>
               </div>
             ))}
+            {data && (
+              <div className="mt-4 border-t border-gray-200 pt-3 dark:border-gray-700">
+                <div className="flex items-center justify-between text-sm font-semibold">
+                  <span className="text-gray-700 dark:text-gray-300">Total</span>
+                  <span className="text-lg text-gray-900 dark:text-white">{data.total}</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

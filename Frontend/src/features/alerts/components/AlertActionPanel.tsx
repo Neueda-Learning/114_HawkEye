@@ -20,7 +20,7 @@ interface ActionConfig {
   icon: React.ReactNode;
   colorClass: string;
   requiresNote: boolean;
-  mutationFn: (id: number, payload: { performedBy: string; reason?: string }) => Promise<Alert>;
+  mutationFn: (id: number, payload?: { resolutionNotes?: string }) => Promise<Alert>;
 }
 
 export function AlertActionPanel({ alert, onUpdated }: AlertActionPanelProps) {
@@ -32,10 +32,7 @@ export function AlertActionPanel({ alert, onUpdated }: AlertActionPanelProps) {
 
   const mutation = useMutation({
     mutationFn: ({ action, note }: { action: ActionConfig; note: string }) =>
-      action.mutationFn(alert.alertId, {
-        performedBy: user?.email ?? 'OPERATOR',
-        reason:      note || undefined,
-      }),
+      action.mutationFn(alert.alertId, note ? { resolutionNotes: note } : undefined),
     onSuccess: (updated) => {
       toast.success(`Alert ${updated.alertStatus.toLowerCase()}`);
       void queryClient.invalidateQueries({ queryKey: ['alert', String(alert.alertId)] });
