@@ -1,6 +1,8 @@
 package neueda.in.TransactionMonitoring.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import neueda.in.TransactionMonitoring.DTO.RequestDTO.CreateRuleRequest;
 import neueda.in.TransactionMonitoring.DTO.RequestDTO.ToggleRuleStatusRequest;
 import neueda.in.TransactionMonitoring.DTO.RequestDTO.UpdateRuleRequest;
@@ -17,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +34,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/rules")
+@Validated
 public class RuleController {
 
 	private final RuleService ruleService;
@@ -47,8 +51,8 @@ public class RuleController {
 
 	@GetMapping
 	public ResponseEntity<Page<RuleResponse>> getAllRules(
-			@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "10") int size,
+			@RequestParam(defaultValue = "0") @Min(0) int page,
+			@RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
 			@RequestParam(defaultValue = "updatedAt") String sortBy,
 			@RequestParam(defaultValue = "desc") String sortDir,
 			@RequestParam(required = false) RuleStatus status,
@@ -89,8 +93,8 @@ public class RuleController {
 	@GetMapping("/{id}/audit-trail")
 	public ResponseEntity<Page<RuleAuditTrailResponse>> getAuditTrail(
 			@PathVariable Long id,
-			@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "20") int size) {
+			@RequestParam(defaultValue = "0") @Min(0) int page,
+			@RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 		return ResponseEntity.ok(ruleService.getAuditTrail(id, pageable));
 	}

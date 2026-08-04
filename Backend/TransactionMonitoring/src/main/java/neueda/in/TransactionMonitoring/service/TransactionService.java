@@ -1,10 +1,10 @@
 package neueda.in.TransactionMonitoring.service;
 
-import neueda.in.TransactionMonitoring.dto.request.TransactionRequestDTO;
-import neueda.in.TransactionMonitoring.dto.response.AlertSummaryDTO;
-import neueda.in.TransactionMonitoring.dto.response.PagedResponse;
-import neueda.in.TransactionMonitoring.dto.response.TransactionDetailResponseDTO;
-import neueda.in.TransactionMonitoring.dto.response.TransactionResponseDTO;
+import neueda.in.TransactionMonitoring.DTO.RequestDTO.TransactionRequestDTO;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.AlertSummaryDTO;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.PagedResponse;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.TransactionDetailResponseDTO;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.TransactionResponseDTO;
 import neueda.in.TransactionMonitoring.enums.TransactionStatus;
 import neueda.in.TransactionMonitoring.enums.TransactionType;
 

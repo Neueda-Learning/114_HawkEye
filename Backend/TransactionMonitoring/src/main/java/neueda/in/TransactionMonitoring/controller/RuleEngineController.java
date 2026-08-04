@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import neueda.in.TransactionMonitoring.DTO.ResponseDTO.TransactionEvaluationResponseDTO;
 import neueda.in.TransactionMonitoring.service.RuleEngineService;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/rules")
 @RequiredArgsConstructor
 @Slf4j
+@Profile("dev")
 public class RuleEngineController {
 
     private final RuleEngineService ruleEngineService;

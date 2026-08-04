@@ -1,4 +1,4 @@
-package neueda.in.TransactionMonitoring.dto.response;
+package neueda.in.TransactionMonitoring.DTO.ResponseDTO;
 
 import lombok.*;
 

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,14 +31,32 @@ public class VelocityEvaluator implements RuleEvaluator {
 
     @Override
     public RuleEvaluationResultDTO evaluate(Transaction transaction, Rule rule) {
-        int windowMinutes = extractInteger(rule.getParameters(), 60, "velocityWindowMinutes", "velocity_window_minutes");
-        int maxCount = extractInteger(rule.getParameters(), 5, "velocityCount", "velocity_count");
+        int windowMinutes = extractInteger(
+                rule.getParameters(),
+                60,
+                "windowMinutes",
+                "velocityWindowMinutes",
+                "velocity_window_minutes"
+        );
+        int maxCount = extractInteger(
+                rule.getParameters(),
+                5,
+                "maxTransactions",
+                "velocityCount",
+                "velocity_count"
+        );
 
         String accountId = transaction.getAccount().getAccountId();
         LocalDateTime eventTime = transaction.getTimestamp();
         LocalDateTime windowStart = eventTime.minusMinutes(windowMinutes);
         long count = transactionRepository.countByAccountIdAndTimestampBetween(
                 accountId, windowStart, eventTime);
+        List<Long> linkedTransactionIds = transactionRepository.findByAccount_AccountIdOrderByTimestampDesc(accountId)
+                .stream()
+                .filter(t -> t.getTimestamp() != null)
+                .filter(t -> !t.getTimestamp().isBefore(windowStart) && !t.getTimestamp().isAfter(eventTime))
+                .map(Transaction::getTransactionId)
+                .toList();
 
         // The current transaction is included in count, so threshold is maxCount+1
         boolean matched = count > maxCount;
@@ -48,6 +67,7 @@ public class VelocityEvaluator implements RuleEvaluator {
         details.put("windowMinutes", windowMinutes);
         details.put("windowStart", windowStart.toString());
         details.put("accountId", accountId);
+        details.put("linkedTransactionIds", linkedTransactionIds);
 
         return RuleEvaluationResultDTO.builder()
                 .ruleId(rule.getId())

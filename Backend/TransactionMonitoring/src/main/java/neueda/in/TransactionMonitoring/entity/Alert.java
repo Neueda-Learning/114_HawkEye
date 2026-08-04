@@ -49,7 +49,7 @@ public class Alert {
     private Transaction transaction;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "alert_status", length = 20)
+    @Column(name = "alert_status", length = 20, nullable = false)
     @Builder.Default
     private AlertStatus alertStatus = AlertStatus.OPEN;
 
@@ -62,6 +62,9 @@ public class Alert {
 
     @Column(name = "alert_details", columnDefinition = "JSON")
     private String alertDetails;
+
+    @Column(name = "resolution_notes", columnDefinition = "TEXT")
+    private String resolutionNotes;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -77,6 +80,9 @@ public class Alert {
     @Column(name = "closed_at")
     private LocalDateTime closedAt;
 
+    @Column(name = "dismissed_at")
+    private LocalDateTime dismissedAt;
+
     @Column(name = "closed_reason", columnDefinition = "TEXT")
     private String closedReason;
 
@@ -87,4 +93,3 @@ public class Alert {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 }
-

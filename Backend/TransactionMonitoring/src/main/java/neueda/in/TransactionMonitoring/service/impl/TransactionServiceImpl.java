@@ -2,15 +2,17 @@ package neueda.in.TransactionMonitoring.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import neueda.in.TransactionMonitoring.dto.request.TransactionRequestDTO;
-import neueda.in.TransactionMonitoring.dto.response.AlertSummaryDTO;
-import neueda.in.TransactionMonitoring.dto.response.PagedResponse;
-import neueda.in.TransactionMonitoring.dto.response.TransactionDetailResponseDTO;
-import neueda.in.TransactionMonitoring.dto.response.TransactionResponseDTO;
+import neueda.in.TransactionMonitoring.DTO.RequestDTO.TransactionRequestDTO;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.AlertSummaryDTO;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.PagedResponse;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.TransactionDetailResponseDTO;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.TransactionResponseDTO;
 import neueda.in.TransactionMonitoring.entity.Account;
 import neueda.in.TransactionMonitoring.entity.Alert;
+import neueda.in.TransactionMonitoring.entity.AlertTransaction;
 import neueda.in.TransactionMonitoring.entity.Payee;
 import neueda.in.TransactionMonitoring.entity.Transaction;
+import neueda.in.TransactionMonitoring.event.TransactionRecordedEvent;
 import neueda.in.TransactionMonitoring.enums.AccountStatus;
 import neueda.in.TransactionMonitoring.enums.TransactionStatus;
 import neueda.in.TransactionMonitoring.enums.TransactionType;
@@ -19,10 +21,12 @@ import neueda.in.TransactionMonitoring.exception.InvalidTransactionException;
 import neueda.in.TransactionMonitoring.exception.ResourceNotFoundException;
 import neueda.in.TransactionMonitoring.repository.AccountRepository;
 import neueda.in.TransactionMonitoring.repository.AlertRepository;
+import neueda.in.TransactionMonitoring.repository.AlertTransactionRepository;
 import neueda.in.TransactionMonitoring.repository.PayeeRepository;
 import neueda.in.TransactionMonitoring.repository.TransactionRepository;
 import neueda.in.TransactionMonitoring.service.TransactionService;
 import neueda.in.TransactionMonitoring.specification.TransactionSpecification;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,7 +37,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,6 +52,8 @@ public class TransactionServiceImpl implements TransactionService {
     private final AccountRepository     accountRepository;
     private final PayeeRepository       payeeRepository;
     private final AlertRepository       alertRepository;
+    private final AlertTransactionRepository alertTransactionRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     // ────────────────────────────────────────────────────────────────────────
     // POST /api/v1/transactions
@@ -108,6 +117,9 @@ public class TransactionServiceImpl implements TransactionService {
         Transaction saved = transactionRepository.save(transaction);
         log.info("Transaction created successfully — id: {}, account: {}, amount: {}",
                 saved.getTransactionId(), request.getAccountId(), request.getAmount());
+
+        eventPublisher.publishEvent(new TransactionRecordedEvent(this, saved.getTransactionId()));
+        log.info("TransactionRecordedEvent published for transactionId={}", saved.getTransactionId());
 
         return toResponseDTO(saved);
     }
@@ -180,7 +192,7 @@ public class TransactionServiceImpl implements TransactionService {
         Transaction txn = transactionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction", "id", id));
 
-        List<AlertSummaryDTO> alerts = alertRepository.findAllByTransactionId(id)
+        List<AlertSummaryDTO> alerts = findAlertsForTransaction(id)
                 .stream()
                 .map(this::toAlertSummaryDTO)
                 .collect(Collectors.toList());
@@ -198,11 +210,31 @@ public class TransactionServiceImpl implements TransactionService {
         if (!transactionRepository.existsById(id)) {
             throw new ResourceNotFoundException("Transaction", "id", id);
         }
-        return alertRepository.findAllByTransactionId(id)
+        return findAlertsForTransaction(id)
                 .stream()
                 .map(this::toAlertSummaryDTO)
                 .collect(Collectors.toList());
     }
+
+  private List<Alert> findAlertsForTransaction(Long transactionId) {
+    Map<Long, Alert> unique = new LinkedHashMap<>();
+
+    for (Alert alert : alertRepository.findByTransaction_TransactionIdOrderByCreatedAtDesc(transactionId)) {
+      unique.putIfAbsent(alert.getAlertId(), alert);
+    }
+
+    for (AlertTransaction link : alertTransactionRepository.findByTransaction_TransactionIdOrderByLinkedAtDesc(transactionId)) {
+      Alert linkedAlert = link.getAlert();
+      if (linkedAlert != null) {
+        unique.putIfAbsent(linkedAlert.getAlertId(), linkedAlert);
+      }
+    }
+
+    return unique.values().stream()
+        .sorted(Comparator.comparing(Alert::getCreatedAt,
+            Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+        .toList();
+  }
 
     // ────────────────────────────────────────────────────────────────────────
     // Private mappers

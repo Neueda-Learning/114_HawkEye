@@ -28,7 +28,11 @@ public class AlertResponseDTO {
     private Severity severity;
     private String alertMessage;
     private Map<String, Object> alertDetails;
+    private String resolutionNotes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime acknowledgedAt;
+    private LocalDateTime investigatingAt;
+    private LocalDateTime closedAt;
+    private LocalDateTime dismissedAt;
 }
-

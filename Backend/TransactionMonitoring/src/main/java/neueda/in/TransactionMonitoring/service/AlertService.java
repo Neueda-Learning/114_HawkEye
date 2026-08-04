@@ -1,128 +1,424 @@
 package neueda.in.TransactionMonitoring.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import neueda.in.TransactionMonitoring.DTO.RequestDTO.AlertCreationRequestDTO;
+import neueda.in.TransactionMonitoring.DTO.RequestDTO.AlertStatusUpdateDTO;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.AlertAuditTrailResponseDTO;
 import neueda.in.TransactionMonitoring.DTO.ResponseDTO.AlertResponseDTO;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.AlertStatsResponseDTO;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.PagedResponseDTO;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.TransactionResponseDTO;
 import neueda.in.TransactionMonitoring.entity.Alert;
+import neueda.in.TransactionMonitoring.entity.AlertAuditTrail;
+import neueda.in.TransactionMonitoring.entity.AlertTransaction;
 import neueda.in.TransactionMonitoring.entity.Rule;
 import neueda.in.TransactionMonitoring.entity.Transaction;
 import neueda.in.TransactionMonitoring.enums.AlertStatus;
+import neueda.in.TransactionMonitoring.enums.Severity;
 import neueda.in.TransactionMonitoring.event.AlertCreatedEvent;
+import neueda.in.TransactionMonitoring.exception.InvalidStateTransitionException;
+import neueda.in.TransactionMonitoring.exception.ResourceNotFoundException;
+import neueda.in.TransactionMonitoring.repository.AlertAuditTrailRepository;
 import neueda.in.TransactionMonitoring.repository.AlertRepository;
+import neueda.in.TransactionMonitoring.repository.AlertTransactionRepository;
 import neueda.in.TransactionMonitoring.repository.RuleRepository;
 import neueda.in.TransactionMonitoring.repository.TransactionRepository;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Person 3 — Alert Service.
- * Responsible for persisting new alert records and publishing AlertCreatedEvent.
- * Does NOT handle lifecycle actions (acknowledge / close / dismiss) — those belong to Person 4.
- */
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AlertService {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+	private static final String SYSTEM_ACTOR = "SYSTEM";
 
-    private final AlertRepository alertRepository;
-    private final TransactionRepository transactionRepository;
-    private final RuleRepository ruleRepository;
-    private final ApplicationEventPublisher eventPublisher;
+	private final AlertRepository alertRepository;
+	private final AlertAuditTrailRepository alertAuditTrailRepository;
+	private final AlertTransactionRepository alertTransactionRepository;
+	private final TransactionRepository transactionRepository;
+	private final RuleRepository ruleRepository;
+	private final AlertAuditTrailService alertAuditTrailService;
+	private final ApplicationEventPublisher eventPublisher;
 
-    /**
-     * Creates a new alert record from the given request payload.
-     * Returns null (and logs a warning) if a duplicate alert already exists
-     * for the same rule + transaction combination.
-     */
-    @Transactional
-    public AlertResponseDTO createAlert(AlertCreationRequestDTO request) {
+	@Transactional
+	public AlertResponseDTO createAlert(AlertCreationRequestDTO request) {
+		if (alertRepository.existsByRuleIdAndTransaction_TransactionId(request.getRuleId(), request.getTransactionId())) {
+			log.warn("Duplicate alert skipped — ruleId={} transactionId={}", request.getRuleId(), request.getTransactionId());
+			return null;
+		}
 
-        // ── Duplicate prevention ──────────────────────────────────────────────
-        if (alertRepository.existsByRuleIdAndTransaction_TransactionId(
-                request.getRuleId(), request.getTransactionId())) {
-            log.warn("Duplicate alert skipped — ruleId={} transactionId={}",
-                    request.getRuleId(), request.getTransactionId());
-            return null;
-        }
+		Rule rule = ruleRepository.findById(request.getRuleId())
+				.orElseThrow(() -> new EntityNotFoundException("Rule not found with id: " + request.getRuleId()));
 
-        // ── Resolve FK entities ───────────────────────────────────────────────
-        Rule rule = ruleRepository.findById(request.getRuleId())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Rule not found with id: " + request.getRuleId()));
+		Transaction transaction = transactionRepository.findById(request.getTransactionId())
+				.orElseThrow(() -> new EntityNotFoundException("Transaction not found with id: " + request.getTransactionId()));
 
-        Transaction transaction = transactionRepository.findById(request.getTransactionId())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Transaction not found with id: " + request.getTransactionId()));
+		Alert alert = Alert.builder()
+				.ruleId(rule.getId())
+				.account(transaction.getAccount())
+				.transaction(transaction)
+				.alertStatus(AlertStatus.OPEN)
+				.severity(request.getSeverity())
+				.alertMessage(request.getAlertMessage())
+				.alertDetails(toJson(request.getAlertDetails()))
+				.build();
 
-        // ── Build and persist ─────────────────────────────────────────────────
-        Alert alert = Alert.builder()
-                .ruleId(rule.getId())
-                .account(transaction.getAccount())
-                .transaction(transaction)
-                .alertStatus(AlertStatus.OPEN)
-                .severity(request.getSeverity())
-                .alertMessage(request.getAlertMessage())
-                .alertDetails(toJson(request.getAlertDetails()))
-                .build();
+		Alert saved = alertRepository.save(alert);
+		linkAlertToTransaction(saved, transaction);
+		for (Long linkedTransactionId : extractLinkedTransactionIds(request.getAlertDetails())) {
+			if (linkedTransactionId.equals(transaction.getTransactionId())) {
+				continue;
+			}
+			transactionRepository.findById(linkedTransactionId)
+					.ifPresentOrElse(
+							linkedTx -> linkAlertToTransaction(saved, linkedTx),
+							() -> log.warn("Skipping alert link for missing transactionId={} (alertId={})",
+									linkedTransactionId, saved.getAlertId())
+					);
+		}
 
-        Alert saved = alertRepository.save(alert);
-        log.info("Alert created — alertId={} ruleId={} transactionId={} severity={}",
-                saved.getAlertId(), rule.getId(), transaction.getTransactionId(), saved.getSeverity());
+		AlertResponseDTO response = toResponseDTO(saved, rule.getName());
+		eventPublisher.publishEvent(new AlertCreatedEvent(this, response));
+		return response;
+	}
 
-        // ── Publish event for Person 4 ────────────────────────────────────────
-        AlertResponseDTO response = toResponseDTO(saved, rule);
-        eventPublisher.publishEvent(new AlertCreatedEvent(this, response));
-        return response;
-    }
+	@Transactional(readOnly = true)
+	public PagedResponseDTO<AlertResponseDTO> getAlerts(AlertStatus status, Severity severity, int page, int size) {
+		Specification<Alert> spec = (root, query, cb) -> cb.conjunction();
+		if (status != null) {
+			spec = spec.and((root, query, cb) -> cb.equal(root.get("alertStatus"), status));
+		}
+		if (severity != null) {
+			spec = spec.and((root, query, cb) -> cb.equal(root.get("severity"), severity));
+		}
+		return toPagedResponse(alertRepository.findAll(spec, PageRequest.of(page, size, Sort.by("createdAt").descending())));
+	}
 
-    // ── Mapper ────────────────────────────────────────────────────────────────
+	@Transactional(readOnly = true)
+	public AlertStatsResponseDTO getStats() {
+		long open = alertRepository.countByAlertStatus(AlertStatus.OPEN);
+		long acknowledged = alertRepository.countByAlertStatus(AlertStatus.ACKNOWLEDGED);
+		long investigating = alertRepository.countByAlertStatus(AlertStatus.INVESTIGATING);
+		long closed = alertRepository.countByAlertStatus(AlertStatus.CLOSED);
+		long dismissed = alertRepository.countByAlertStatus(AlertStatus.DISMISSED);
+		return AlertStatsResponseDTO.builder()
+				.open(open)
+				.acknowledged(acknowledged)
+				.investigating(investigating)
+				.closed(closed)
+				.dismissed(dismissed)
+				.total(open + acknowledged + investigating + closed + dismissed)
+				.build();
+	}
 
-    private AlertResponseDTO toResponseDTO(Alert alert, Rule rule) {
-        return AlertResponseDTO.builder()
-                .alertId(alert.getAlertId())
-                .ruleId(alert.getRuleId())
-                .ruleName(rule != null ? rule.getName() : null)
-                .accountId(alert.getAccount() != null ? alert.getAccount().getAccountId() : null)
-                .transactionId(alert.getTransaction().getTransactionId())
-                .alertStatus(alert.getAlertStatus())
-                .severity(alert.getSeverity())
-                .alertMessage(alert.getAlertMessage())
-                .alertDetails(parseJson(alert.getAlertDetails()))
-                .createdAt(alert.getCreatedAt())
-                .updatedAt(alert.getUpdatedAt())
-                .build();
-    }
+	@Transactional(readOnly = true)
+	public PagedResponseDTO<AlertResponseDTO> getAlertHistory(Severity severity, String ruleName, int page, int size) {
+		Set<Long> ruleIds = resolveRuleIds(ruleName);
+		Specification<Alert> spec = historySpec(severity, ruleIds);
+		return toPagedResponse(alertRepository.findAll(spec, PageRequest.of(page, size, Sort.by("updatedAt").descending())));
+	}
 
-    private String toJson(java.util.Map<String, Object> details) {
-        if (details == null || details.isEmpty()) {
-            return null;
-        }
-        try {
-            return OBJECT_MAPPER.writeValueAsString(details);
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Unable to serialize alert details", e);
-        }
-    }
+	@Transactional(readOnly = true)
+	public PagedResponseDTO<AlertResponseDTO> getClosedAlerts(Severity severity, int page, int size) {
+		Specification<Alert> spec = (root, query, cb) -> cb.equal(root.get("alertStatus"), AlertStatus.CLOSED);
+		if (severity != null) {
+			spec = spec.and((root, query, cb) -> cb.equal(root.get("severity"), severity));
+		}
+		return toPagedResponse(alertRepository.findAll(spec, PageRequest.of(page, size, Sort.by("closedAt").descending())));
+	}
 
-    private java.util.Map<String, Object> parseJson(String json) {
-        if (json == null || json.isBlank()) {
-            return null;
-        }
-        try {
-            return OBJECT_MAPPER.readValue(json, new TypeReference<java.util.Map<String, Object>>() { });
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Unable to parse alert details JSON", e);
-        }
-    }
+	@Transactional(readOnly = true)
+	public PagedResponseDTO<AlertResponseDTO> getDismissedAlerts(Severity severity, int page, int size) {
+		Specification<Alert> spec = (root, query, cb) -> cb.equal(root.get("alertStatus"), AlertStatus.DISMISSED);
+		if (severity != null) {
+			spec = spec.and((root, query, cb) -> cb.equal(root.get("severity"), severity));
+		}
+		return toPagedResponse(alertRepository.findAll(spec, PageRequest.of(page, size, Sort.by("dismissedAt").descending())));
+	}
+
+	@Transactional(readOnly = true)
+	public AlertResponseDTO getAlertById(Long id) {
+		Alert alert = findAlert(id);
+		return toResponseDTO(alert, resolveRuleName(alert.getRuleId()));
+	}
+
+	@Transactional(readOnly = true)
+	public PagedResponseDTO<AlertAuditTrailResponseDTO> getAlertAuditTrail(Long id, int page, int size) {
+		findAlert(id);
+		Page<AlertAuditTrail> history = alertAuditTrailRepository.findByAlertIdOrderByCreatedAtDesc(
+				id, PageRequest.of(page, size, Sort.by("createdAt").descending()));
+
+		List<AlertAuditTrailResponseDTO> content = history.getContent().stream()
+				.map(this::toAuditTrailResponse)
+				.toList();
+
+		return PagedResponseDTO.<AlertAuditTrailResponseDTO>builder()
+				.content(content)
+				.page(history.getNumber())
+				.size(history.getSize())
+				.totalElements(history.getTotalElements())
+				.totalPages(history.getTotalPages())
+				.first(history.isFirst())
+				.last(history.isLast())
+				.build();
+	}
+
+	@Transactional(readOnly = true)
+	public List<TransactionResponseDTO> getAlertTransactions(Long id) {
+		Alert alert = findAlert(id);
+		List<AlertTransaction> links = alertTransactionRepository.findByAlert_AlertIdOrderByLinkedAtAsc(id);
+		if (links.isEmpty()) {
+			return List.of(toTransactionResponseDTO(alert.getTransaction()));
+		}
+		return links.stream()
+				.map(AlertTransaction::getTransaction)
+				.map(this::toTransactionResponseDTO)
+				.toList();
+	}
+
+	@Transactional
+	public AlertResponseDTO acknowledgeAlert(Long id) {
+		Alert alert = findAlert(id);
+		requireTransition(alert.getAlertStatus(), AlertStatus.OPEN, AlertStatus.ACKNOWLEDGED);
+		AlertStatus previousStatus = alert.getAlertStatus();
+		alert.setAlertStatus(AlertStatus.ACKNOWLEDGED);
+		alert.setAcknowledgedAt(LocalDateTime.now());
+		Alert saved = alertRepository.save(alert);
+		alertAuditTrailService.record(saved, previousStatus, SYSTEM_ACTOR, "ACKNOWLEDGE", null);
+		return toResponseDTO(saved, resolveRuleName(saved.getRuleId()));
+	}
+
+	@Transactional
+	public AlertResponseDTO startInvestigation(Long id) {
+		Alert alert = findAlert(id);
+		if (alert.getAlertStatus() != AlertStatus.OPEN && alert.getAlertStatus() != AlertStatus.ACKNOWLEDGED) {
+			throw new InvalidStateTransitionException(alert.getAlertStatus(), AlertStatus.INVESTIGATING);
+		}
+		AlertStatus previousStatus = alert.getAlertStatus();
+		alert.setAlertStatus(AlertStatus.INVESTIGATING);
+		alert.setInvestigatingAt(LocalDateTime.now());
+		Alert saved = alertRepository.save(alert);
+		alertAuditTrailService.record(saved, previousStatus, SYSTEM_ACTOR, "INVESTIGATE", null);
+		return toResponseDTO(saved, resolveRuleName(saved.getRuleId()));
+	}
+
+	@Transactional
+	public AlertResponseDTO closeAlert(Long id, AlertStatusUpdateDTO dto) {
+		Alert alert = findAlert(id);
+		requireTransition(alert.getAlertStatus(), AlertStatus.INVESTIGATING, AlertStatus.CLOSED);
+		AlertStatus previousStatus = alert.getAlertStatus();
+		alert.setAlertStatus(AlertStatus.CLOSED);
+		alert.setClosedAt(LocalDateTime.now());
+		applyResolutionNotes(alert, dto);
+		Alert saved = alertRepository.save(alert);
+		alertAuditTrailService.record(saved, previousStatus, SYSTEM_ACTOR, "CLOSE", alert.getResolutionNotes());
+		return toResponseDTO(saved, resolveRuleName(saved.getRuleId()));
+	}
+
+	@Transactional
+	public AlertResponseDTO dismissAlert(Long id, AlertStatusUpdateDTO dto) {
+		Alert alert = findAlert(id);
+		if (alert.getAlertStatus() == AlertStatus.CLOSED || alert.getAlertStatus() == AlertStatus.DISMISSED) {
+			throw new InvalidStateTransitionException(alert.getAlertStatus(), AlertStatus.DISMISSED);
+		}
+		AlertStatus previousStatus = alert.getAlertStatus();
+		alert.setAlertStatus(AlertStatus.DISMISSED);
+		alert.setDismissedAt(LocalDateTime.now());
+		applyResolutionNotes(alert, dto);
+		Alert saved = alertRepository.save(alert);
+		alertAuditTrailService.record(saved, previousStatus, SYSTEM_ACTOR, "DISMISS", alert.getResolutionNotes());
+		return toResponseDTO(saved, resolveRuleName(saved.getRuleId()));
+	}
+
+	private Alert findAlert(Long id) {
+		return alertRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Alert", "id", id));
+	}
+
+	private void requireTransition(AlertStatus current, AlertStatus expectedFrom, AlertStatus target) {
+		if (current != expectedFrom) {
+			throw new InvalidStateTransitionException(current, target);
+		}
+	}
+
+	private void applyResolutionNotes(Alert alert, AlertStatusUpdateDTO dto) {
+		String notes = dto != null ? dto.getResolutionNotes() : null;
+		alert.setResolutionNotes(notes);
+		alert.setClosedReason(notes);
+	}
+
+	private PagedResponseDTO<AlertResponseDTO> toPagedResponse(Page<Alert> page) {
+		List<AlertResponseDTO> content = page.getContent().stream()
+				.map(alert -> toResponseDTO(alert, resolveRuleName(alert.getRuleId())))
+				.toList();
+
+		return PagedResponseDTO.<AlertResponseDTO>builder()
+				.content(content)
+				.page(page.getNumber())
+				.size(page.getSize())
+				.totalElements(page.getTotalElements())
+				.totalPages(page.getTotalPages())
+				.first(page.isFirst())
+				.last(page.isLast())
+				.build();
+	}
+
+	private Specification<Alert> historySpec(Severity severity, Set<Long> ruleIds) {
+		Specification<Alert> spec = (root, query, cb) -> root.get("alertStatus").in(AlertStatus.CLOSED, AlertStatus.DISMISSED);
+		if (severity != null) {
+			spec = spec.and((root, query, cb) -> cb.equal(root.get("severity"), severity));
+		}
+		if (ruleIds != null) {
+			if (ruleIds.isEmpty()) {
+				return spec.and((root, query, cb) -> cb.disjunction());
+			}
+			spec = spec.and((root, query, cb) -> root.get("ruleId").in(ruleIds));
+		}
+		return spec;
+	}
+
+	private Set<Long> resolveRuleIds(String ruleName) {
+		if (ruleName == null || ruleName.isBlank()) {
+			return null;
+		}
+		String normalized = ruleName.trim().toLowerCase();
+		return ruleRepository.findAll().stream()
+				.filter(rule -> rule.getName() != null && rule.getName().toLowerCase().contains(normalized))
+				.map(Rule::getId)
+				.collect(Collectors.toSet());
+	}
+
+	private String resolveRuleName(Long ruleId) {
+		return ruleRepository.findById(ruleId).map(Rule::getName).orElse(null);
+	}
+
+	private AlertResponseDTO toResponseDTO(Alert alert, String ruleName) {
+		return AlertResponseDTO.builder()
+				.alertId(alert.getAlertId())
+				.ruleId(alert.getRuleId())
+				.ruleName(ruleName)
+				.accountId(alert.getAccount() != null ? alert.getAccount().getAccountId() : null)
+				.transactionId(alert.getTransaction() != null ? alert.getTransaction().getTransactionId() : null)
+				.alertStatus(alert.getAlertStatus())
+				.severity(alert.getSeverity())
+				.alertMessage(alert.getAlertMessage())
+				.alertDetails(parseJson(alert.getAlertDetails()))
+				.resolutionNotes(alert.getResolutionNotes())
+				.createdAt(alert.getCreatedAt())
+				.updatedAt(alert.getUpdatedAt())
+				.acknowledgedAt(alert.getAcknowledgedAt())
+				.investigatingAt(alert.getInvestigatingAt())
+				.closedAt(alert.getClosedAt())
+				.dismissedAt(alert.getDismissedAt())
+				.build();
+	}
+
+	private TransactionResponseDTO toTransactionResponseDTO(Transaction transaction) {
+		return TransactionResponseDTO.builder()
+				.transactionId(transaction.getTransactionId())
+				.accountId(transaction.getAccount() != null ? transaction.getAccount().getAccountId() : null)
+				.accountName(transaction.getAccount() != null ? transaction.getAccount().getAccountName() : null)
+				.payeeId(transaction.getPayee() != null ? transaction.getPayee().getPayeeId() : null)
+				.payeeName(transaction.getPayee() != null ? transaction.getPayee().getPayeeName() : null)
+				.amount(transaction.getAmount())
+				.currency(transaction.getCurrency())
+				.transactionType(transaction.getTransactionType())
+				.status(transaction.getStatus())
+				.description(transaction.getDescription())
+				.timestamp(transaction.getTimestamp())
+				.createdAt(transaction.getCreatedAt())
+				.build();
+	}
+
+	private String toJson(Map<String, Object> details) {
+		if (details == null || details.isEmpty()) {
+			return null;
+		}
+		try {
+			return OBJECT_MAPPER.writeValueAsString(details);
+		} catch (Exception e) {
+			throw new IllegalArgumentException("Unable to serialize alert details", e);
+		}
+	}
+
+	private Map<String, Object> parseJson(String json) {
+		if (json == null || json.isBlank()) {
+			return Collections.emptyMap();
+		}
+		try {
+			return OBJECT_MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {
+			});
+		} catch (Exception e) {
+			throw new IllegalArgumentException("Unable to parse alert details JSON", e);
+		}
+	}
+
+	private void linkAlertToTransaction(Alert alert, Transaction transaction) {
+		if (!alertTransactionRepository.existsByAlert_AlertIdAndTransaction_TransactionId(
+				alert.getAlertId(), transaction.getTransactionId())) {
+			alertTransactionRepository.save(AlertTransaction.builder()
+					.alert(alert)
+					.transaction(transaction)
+					.build());
+		}
+	}
+
+	private Set<Long> extractLinkedTransactionIds(Map<String, Object> alertDetails) {
+		if (alertDetails == null || alertDetails.isEmpty()) {
+			return Collections.emptySet();
+		}
+
+		Object raw = alertDetails.get("linkedTransactionIds");
+		if (!(raw instanceof List<?> rawList)) {
+			return Collections.emptySet();
+		}
+
+		Set<Long> ids = new LinkedHashSet<>();
+		for (Object value : rawList) {
+			if (value instanceof Number number) {
+				ids.add(number.longValue());
+				continue;
+			}
+			if (value instanceof String text) {
+				try {
+					ids.add(Long.parseLong(text.trim()));
+				} catch (NumberFormatException ignored) {
+					log.warn("Skipping invalid linkedTransactionIds value='{}'", text);
+				}
+			}
+		}
+		return ids;
+	}
+
+	private AlertAuditTrailResponseDTO toAuditTrailResponse(AlertAuditTrail audit) {
+		return AlertAuditTrailResponseDTO.builder()
+				.id(audit.getId())
+				.alertId(audit.getAlertId())
+				.previousStatus(audit.getPreviousStatus())
+				.newStatus(audit.getNewStatus())
+				.changedBy(audit.getChangedBy())
+				.changeReason(audit.getChangeReason())
+				.notes(audit.getNotes())
+				.createdAt(audit.getCreatedAt())
+				.build();
+	}
 }
-
-
-

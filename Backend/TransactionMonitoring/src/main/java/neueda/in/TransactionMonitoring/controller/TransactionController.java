@@ -1,20 +1,23 @@
 package neueda.in.TransactionMonitoring.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import neueda.in.TransactionMonitoring.dto.request.TransactionRequestDTO;
-import neueda.in.TransactionMonitoring.dto.response.AlertSummaryDTO;
-import neueda.in.TransactionMonitoring.dto.response.ApiResponse;
-import neueda.in.TransactionMonitoring.dto.response.PagedResponse;
-import neueda.in.TransactionMonitoring.dto.response.TransactionDetailResponseDTO;
-import neueda.in.TransactionMonitoring.dto.response.TransactionResponseDTO;
+import neueda.in.TransactionMonitoring.DTO.RequestDTO.TransactionRequestDTO;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.AlertSummaryDTO;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.ApiResponse;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.PagedResponse;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.TransactionDetailResponseDTO;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.TransactionResponseDTO;
 import neueda.in.TransactionMonitoring.enums.TransactionStatus;
 import neueda.in.TransactionMonitoring.enums.TransactionType;
 import neueda.in.TransactionMonitoring.service.TransactionService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -25,6 +28,7 @@ import java.util.List;
 @RequestMapping("/api/v1/transactions")
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 public class TransactionController {
 
     private final TransactionService transactionService;
@@ -65,8 +69,8 @@ public class TransactionController {
                 @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false)
                 @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
-            @RequestParam(defaultValue = "0")  int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @RequestParam(defaultValue = "timestamp,desc") String sort) {
 
         log.info("GET /api/v1/transactions — page: {}, size: {}, accountId: {}", page, size, accountId);

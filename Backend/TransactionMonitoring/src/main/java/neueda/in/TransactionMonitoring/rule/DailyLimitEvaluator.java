@@ -60,6 +60,9 @@ public class DailyLimitEvaluator implements RuleEvaluator {
         details.put("transactionsToday", dailyTransactions.size());
         details.put("accountId", accountId);
         details.put("date", startOfDay.toLocalDate().toString());
+        details.put("linkedTransactionIds", dailyTransactions.stream()
+                .map(Transaction::getTransactionId)
+                .toList());
 
         return RuleEvaluationResultDTO.builder()
                 .ruleId(rule.getId())
