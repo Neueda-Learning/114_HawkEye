@@ -31,8 +31,20 @@ public class VelocityEvaluator implements RuleEvaluator {
 
     @Override
     public RuleEvaluationResultDTO evaluate(Transaction transaction, Rule rule) {
-        int windowMinutes = extractInteger(rule.getParameters(), 60, "velocityWindowMinutes", "velocity_window_minutes");
-        int maxCount = extractInteger(rule.getParameters(), 5, "velocityCount", "velocity_count");
+        int windowMinutes = extractInteger(
+                rule.getParameters(),
+                60,
+                "windowMinutes",
+                "velocityWindowMinutes",
+                "velocity_window_minutes"
+        );
+        int maxCount = extractInteger(
+                rule.getParameters(),
+                5,
+                "maxTransactions",
+                "velocityCount",
+                "velocity_count"
+        );
 
         String accountId = transaction.getAccount().getAccountId();
         LocalDateTime eventTime = transaction.getTimestamp();

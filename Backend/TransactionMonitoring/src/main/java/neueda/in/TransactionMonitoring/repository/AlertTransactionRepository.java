@@ -12,5 +12,7 @@ public interface AlertTransactionRepository extends JpaRepository<AlertTransacti
     boolean existsByAlert_AlertIdAndTransaction_TransactionId(Long alertId, Long transactionId);
 
     List<AlertTransaction> findByAlert_AlertIdOrderByLinkedAtAsc(Long alertId);
+
+	List<AlertTransaction> findByTransaction_TransactionIdOrderByLinkedAtDesc(Long transactionId);
 }
 

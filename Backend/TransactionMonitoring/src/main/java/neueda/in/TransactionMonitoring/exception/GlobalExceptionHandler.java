@@ -42,10 +42,16 @@ public class GlobalExceptionHandler {
 		return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI(), null);
 	}
 
-	@ExceptionHandler({InvalidTransactionException.class, InvalidStateTransitionException.class})
+	@ExceptionHandler(InvalidTransactionException.class)
 	public ResponseEntity<ApiErrorResponse> handleBusinessValidation(RuntimeException ex,
 	                                                                 HttpServletRequest request) {
 		return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI(), null);
+	}
+
+	@ExceptionHandler(InvalidStateTransitionException.class)
+	public ResponseEntity<ApiErrorResponse> handleInvalidStateTransition(InvalidStateTransitionException ex,
+	                                                                    HttpServletRequest request) {
+		return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI(), null);
 	}
 
 	@ExceptionHandler(IllegalArgumentException.class)

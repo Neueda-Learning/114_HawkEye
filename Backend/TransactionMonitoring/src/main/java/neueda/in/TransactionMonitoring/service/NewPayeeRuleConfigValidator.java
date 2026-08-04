@@ -15,8 +15,12 @@ public class NewPayeeRuleConfigValidator implements RuleConfigValidator {
 
 	@Override
 	public void validate(Map<String, Object> parameters) {
+		if (parameters == null || parameters.isEmpty()) {
+			return;
+		}
+
 		Object lookbackDays = parameters.get("lookbackDays");
-		if (!(lookbackDays instanceof Number numberValue) || numberValue.intValue() <= 0) {
+		if (lookbackDays != null && (!(lookbackDays instanceof Number numberValue) || numberValue.intValue() <= 0)) {
 			throw new IllegalArgumentException("lookbackDays must be a number greater than 0");
 		}
 	}
