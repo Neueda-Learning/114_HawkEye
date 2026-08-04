@@ -1,48 +1,73 @@
-﻿package neueda.in.TransactionMonitoring.entity;
+package neueda.in.TransactionMonitoring.entity;
+
 import jakarta.persistence.*;
 import lombok.*;
 import neueda.in.TransactionMonitoring.enums.TransactionStatus;
 import neueda.in.TransactionMonitoring.enums.TransactionType;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = "transactions",
+@Table(
+    name = "transactions",
     indexes = {
-        @Index(name = "idx_txn_account_id", columnList = "account_id"),
-        @Index(name = "idx_txn_payee_id",   columnList = "payee_id"),
-        @Index(name = "idx_txn_timestamp",  columnList = "timestamp")
-    })
-@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString
+        @Index(name = "idx_txn_account_id",        columnList = "account_id"),
+        @Index(name = "idx_txn_timestamp",         columnList = "timestamp"),
+        @Index(name = "idx_txn_account_timestamp", columnList = "account_id, timestamp"),
+        @Index(name = "idx_txn_payee_id",          columnList = "payee_id"),
+        @Index(name = "idx_txn_amount",            columnList = "amount")
+    }
+)
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Transaction {
-    @Id @GeneratedValue @UuidGenerator
-    @EqualsAndHashCode.Include
-    @Column(name = "id", updatable = false, nullable = false, length = 36)
-    private String id;
-    @Column(name = "account_id", nullable = false, length = 50)
-    private String accountId;
-    @Column(name = "payee_id", nullable = false, length = 50)
-    private String payeeId;
-    @Column(nullable = false, precision = 19, scale = 4)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "transaction_id")
+    private Long transactionId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "payee_id", nullable = false)
+    private Payee payee;
+
+    @Column(name = "amount", nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
-    @Column(nullable = false, length = 3)
+
+    @Column(name = "currency", length = 3)
     @Builder.Default
     private String currency = "USD";
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private TransactionType type;
+    @Column(name = "transaction_type", nullable = false, length = 10)
+    private TransactionType transactionType;
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "status", length = 20)
     @Builder.Default
     private TransactionStatus status = TransactionStatus.COMPLETED;
-    @Column(nullable = false)
-    private Instant timestamp;
-    @Column(length = 500)
+
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "timestamp", nullable = false)
+    private LocalDateTime timestamp;
+
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private Instant createdAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 }
+

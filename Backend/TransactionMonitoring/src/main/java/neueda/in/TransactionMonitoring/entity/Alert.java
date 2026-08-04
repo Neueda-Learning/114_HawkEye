@@ -1,55 +1,90 @@
-﻿package neueda.in.TransactionMonitoring.entity;
+package neueda.in.TransactionMonitoring.entity;
+
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import neueda.in.TransactionMonitoring.enums.AlertSeverity;
+import lombok.*;
 import neueda.in.TransactionMonitoring.enums.AlertStatus;
-import java.time.Instant;
-import java.util.List;
+import neueda.in.TransactionMonitoring.enums.Severity;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
+
 /**
- * STUB — Full implementation (entity + table) to be provided by the Alert Entity team.
- * This class exists only so AlertService / AlertController / AlertRepository can compile.
+ * Minimal Alert entity — read-only for Person 1 (Transactions Domain).
+ * Person 2 (Alerts Domain) will add full lifecycle fields and service logic.
  */
 @Entity
-@Table(name = "alerts")
-@Getter
-@Setter
+@Table(
+    name = "alerts",
+    indexes = {
+        @Index(name = "idx_alert_status",         columnList = "alert_status"),
+        @Index(name = "idx_alert_account_id",     columnList = "account_id"),
+        @Index(name = "idx_alert_created_at",     columnList = "created_at"),
+        @Index(name = "idx_alert_rule_id",        columnList = "rule_id"),
+        @Index(name = "idx_alert_status_created", columnList = "alert_status, created_at")
+    }
+)
+@Data
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class Alert {
+
     @Id
-    @Column(name = "id", updatable = false, nullable = false, length = 36)
-    private String id;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "rule_id")
-    private MonitoringRule rule;
-    @Column(name = "rule_name", length = 100)
-    private String ruleName;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "alert_id")
+    private Long alertId;
+
+    // Stored as plain Long — Rule entity belongs to Person 2's domain
+    @Column(name = "rule_id", nullable = false)
+    private Long ruleId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
+
+    // Primary triggering transaction (direct FK)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "transaction_id", nullable = false)
+    private Transaction transaction;
+
     @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private AlertStatus status;
+    @Column(name = "alert_status", length = 20)
+    @Builder.Default
+    private AlertStatus alertStatus = AlertStatus.OPEN;
+
     @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private AlertSeverity severity;
-    @Column(length = 1000)
-    private String description;
-    @Column(name = "resolution_notes", length = 2000)
-    private String resolutionNotes;
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "alert_transactions",
-        joinColumns = @JoinColumn(name = "alert_id"),
-        inverseJoinColumns = @JoinColumn(name = "transaction_id")
-    )
-    private List<Transaction> transactions;
-    @Column(name = "created_at")
-    private Instant createdAt;
+    @Column(name = "severity", nullable = false, length = 10)
+    private Severity severity;
+
+    @Column(name = "alert_message", nullable = false, columnDefinition = "TEXT")
+    private String alertMessage;
+
+    @Column(name = "alert_details", columnDefinition = "JSON")
+    private String alertDetails;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    // Full lifecycle fields — managed by Person 2 (Alerts Domain)
     @Column(name = "acknowledged_at")
-    private Instant acknowledgedAt;
+    private LocalDateTime acknowledgedAt;
+
     @Column(name = "investigating_at")
-    private Instant investigatingAt;
+    private LocalDateTime investigatingAt;
+
     @Column(name = "closed_at")
-    private Instant closedAt;
-    @Column(name = "dismissed_at")
-    private Instant dismissedAt;
+    private LocalDateTime closedAt;
+
+    @Column(name = "closed_reason", columnDefinition = "TEXT")
+    private String closedReason;
+
+    @Column(name = "closed_by", length = 50)
+    private String closedBy;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 }
+

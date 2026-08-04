@@ -1,24 +1,34 @@
-﻿package neueda.in.TransactionMonitoring.DTO.ResponseDTO;
+package neueda.in.TransactionMonitoring.DTO.ResponseDTO;
+
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import neueda.in.TransactionMonitoring.enums.AlertSeverity;
+import lombok.NoArgsConstructor;
 import neueda.in.TransactionMonitoring.enums.AlertStatus;
-import java.time.Instant;
-import java.util.List;
+import neueda.in.TransactionMonitoring.enums.Severity;
+
+import java.time.LocalDateTime;
+import java.util.Map;
+
+/**
+ * Alert response payload handed off to Person 4 (Alert Management).
+ */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AlertResponseDTO {
-    private String id;
-    private String ruleId;
+
+    private Long alertId;
+    private Long ruleId;
     private String ruleName;
-    private AlertStatus status;
-    private AlertSeverity severity;
-    private String description;
-    private String resolutionNotes;
-    private List<TransactionResponseDTO> transactions;
-    private Instant createdAt;
-    private Instant acknowledgedAt;
-    private Instant investigatingAt;
-    private Instant closedAt;
-    private Instant dismissedAt;
+    private String accountId;
+    private Long transactionId;
+    private AlertStatus alertStatus;
+    private Severity severity;
+    private String alertMessage;
+    private Map<String, Object> alertDetails;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
+

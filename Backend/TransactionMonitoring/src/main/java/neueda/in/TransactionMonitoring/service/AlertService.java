@@ -1,199 +1,128 @@
 package neueda.in.TransactionMonitoring.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import neueda.in.TransactionMonitoring.DTO.RequestDTO.AlertStatusUpdateDTO;
+import neueda.in.TransactionMonitoring.DTO.RequestDTO.AlertCreationRequestDTO;
 import neueda.in.TransactionMonitoring.DTO.ResponseDTO.AlertResponseDTO;
-import neueda.in.TransactionMonitoring.DTO.ResponseDTO.AlertStatsResponseDTO;
-import neueda.in.TransactionMonitoring.DTO.ResponseDTO.PagedResponseDTO;
 import neueda.in.TransactionMonitoring.entity.Alert;
-import neueda.in.TransactionMonitoring.enums.AlertSeverity;
+import neueda.in.TransactionMonitoring.entity.Rule;
+import neueda.in.TransactionMonitoring.entity.Transaction;
 import neueda.in.TransactionMonitoring.enums.AlertStatus;
-import neueda.in.TransactionMonitoring.exception.InvalidStateTransitionException;
-import neueda.in.TransactionMonitoring.exception.ResourceNotFoundException;
-import neueda.in.TransactionMonitoring.mapper.AlertMapper;
+import neueda.in.TransactionMonitoring.event.AlertCreatedEvent;
 import neueda.in.TransactionMonitoring.repository.AlertRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import neueda.in.TransactionMonitoring.repository.RuleRepository;
+import neueda.in.TransactionMonitoring.repository.TransactionRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.util.EnumSet;
-
-@Slf4j
+/**
+ * Person 3 — Alert Service.
+ * Responsible for persisting new alert records and publishing AlertCreatedEvent.
+ * Does NOT handle lifecycle actions (acknowledge / close / dismiss) — those belong to Person 4.
+ */
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Slf4j
 public class AlertService {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private final AlertRepository alertRepository;
-    private final AlertMapper     alertMapper;
+    private final TransactionRepository transactionRepository;
+    private final RuleRepository ruleRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    // ── Queries ──────────────────────────────────────────────────────────────
+    /**
+     * Creates a new alert record from the given request payload.
+     * Returns null (and logs a warning) if a duplicate alert already exists
+     * for the same rule + transaction combination.
+     */
+    @Transactional
+    public AlertResponseDTO createAlert(AlertCreationRequestDTO request) {
 
-    public PagedResponseDTO<AlertResponseDTO> getAlerts(
-            AlertStatus status, AlertSeverity severity, int page, int size) {
-
-        size = Math.min(size, 100);
-        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-
-        Page<Alert> result;
-        if (status != null && severity != null) {
-            result = alertRepository.findByStatusAndSeverity(status, severity, pageable);
-        } else if (status != null) {
-            result = alertRepository.findByStatus(status, pageable);
-        } else if (severity != null) {
-            result = alertRepository.findBySeverity(severity, pageable);
-        } else {
-            result = alertRepository.findAll(pageable);
+        // ── Duplicate prevention ──────────────────────────────────────────────
+        if (alertRepository.existsByRuleIdAndTransaction_TransactionId(
+                request.getRuleId(), request.getTransactionId())) {
+            log.warn("Duplicate alert skipped — ruleId={} transactionId={}",
+                    request.getRuleId(), request.getTransactionId());
+            return null;
         }
 
-        return PagedResponseDTO.<AlertResponseDTO>builder()
-            .content(result.getContent().stream().map(alertMapper::toResponseDTO).toList())
-            .page(result.getNumber())
-            .size(result.getSize())
-            .totalElements(result.getTotalElements())
-            .totalPages(result.getTotalPages())
-            .last(result.isLast())
-            .build();
+        // ── Resolve FK entities ───────────────────────────────────────────────
+        Rule rule = ruleRepository.findById(request.getRuleId())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Rule not found with id: " + request.getRuleId()));
+
+        Transaction transaction = transactionRepository.findById(request.getTransactionId())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Transaction not found with id: " + request.getTransactionId()));
+
+        // ── Build and persist ─────────────────────────────────────────────────
+        Alert alert = Alert.builder()
+                .ruleId(rule.getId())
+                .account(transaction.getAccount())
+                .transaction(transaction)
+                .alertStatus(AlertStatus.OPEN)
+                .severity(request.getSeverity())
+                .alertMessage(request.getAlertMessage())
+                .alertDetails(toJson(request.getAlertDetails()))
+                .build();
+
+        Alert saved = alertRepository.save(alert);
+        log.info("Alert created — alertId={} ruleId={} transactionId={} severity={}",
+                saved.getAlertId(), rule.getId(), transaction.getTransactionId(), saved.getSeverity());
+
+        // ── Publish event for Person 4 ────────────────────────────────────────
+        AlertResponseDTO response = toResponseDTO(saved, rule);
+        eventPublisher.publishEvent(new AlertCreatedEvent(this, response));
+        return response;
     }
 
-    public AlertResponseDTO getAlertById(String id) {
-        Alert alert = findAlertOrThrow(id);
-        return alertMapper.toResponseDTO(alert);
+    // ── Mapper ────────────────────────────────────────────────────────────────
+
+    private AlertResponseDTO toResponseDTO(Alert alert, Rule rule) {
+        return AlertResponseDTO.builder()
+                .alertId(alert.getAlertId())
+                .ruleId(alert.getRuleId())
+                .ruleName(rule != null ? rule.getName() : null)
+                .accountId(alert.getAccount() != null ? alert.getAccount().getAccountId() : null)
+                .transactionId(alert.getTransaction().getTransactionId())
+                .alertStatus(alert.getAlertStatus())
+                .severity(alert.getSeverity())
+                .alertMessage(alert.getAlertMessage())
+                .alertDetails(parseJson(alert.getAlertDetails()))
+                .createdAt(alert.getCreatedAt())
+                .updatedAt(alert.getUpdatedAt())
+                .build();
     }
 
-    public AlertStatsResponseDTO getStats() {
-        return AlertStatsResponseDTO.builder()
-            .open(alertRepository.countByStatus(AlertStatus.OPEN))
-            .acknowledged(alertRepository.countByStatus(AlertStatus.ACKNOWLEDGED))
-            .investigating(alertRepository.countByStatus(AlertStatus.INVESTIGATING))
-            .closed(alertRepository.countByStatus(AlertStatus.CLOSED))
-            .dismissed(alertRepository.countByStatus(AlertStatus.DISMISSED))
-            .total(alertRepository.count())
-            .build();
-    }
-
-    /** Alert history — all CLOSED and DISMISSED alerts, filterable by severity and rule name. */
-    public PagedResponseDTO<AlertResponseDTO> getAlertHistory(
-            AlertSeverity severity, String ruleName, int page, int size) {
-
-        size = Math.min(size, 100);
-        PageRequest pageable = PageRequest.of(page, size);
-        Page<Alert> result = alertRepository.findHistory(severity, ruleName, pageable);
-
-        return PagedResponseDTO.<AlertResponseDTO>builder()
-            .content(result.getContent().stream().map(alertMapper::toResponseDTO).toList())
-            .page(result.getNumber())
-            .size(result.getSize())
-            .totalElements(result.getTotalElements())
-            .totalPages(result.getTotalPages())
-            .last(result.isLast())
-            .build();
-    }
-
-    /** Closed alerts only. */
-    public PagedResponseDTO<AlertResponseDTO> getClosedAlerts(AlertSeverity severity, int page, int size) {
-        size = Math.min(size, 100);
-        PageRequest pageable = PageRequest.of(page, size);
-        Page<Alert> result = alertRepository.findHistoryByStatus(AlertStatus.CLOSED, severity, pageable);
-
-        return PagedResponseDTO.<AlertResponseDTO>builder()
-            .content(result.getContent().stream().map(alertMapper::toResponseDTO).toList())
-            .page(result.getNumber())
-            .size(result.getSize())
-            .totalElements(result.getTotalElements())
-            .totalPages(result.getTotalPages())
-            .last(result.isLast())
-            .build();
-    }
-
-    /** Dismissed alerts only. */
-    public PagedResponseDTO<AlertResponseDTO> getDismissedAlerts(AlertSeverity severity, int page, int size) {
-        size = Math.min(size, 100);
-        PageRequest pageable = PageRequest.of(page, size);
-        Page<Alert> result = alertRepository.findHistoryByStatus(AlertStatus.DISMISSED, severity, pageable);
-
-        return PagedResponseDTO.<AlertResponseDTO>builder()
-            .content(result.getContent().stream().map(alertMapper::toResponseDTO).toList())
-            .page(result.getNumber())
-            .size(result.getSize())
-            .totalElements(result.getTotalElements())
-            .totalPages(result.getTotalPages())
-            .last(result.isLast())
-            .build();
-    }
-
-    // ── Lifecycle transitions ─────────────────────────────────────────────────
-
-    /** OPEN → ACKNOWLEDGED */
-    @Transactional
-    public AlertResponseDTO acknowledgeAlert(String id) {
-        Alert alert = findAlertOrThrow(id);
-        validateTransition(alert.getStatus(), AlertStatus.ACKNOWLEDGED,
-            EnumSet.of(AlertStatus.OPEN));
-        alert.setStatus(AlertStatus.ACKNOWLEDGED);
-        alert.setAcknowledgedAt(Instant.now());
-        log.info("Alert {} acknowledged", id);
-        return alertMapper.toResponseDTO(alertRepository.save(alert));
-    }
-
-    /** ACKNOWLEDGED → INVESTIGATING */
-    @Transactional
-    public AlertResponseDTO startInvestigation(String id) {
-        Alert alert = findAlertOrThrow(id);
-        validateTransition(alert.getStatus(), AlertStatus.INVESTIGATING,
-            EnumSet.of(AlertStatus.ACKNOWLEDGED));
-        alert.setStatus(AlertStatus.INVESTIGATING);
-        alert.setInvestigatingAt(Instant.now());
-        log.info("Alert {} moved to INVESTIGATING", id);
-        return alertMapper.toResponseDTO(alertRepository.save(alert));
-    }
-
-    /** INVESTIGATING → CLOSED */
-    @Transactional
-    public AlertResponseDTO closeAlert(String id, AlertStatusUpdateDTO dto) {
-        Alert alert = findAlertOrThrow(id);
-        validateTransition(alert.getStatus(), AlertStatus.CLOSED,
-            EnumSet.of(AlertStatus.INVESTIGATING));
-        alert.setStatus(AlertStatus.CLOSED);
-        alert.setClosedAt(Instant.now());
-        if (dto != null && dto.getResolutionNotes() != null) {
-            alert.setResolutionNotes(dto.getResolutionNotes());
+    private String toJson(java.util.Map<String, Object> details) {
+        if (details == null || details.isEmpty()) {
+            return null;
         }
-        log.info("Alert {} closed", id);
-        return alertMapper.toResponseDTO(alertRepository.save(alert));
-    }
-
-    /** OPEN / ACKNOWLEDGED / INVESTIGATING → DISMISSED */
-    @Transactional
-    public AlertResponseDTO dismissAlert(String id, AlertStatusUpdateDTO dto) {
-        Alert alert = findAlertOrThrow(id);
-        validateTransition(alert.getStatus(), AlertStatus.DISMISSED,
-            EnumSet.of(AlertStatus.OPEN, AlertStatus.ACKNOWLEDGED, AlertStatus.INVESTIGATING));
-        alert.setStatus(AlertStatus.DISMISSED);
-        alert.setDismissedAt(Instant.now());
-        if (dto != null && dto.getResolutionNotes() != null) {
-            alert.setResolutionNotes(dto.getResolutionNotes());
+        try {
+            return OBJECT_MAPPER.writeValueAsString(details);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Unable to serialize alert details", e);
         }
-        log.info("Alert {} dismissed", id);
-        return alertMapper.toResponseDTO(alertRepository.save(alert));
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private Alert findAlertOrThrow(String id) {
-        return alertRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Alert", id));
-    }
-
-    private void validateTransition(AlertStatus current, AlertStatus target,
-                                    EnumSet<AlertStatus> allowed) {
-        if (!allowed.contains(current)) {
-            throw new InvalidStateTransitionException(current, target);
+    private java.util.Map<String, Object> parseJson(String json) {
+        if (json == null || json.isBlank()) {
+            return null;
+        }
+        try {
+            return OBJECT_MAPPER.readValue(json, new TypeReference<java.util.Map<String, Object>>() { });
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Unable to parse alert details JSON", e);
         }
     }
 }
+
+
 

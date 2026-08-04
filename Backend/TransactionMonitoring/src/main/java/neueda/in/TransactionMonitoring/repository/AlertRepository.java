@@ -1,58 +1,42 @@
-﻿package neueda.in.TransactionMonitoring.repository;
+package neueda.in.TransactionMonitoring.repository;
+
 import neueda.in.TransactionMonitoring.entity.Alert;
-import neueda.in.TransactionMonitoring.enums.AlertSeverity;
 import neueda.in.TransactionMonitoring.enums.AlertStatus;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
 import java.util.List;
-import java.util.Map;
+
 @Repository
-public interface AlertRepository extends JpaRepository<Alert, String> {
-    Page<Alert> findByStatus(AlertStatus status, Pageable pageable);
-    Page<Alert> findBySeverity(AlertSeverity severity, Pageable pageable);
-    Page<Alert> findByStatusAndSeverity(AlertStatus status, AlertSeverity severity, Pageable pageable);
-    /** Check for any existing open alert for the same rule + account to avoid duplicates. */
-    @Query("""
-        SELECT COUNT(a) > 0 FROM Alert a
-        JOIN a.transactions t
-        WHERE a.rule.id = :ruleId
-          AND t.accountId = :accountId
-          AND a.status NOT IN ('CLOSED', 'DISMISSED')
-        """)
-    boolean existsOpenAlertForRuleAndAccount(@Param("ruleId") String ruleId, @Param("accountId") String accountId);
-    /** Count of alerts grouped by status (for dashboard stats). */
-    @Query("SELECT a.status AS status, COUNT(a) AS count FROM Alert a GROUP BY a.status")
-    List<Map<String, Object>> countGroupedByStatus();
-    long countByStatus(AlertStatus status);
+public interface AlertRepository extends JpaRepository<Alert, Long> {
 
-    /** Fetch history: alerts that are CLOSED or DISMISSED, with optional severity filter. */
-    @Query("""
-        SELECT a FROM Alert a
-        WHERE a.status IN ('CLOSED', 'DISMISSED')
-          AND (:severity IS NULL OR a.severity = :severity)
-          AND (:ruleName IS NULL OR LOWER(a.ruleName) LIKE LOWER(CONCAT('%', :ruleName, '%')))
-        ORDER BY a.closedAt DESC, a.dismissedAt DESC
-        """)
-    Page<Alert> findHistory(
-        @Param("severity") AlertSeverity severity,
-        @Param("ruleName") String ruleName,
-        Pageable pageable
-    );
+    // Person 3 usage — duplicate prevention for same rule + transaction
+    boolean existsByRuleIdAndTransaction_TransactionId(Long ruleId, Long transactionId);
 
-    /** Fetch history by specific status (CLOSED only or DISMISSED only). */
-    @Query("""
-        SELECT a FROM Alert a
-        WHERE a.status = :status
-          AND (:severity IS NULL OR a.severity = :severity)
-        ORDER BY a.createdAt DESC
-        """)
-    Page<Alert> findHistoryByStatus(
-        @Param("status") AlertStatus status,
-        @Param("severity") AlertSeverity severity,
-        Pageable pageable
-    );
+    /**
+     * Person 1 usage — fetch all alerts linked to a transaction.
+     * Checks both:
+     *   1. Direct FK: alerts.transaction_id = transactionId
+     *   2. Junction table: alert_transactions.transaction_id = transactionId
+     * NOTE: alert_transactions table is created by Person 2 (Alerts Domain).
+     *       Until then, only direct FK results are returned.
+     */
+    @Query(value = """
+            SELECT DISTINCT a.* FROM alerts a
+            LEFT JOIN alert_transactions at ON a.alert_id = at.alert_id
+            WHERE a.transaction_id = :transactionId
+               OR at.transaction_id = :transactionId
+            ORDER BY a.created_at DESC
+            """, nativeQuery = true)
+    List<Alert> findAllByTransactionId(@Param("transactionId") Long transactionId);
+
+    // Fetch all alerts for an account
+    List<Alert> findByAccount_AccountIdOrderByCreatedAtDesc(String accountId);
+
+    // Fetch open alerts count (used by dashboard — Person 2 but shared)
+    long countByAlertStatus(AlertStatus alertStatus);
 }
+
+

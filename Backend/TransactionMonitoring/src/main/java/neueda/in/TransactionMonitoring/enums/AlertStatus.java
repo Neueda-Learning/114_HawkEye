@@ -1,13 +1,8 @@
 package neueda.in.TransactionMonitoring.enums;
 
 /**
- * Lifecycle states for an Alert.
- *
- * Valid transitions:
- *   OPEN → ACKNOWLEDGED → INVESTIGATING → CLOSED
- *                ↓               ↓
- *           DISMISSED       DISMISSED
- *   OPEN → DISMISSED (fast-track false-positive)
+ * Shared enum — owned by Alerts domain (Person 2).
+ * Placed here so Person 1 can read alert status on the transaction detail endpoint.
  */
 public enum AlertStatus {
     OPEN,
