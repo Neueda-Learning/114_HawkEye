@@ -1,4 +1,4 @@
-﻿package neueda.in.TransactionMonitoring.DTO.RequestDTO;
+package neueda.in.TransactionMonitoring.DTO.RequestDTO;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 @Data

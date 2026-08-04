@@ -1,4 +1,4 @@
-﻿package neueda.in.TransactionMonitoring.exception;
+package neueda.in.TransactionMonitoring.exception;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;

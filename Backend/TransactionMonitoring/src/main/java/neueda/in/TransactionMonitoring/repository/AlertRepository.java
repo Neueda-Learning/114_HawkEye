@@ -1,4 +1,4 @@
-﻿package neueda.in.TransactionMonitoring.repository;
+package neueda.in.TransactionMonitoring.repository;
 import neueda.in.TransactionMonitoring.entity.Alert;
 import neueda.in.TransactionMonitoring.enums.AlertStatus;
 import neueda.in.TransactionMonitoring.enums.Severity;

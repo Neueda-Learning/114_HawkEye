@@ -1,4 +1,4 @@
-﻿package neueda.in.TransactionMonitoring.exception;
+package neueda.in.TransactionMonitoring.exception;
 import neueda.in.TransactionMonitoring.enums.AlertStatus;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

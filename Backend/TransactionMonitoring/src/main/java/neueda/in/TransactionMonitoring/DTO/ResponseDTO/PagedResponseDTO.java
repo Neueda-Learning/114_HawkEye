@@ -1,4 +1,4 @@
-﻿package neueda.in.TransactionMonitoring.DTO.ResponseDTO;
+package neueda.in.TransactionMonitoring.DTO.ResponseDTO;
 import lombok.Builder;
 import lombok.Data;
 import java.util.List;
