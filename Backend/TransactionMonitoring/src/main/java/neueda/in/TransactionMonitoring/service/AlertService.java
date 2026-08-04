@@ -7,11 +7,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import neueda.in.TransactionMonitoring.DTO.RequestDTO.AlertCreationRequestDTO;
 import neueda.in.TransactionMonitoring.DTO.RequestDTO.AlertStatusUpdateDTO;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.AlertAuditTrailResponseDTO;
 import neueda.in.TransactionMonitoring.DTO.ResponseDTO.AlertResponseDTO;
 import neueda.in.TransactionMonitoring.DTO.ResponseDTO.AlertStatsResponseDTO;
 import neueda.in.TransactionMonitoring.DTO.ResponseDTO.PagedResponseDTO;
-import neueda.in.TransactionMonitoring.dto.response.TransactionResponseDTO;
+import neueda.in.TransactionMonitoring.DTO.ResponseDTO.TransactionResponseDTO;
 import neueda.in.TransactionMonitoring.entity.Alert;
+import neueda.in.TransactionMonitoring.entity.AlertAuditTrail;
+import neueda.in.TransactionMonitoring.entity.AlertTransaction;
 import neueda.in.TransactionMonitoring.entity.Rule;
 import neueda.in.TransactionMonitoring.entity.Transaction;
 import neueda.in.TransactionMonitoring.enums.AlertStatus;
@@ -19,13 +22,14 @@ import neueda.in.TransactionMonitoring.enums.Severity;
 import neueda.in.TransactionMonitoring.event.AlertCreatedEvent;
 import neueda.in.TransactionMonitoring.exception.InvalidStateTransitionException;
 import neueda.in.TransactionMonitoring.exception.ResourceNotFoundException;
+import neueda.in.TransactionMonitoring.repository.AlertAuditTrailRepository;
 import neueda.in.TransactionMonitoring.repository.AlertRepository;
+import neueda.in.TransactionMonitoring.repository.AlertTransactionRepository;
 import neueda.in.TransactionMonitoring.repository.RuleRepository;
 import neueda.in.TransactionMonitoring.repository.TransactionRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -33,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,10 +49,14 @@ import java.util.stream.Collectors;
 public class AlertService {
 
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+	private static final String SYSTEM_ACTOR = "SYSTEM";
 
 	private final AlertRepository alertRepository;
+	private final AlertAuditTrailRepository alertAuditTrailRepository;
+	private final AlertTransactionRepository alertTransactionRepository;
 	private final TransactionRepository transactionRepository;
 	private final RuleRepository ruleRepository;
+	private final AlertAuditTrailService alertAuditTrailService;
 	private final ApplicationEventPublisher eventPublisher;
 
 	@Transactional
@@ -74,6 +83,19 @@ public class AlertService {
 				.build();
 
 		Alert saved = alertRepository.save(alert);
+		linkAlertToTransaction(saved, transaction);
+		for (Long linkedTransactionId : extractLinkedTransactionIds(request.getAlertDetails())) {
+			if (linkedTransactionId.equals(transaction.getTransactionId())) {
+				continue;
+			}
+			transactionRepository.findById(linkedTransactionId)
+					.ifPresentOrElse(
+							linkedTx -> linkAlertToTransaction(saved, linkedTx),
+							() -> log.warn("Skipping alert link for missing transactionId={} (alertId={})",
+									linkedTransactionId, saved.getAlertId())
+					);
+		}
+
 		AlertResponseDTO response = toResponseDTO(saved, rule.getName());
 		eventPublisher.publishEvent(new AlertCreatedEvent(this, response));
 		return response;
@@ -140,18 +162,49 @@ public class AlertService {
 	}
 
 	@Transactional(readOnly = true)
+	public PagedResponseDTO<AlertAuditTrailResponseDTO> getAlertAuditTrail(Long id, int page, int size) {
+		findAlert(id);
+		Page<AlertAuditTrail> history = alertAuditTrailRepository.findByAlertIdOrderByCreatedAtDesc(
+				id, PageRequest.of(page, size, Sort.by("createdAt").descending()));
+
+		List<AlertAuditTrailResponseDTO> content = history.getContent().stream()
+				.map(this::toAuditTrailResponse)
+				.toList();
+
+		return PagedResponseDTO.<AlertAuditTrailResponseDTO>builder()
+				.content(content)
+				.page(history.getNumber())
+				.size(history.getSize())
+				.totalElements(history.getTotalElements())
+				.totalPages(history.getTotalPages())
+				.first(history.isFirst())
+				.last(history.isLast())
+				.build();
+	}
+
+	@Transactional(readOnly = true)
 	public List<TransactionResponseDTO> getAlertTransactions(Long id) {
 		Alert alert = findAlert(id);
-		return List.of(toTransactionResponseDTO(alert.getTransaction()));
+		List<AlertTransaction> links = alertTransactionRepository.findByAlert_AlertIdOrderByLinkedAtAsc(id);
+		if (links.isEmpty()) {
+			return List.of(toTransactionResponseDTO(alert.getTransaction()));
+		}
+		return links.stream()
+				.map(AlertTransaction::getTransaction)
+				.map(this::toTransactionResponseDTO)
+				.toList();
 	}
 
 	@Transactional
 	public AlertResponseDTO acknowledgeAlert(Long id) {
 		Alert alert = findAlert(id);
 		requireTransition(alert.getAlertStatus(), AlertStatus.OPEN, AlertStatus.ACKNOWLEDGED);
+		AlertStatus previousStatus = alert.getAlertStatus();
 		alert.setAlertStatus(AlertStatus.ACKNOWLEDGED);
 		alert.setAcknowledgedAt(LocalDateTime.now());
-		return toResponseDTO(alertRepository.save(alert), resolveRuleName(alert.getRuleId()));
+		Alert saved = alertRepository.save(alert);
+		alertAuditTrailService.record(saved, previousStatus, SYSTEM_ACTOR, "ACKNOWLEDGE", null);
+		return toResponseDTO(saved, resolveRuleName(saved.getRuleId()));
 	}
 
 	@Transactional
@@ -160,19 +213,25 @@ public class AlertService {
 		if (alert.getAlertStatus() != AlertStatus.OPEN && alert.getAlertStatus() != AlertStatus.ACKNOWLEDGED) {
 			throw new InvalidStateTransitionException(alert.getAlertStatus(), AlertStatus.INVESTIGATING);
 		}
+		AlertStatus previousStatus = alert.getAlertStatus();
 		alert.setAlertStatus(AlertStatus.INVESTIGATING);
 		alert.setInvestigatingAt(LocalDateTime.now());
-		return toResponseDTO(alertRepository.save(alert), resolveRuleName(alert.getRuleId()));
+		Alert saved = alertRepository.save(alert);
+		alertAuditTrailService.record(saved, previousStatus, SYSTEM_ACTOR, "INVESTIGATE", null);
+		return toResponseDTO(saved, resolveRuleName(saved.getRuleId()));
 	}
 
 	@Transactional
 	public AlertResponseDTO closeAlert(Long id, AlertStatusUpdateDTO dto) {
 		Alert alert = findAlert(id);
 		requireTransition(alert.getAlertStatus(), AlertStatus.INVESTIGATING, AlertStatus.CLOSED);
+		AlertStatus previousStatus = alert.getAlertStatus();
 		alert.setAlertStatus(AlertStatus.CLOSED);
 		alert.setClosedAt(LocalDateTime.now());
 		applyResolutionNotes(alert, dto);
-		return toResponseDTO(alertRepository.save(alert), resolveRuleName(alert.getRuleId()));
+		Alert saved = alertRepository.save(alert);
+		alertAuditTrailService.record(saved, previousStatus, SYSTEM_ACTOR, "CLOSE", alert.getResolutionNotes());
+		return toResponseDTO(saved, resolveRuleName(saved.getRuleId()));
 	}
 
 	@Transactional
@@ -181,10 +240,13 @@ public class AlertService {
 		if (alert.getAlertStatus() == AlertStatus.CLOSED || alert.getAlertStatus() == AlertStatus.DISMISSED) {
 			throw new InvalidStateTransitionException(alert.getAlertStatus(), AlertStatus.DISMISSED);
 		}
+		AlertStatus previousStatus = alert.getAlertStatus();
 		alert.setAlertStatus(AlertStatus.DISMISSED);
 		alert.setDismissedAt(LocalDateTime.now());
 		applyResolutionNotes(alert, dto);
-		return toResponseDTO(alertRepository.save(alert), resolveRuleName(alert.getRuleId()));
+		Alert saved = alertRepository.save(alert);
+		alertAuditTrailService.record(saved, previousStatus, SYSTEM_ACTOR, "DISMISS", alert.getResolutionNotes());
+		return toResponseDTO(saved, resolveRuleName(saved.getRuleId()));
 	}
 
 	private Alert findAlert(Long id) {
@@ -308,5 +370,55 @@ public class AlertService {
 		} catch (Exception e) {
 			throw new IllegalArgumentException("Unable to parse alert details JSON", e);
 		}
+	}
+
+	private void linkAlertToTransaction(Alert alert, Transaction transaction) {
+		if (!alertTransactionRepository.existsByAlert_AlertIdAndTransaction_TransactionId(
+				alert.getAlertId(), transaction.getTransactionId())) {
+			alertTransactionRepository.save(AlertTransaction.builder()
+					.alert(alert)
+					.transaction(transaction)
+					.build());
+		}
+	}
+
+	private Set<Long> extractLinkedTransactionIds(Map<String, Object> alertDetails) {
+		if (alertDetails == null || alertDetails.isEmpty()) {
+			return Collections.emptySet();
+		}
+
+		Object raw = alertDetails.get("linkedTransactionIds");
+		if (!(raw instanceof List<?> rawList)) {
+			return Collections.emptySet();
+		}
+
+		Set<Long> ids = new LinkedHashSet<>();
+		for (Object value : rawList) {
+			if (value instanceof Number number) {
+				ids.add(number.longValue());
+				continue;
+			}
+			if (value instanceof String text) {
+				try {
+					ids.add(Long.parseLong(text.trim()));
+				} catch (NumberFormatException ignored) {
+					log.warn("Skipping invalid linkedTransactionIds value='{}'", text);
+				}
+			}
+		}
+		return ids;
+	}
+
+	private AlertAuditTrailResponseDTO toAuditTrailResponse(AlertAuditTrail audit) {
+		return AlertAuditTrailResponseDTO.builder()
+				.id(audit.getId())
+				.alertId(audit.getAlertId())
+				.previousStatus(audit.getPreviousStatus())
+				.newStatus(audit.getNewStatus())
+				.changedBy(audit.getChangedBy())
+				.changeReason(audit.getChangeReason())
+				.notes(audit.getNotes())
+				.createdAt(audit.getCreatedAt())
+				.build();
 	}
 }
