@@ -29,9 +29,9 @@ export default function AlertDetailPage() {
     enabled:  !!id,
   });
 
-  const { data: auditTrail } = useQuery({
+  const { data: auditData } = useQuery({
     queryKey: ['alert-audit', id],
-    queryFn:  () => getAlertAuditTrail(Number(id)),
+    queryFn:  () => getAlertAuditTrail(Number(id), 0, 50),
     enabled:  !!id && tab === 'activity',
   });
 
@@ -44,11 +44,13 @@ export default function AlertDetailPage() {
   if (isLoading) return <PageSkeleton />;
   if (!alert)    return <div className="py-20 text-center text-gray-400">Alert not found</div>;
 
-  const timelineEvents: TimelineEvent[] = (auditTrail ?? []).map((e) => ({
-    id:          e.auditId,
+  const auditTrail = auditData?.content ?? [];
+
+  const timelineEvents: TimelineEvent[] = auditTrail.map((e) => ({
+    id:          e.id,  // Backend returns 'id' not 'auditId'
     title:       e.previousStatus ? `${e.previousStatus} → ${e.newStatus}` : `Alert Created (${e.newStatus})`,
     description: e.changeReason ? `by ${e.changedBy} — ${e.changeReason}` : `by ${e.changedBy}`,
-    timestamp:   e.changedAt,
+    timestamp:   e.createdAt,  // Backend returns 'createdAt' not 'changedAt'
     color:       STATUS_TO_COLOR[e.newStatus],
   }));
 
@@ -164,9 +166,16 @@ export default function AlertDetailPage() {
           <dl className="grid grid-cols-2 gap-4 text-sm">
             <div><dt className="text-xs text-gray-400">Rule ID</dt><dd className="font-mono font-semibold">#{alert.ruleId}</dd></div>
             <div><dt className="text-xs text-gray-400">Rule Name</dt><dd className="font-medium text-gray-900 dark:text-white">{alert.ruleName}</dd></div>
-            <div><dt className="text-xs text-gray-400">Type</dt><dd>{ruleTypeLabel[alert.ruleType]}</dd></div>
             <div><dt className="text-xs text-gray-400">Severity</dt><dd><SeverityBadge severity={alert.severity} /></dd></div>
           </dl>
+          <div className="mt-4">
+            <button
+              onClick={() => navigate(`/admin/rules/${alert.ruleId}`)}
+              className="text-sm text-hawk-600 hover:text-hawk-700 hover:underline"
+            >
+              View Full Rule Details →
+            </button>
+          </div>
         </div>
       )}
 

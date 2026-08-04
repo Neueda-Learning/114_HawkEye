@@ -1,99 +1,92 @@
 import apiClient from './axios';
 import type {
-  ApiResponse,
   PagedResponse,
   Alert,
   AlertListParams,
   AlertActionRequest,
   AlertAuditEntry,
   AlertStats,
+  TransactionResponse,
 } from '../types';
 
 const BASE = '/api/v1/alerts';
 
-// GET /api/v1/alerts
+// GET /api/v1/alerts - Backend returns PagedResponseDTO directly (not wrapped in ApiResponse)
 export const getAlerts = async (
   params: AlertListParams = {},
 ): Promise<PagedResponse<Alert>> => {
-  const { data } = await apiClient.get<ApiResponse<PagedResponse<Alert>>>(BASE, { params });
-  return data.data;
+  const { data } = await apiClient.get<PagedResponse<Alert>>(BASE, { params });
+  return data;
 };
 
-// GET /api/v1/alerts/:id
+// GET /api/v1/alerts/:id - Backend returns AlertResponseDTO directly
 export const getAlertById = async (id: number): Promise<Alert> => {
-  const { data } = await apiClient.get<ApiResponse<Alert>>(`${BASE}/${id}`);
-  return data.data;
+  const { data } = await apiClient.get<Alert>(`${BASE}/${id}`);
+  return data;
 };
 
-// GET /api/v1/alerts/:id/transactions
-export const getAlertTransactions = async (id: number) => {
-  const { data } = await apiClient.get(`${BASE}/${id}/transactions`);
-  return data.data;
+// GET /api/v1/alerts/:id/transactions - Backend returns List<TransactionResponseDTO>
+export const getAlertTransactions = async (id: number): Promise<TransactionResponse[]> => {
+  const { data } = await apiClient.get<TransactionResponse[]>(`${BASE}/${id}/transactions`);
+  return data;
 };
 
-// PUT /api/v1/alerts/:id/acknowledge
-export const acknowledgeAlert = async (
-  id: number,
-  payload: AlertActionRequest,
-): Promise<Alert> => {
-  const { data } = await apiClient.put<ApiResponse<Alert>>(
-    `${BASE}/${id}/acknowledge`,
-    payload,
-  );
-  return data.data;
+// PUT /api/v1/alerts/:id/acknowledge - Backend takes no body
+export const acknowledgeAlert = async (id: number): Promise<Alert> => {
+  const { data } = await apiClient.put<Alert>(`${BASE}/${id}/acknowledge`);
+  return data;
 };
 
-// PUT /api/v1/alerts/:id/investigate
-export const investigateAlert = async (
-  id: number,
-  payload: AlertActionRequest,
-): Promise<Alert> => {
-  const { data } = await apiClient.put<ApiResponse<Alert>>(
-    `${BASE}/${id}/investigate`,
-    payload,
-  );
-  return data.data;
+// PUT /api/v1/alerts/:id/investigate - Backend takes no body
+export const investigateAlert = async (id: number): Promise<Alert> => {
+  const { data } = await apiClient.put<Alert>(`${BASE}/${id}/investigate`);
+  return data;
 };
 
-// PUT /api/v1/alerts/:id/close
+// PUT /api/v1/alerts/:id/close - Backend takes optional AlertStatusUpdateDTO {resolutionNotes}
 export const closeAlert = async (
   id: number,
-  payload: AlertActionRequest,
+  payload?: AlertActionRequest,
 ): Promise<Alert> => {
-  const { data } = await apiClient.put<ApiResponse<Alert>>(`${BASE}/${id}/close`, payload);
-  return data.data;
+  const { data } = await apiClient.put<Alert>(`${BASE}/${id}/close`, payload);
+  return data;
 };
 
-// PUT /api/v1/alerts/:id/dismiss
+// PUT /api/v1/alerts/:id/dismiss - Backend takes optional AlertStatusUpdateDTO {resolutionNotes}
 export const dismissAlert = async (
   id: number,
-  payload: AlertActionRequest,
+  payload?: AlertActionRequest,
 ): Promise<Alert> => {
-  const { data } = await apiClient.put<ApiResponse<Alert>>(`${BASE}/${id}/dismiss`, payload);
-  return data.data;
+  const { data } = await apiClient.put<Alert>(`${BASE}/${id}/dismiss`, payload);
+  return data;
 };
 
-// GET /api/v1/alerts/history
+// GET /api/v1/alerts/history - Backend returns PagedResponseDTO directly
 export const getAlertHistory = async (
   params: AlertListParams = {},
 ): Promise<PagedResponse<Alert>> => {
-  const { data } = await apiClient.get<ApiResponse<PagedResponse<Alert>>>(`${BASE}/history`, {
+  const { data } = await apiClient.get<PagedResponse<Alert>>(`${BASE}/history`, {
     params,
   });
-  return data.data;
+  return data;
 };
 
-// GET /api/v1/alerts/stats
+// GET /api/v1/alerts/stats - Backend returns AlertStatsResponseDTO directly
 export const getAlertStats = async (): Promise<AlertStats> => {
-  const { data } = await apiClient.get<ApiResponse<AlertStats>>(`${BASE}/stats`);
-  return data.data;
+  const { data } = await apiClient.get<AlertStats>(`${BASE}/stats`);
+  return data;
 };
 
-// GET /api/v1/alerts/:id/audit-trail
-export const getAlertAuditTrail = async (id: number): Promise<AlertAuditEntry[]> => {
-  const { data } = await apiClient.get<ApiResponse<AlertAuditEntry[]>>(
+// GET /api/v1/alerts/:id/audit-trail - Backend returns PagedResponseDTO<AlertAuditTrailResponseDTO>
+export const getAlertAuditTrail = async (
+  id: number,
+  page = 0,
+  size = 20,
+): Promise<PagedResponse<AlertAuditEntry>> => {
+  const { data } = await apiClient.get<PagedResponse<AlertAuditEntry>>(
     `${BASE}/${id}/audit-trail`,
+    { params: { page, size } },
   );
-  return data.data;
+  return data;
 };
 

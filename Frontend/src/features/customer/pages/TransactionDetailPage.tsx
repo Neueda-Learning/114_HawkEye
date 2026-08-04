@@ -50,10 +50,10 @@ export default function TransactionDetailPage() {
       timestamp:   tx.createdAt,
       color:       'blue',
     },
-    ...tx.linkedAlerts.map((a: AlertSummary) => ({
+    ...tx.alerts.map((a: AlertSummary) => ({
       id:          `alert-${a.alertId}`,
-      title:       `Alert Triggered — ${a.ruleName}`,
-      description: `Status: ${a.alertStatus} | Severity: ${a.severity}`,
+      title:       `Alert Triggered`,
+      description: a.alertMessage,
       timestamp:   a.createdAt,
       color:       STATUS_COLOR_MAP[a.alertStatus],
     })),
@@ -109,20 +109,20 @@ export default function TransactionDetailPage() {
         <div className="mb-4 flex items-center gap-2">
           <AlertTriangle className="h-5 w-5 text-yellow-500" />
           <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-            Linked Alerts ({tx.linkedAlerts.length})
+            Linked Alerts ({tx.alerts.length})
           </h2>
         </div>
-        {tx.linkedAlerts.length === 0 ? (
+        {tx.alerts.length === 0 ? (
           <p className="text-sm text-gray-400">No alerts triggered for this transaction.</p>
         ) : (
           <div className="space-y-3">
-            {tx.linkedAlerts.map((alert: AlertSummary) => (
+            {tx.alerts.map((alert: AlertSummary) => (
               <div
                 key={alert.alertId}
                 className="flex items-center justify-between rounded-lg border border-gray-100 p-3 dark:border-gray-700"
               >
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{alert.ruleName}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{alert.alertMessage}</p>
                   <p className="text-xs text-gray-400">{formatDate(alert.createdAt)}</p>
                 </div>
                 <div className="flex items-center gap-2">

@@ -24,7 +24,7 @@ export default function RuleAuditTrailPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['rule-audit', id, page],
-    queryFn:  () => getRuleAuditTrail(Number(id)),
+    queryFn:  () => getRuleAuditTrail(Number(id), page, 20),
     enabled:  !!id,
   });
 

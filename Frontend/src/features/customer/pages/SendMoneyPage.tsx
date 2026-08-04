@@ -61,6 +61,8 @@ export default function SendMoneyPage() {
     mutation.mutate({
       accountId:       user.accountId,
       payeeId:         formData.payeeId,
+      payeeName:       selectedPayee?.payeeName,   // send payeeName for auto-create
+      payeeType:       selectedPayee?.payeeType,   // send payeeType for auto-create
       amount:          formData.amount,
       transactionType: formData.transactionType,
       description:     formData.description,
