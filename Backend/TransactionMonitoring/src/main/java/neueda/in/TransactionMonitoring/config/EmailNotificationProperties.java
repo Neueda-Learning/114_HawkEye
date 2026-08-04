@@ -16,6 +16,7 @@ public class EmailNotificationProperties {
 
     private boolean enabled = false;
     private String from = "hawkeyee2026@gmail.com";
+      private String to;
     private List<String> transactionRecipients = new ArrayList<>();
     private List<String> alertRecipients = new ArrayList<>();
     private List<String> ruleRecipients = new ArrayList<>();

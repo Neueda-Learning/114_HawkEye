@@ -15,6 +15,10 @@ public class JsonMapConverter implements AttributeConverter<Map<String, Object>,
 	private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
 	};
 
+	static {
+		OBJECT_MAPPER.findAndRegisterModules();
+	}
+
 	@Override
 	public String convertToDatabaseColumn(Map<String, Object> attribute) {
 		if (attribute == null || attribute.isEmpty()) {

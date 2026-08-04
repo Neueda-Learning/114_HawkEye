@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long>,
@@ -67,5 +68,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
 
     // Fetch full transaction history for an account (for investigation screen)
     List<Transaction> findByAccount_AccountIdOrderByTimestampDesc(String accountId);
+
+    @Query("SELECT t FROM Transaction t JOIN FETCH t.account JOIN FETCH t.payee WHERE t.transactionId = :id")
+    Optional<Transaction> findDetailedById(@Param("id") Long id);
 }
 

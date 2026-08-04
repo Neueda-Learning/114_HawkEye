@@ -31,7 +31,7 @@ public class NotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onTransactionRecorded(TransactionRecordedEvent event) {
         try {
-            Transaction transaction = transactionRepository.findById(event.getTransactionId()).orElse(null);
+          Transaction transaction = transactionRepository.findDetailedById(event.getTransactionId()).orElse(null);
             if (transaction == null) {
                 log.warn("Skipping transaction email. Transaction not found for id={}", event.getTransactionId());
                 return;
