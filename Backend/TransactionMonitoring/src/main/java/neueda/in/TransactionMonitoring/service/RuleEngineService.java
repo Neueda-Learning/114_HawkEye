@@ -49,7 +49,6 @@ public class RuleEngineService {
      */
     // listener for TransactionRecordedEvent published by TransactionService
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @Transactional
     public void onTransactionRecorded(TransactionRecordedEvent event) {
         log.info("🎯 TransactionRecordedEvent RECEIVED by RuleEngineService — transactionId={}", event.getTransactionId());
         try {
