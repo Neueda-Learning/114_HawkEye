@@ -1,2 +1,8 @@
-﻿package neueda.in.TransactionMonitoring.enums;
-public enum AlertSeverity { HIGH, MEDIUM, LOW }
+package neueda.in.TransactionMonitoring.enums;
+
+public enum AlertSeverity {
+	LOW,
+	MEDIUM,
+	HIGH,
+	CRITICAL
+}

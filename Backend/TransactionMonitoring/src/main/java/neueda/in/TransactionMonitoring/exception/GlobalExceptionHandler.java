@@ -33,6 +33,18 @@ public class GlobalExceptionHandler {
 		return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI(), null);
 	}
 
+	@ExceptionHandler(DuplicateTransactionException.class)
+	public ResponseEntity<ApiErrorResponse> handleDuplicateTransaction(DuplicateTransactionException ex,
+	                                                                   HttpServletRequest request) {
+		return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI(), null);
+	}
+
+	@ExceptionHandler({InvalidTransactionException.class, InvalidStateTransitionException.class})
+	public ResponseEntity<ApiErrorResponse> handleBusinessValidation(RuntimeException ex,
+	                                                                 HttpServletRequest request) {
+		return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI(), null);
+	}
+
 	@ExceptionHandler(IllegalArgumentException.class)
 	public ResponseEntity<ApiErrorResponse> handleIllegalArgument(IllegalArgumentException ex,
 	                                                              HttpServletRequest request) {

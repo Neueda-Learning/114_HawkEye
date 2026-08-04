@@ -1,21 +1,30 @@
-﻿package neueda.in.TransactionMonitoring.DTO.ResponseDTO;
+package neueda.in.TransactionMonitoring.DTO.ResponseDTO;
+
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import neueda.in.TransactionMonitoring.enums.TransactionStatus;
 import neueda.in.TransactionMonitoring.enums.TransactionType;
+
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
+
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TransactionResponseDTO {
-    private String id;
-    private String accountId;
-    private String payeeId;
-    private BigDecimal amount;
-    private String currency;
-    private TransactionType type;
-    private TransactionStatus status;
-    private Instant timestamp;
-    private String description;
-    private Instant createdAt;
+	private Long transactionId;
+	private String accountId;
+	private String accountName;
+	private String payeeId;
+	private String payeeName;
+	private BigDecimal amount;
+	private String currency;
+	private TransactionType transactionType;
+	private TransactionStatus status;
+	private String description;
+	private LocalDateTime timestamp;
+	private LocalDateTime createdAt;
 }

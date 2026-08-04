@@ -11,14 +11,6 @@
             </PendingDiffInfo>
           </value>
         </entry>
-        <entry key="$PROJECT_DIR$/Backend/TransactionMonitoring/src/main/java/neueda/in/TransactionMonitoring/repository/RuleAuditTrailRepository.java">
-          <value>
-            <PendingDiffInfo>
-              <option name="filePath" value="$PROJECT_DIR$/Backend/TransactionMonitoring/src/main/java/neueda/in/TransactionMonitoring/repository/RuleAuditTrailRepository.java" />
-              <option name="updatedContent" value="package neueda.in.TransactionMonitoring.repository;&#10;&#10;import neueda.in.TransactionMonitoring.entity.RuleAuditTrail;&#10;import org.springframework.data.domain.Page;&#10;import org.springframework.data.domain.Pageable;&#10;import org.springframework.data.jpa.repository.JpaRepository;&#10;&#10;public interface RuleAuditTrailRepository extends JpaRepository&lt;RuleAuditTrail, Long&gt; {&#10;&#10;&#9;Page&lt;RuleAuditTrail&gt; findByRuleIdOrderByCreatedAtDesc(Long ruleId, Pageable pageable);&#10;}&#10;" />
-            </PendingDiffInfo>
-          </value>
-        </entry>
       </map>
     </option>
   </component>

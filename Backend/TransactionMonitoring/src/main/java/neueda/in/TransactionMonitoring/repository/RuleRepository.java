@@ -17,5 +17,7 @@ public interface RuleRepository extends JpaRepository<Rule, Long>, JpaSpecificat
 	Optional<Rule> findByIdAndStatusNot(Long id, RuleStatus status);
 
 	List<Rule> findAllByStatusOrderByUpdatedAtDesc(RuleStatus status);
+
+	List<Rule> findByStatus(RuleStatus status);
 }
 

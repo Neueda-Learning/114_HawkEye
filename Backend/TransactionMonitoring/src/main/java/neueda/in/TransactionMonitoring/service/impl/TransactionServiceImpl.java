@@ -11,6 +11,7 @@ import neueda.in.TransactionMonitoring.entity.Account;
 import neueda.in.TransactionMonitoring.entity.Alert;
 import neueda.in.TransactionMonitoring.entity.Payee;
 import neueda.in.TransactionMonitoring.entity.Transaction;
+import neueda.in.TransactionMonitoring.event.TransactionRecordedEvent;
 import neueda.in.TransactionMonitoring.enums.AccountStatus;
 import neueda.in.TransactionMonitoring.enums.TransactionStatus;
 import neueda.in.TransactionMonitoring.enums.TransactionType;
@@ -23,6 +24,7 @@ import neueda.in.TransactionMonitoring.repository.PayeeRepository;
 import neueda.in.TransactionMonitoring.repository.TransactionRepository;
 import neueda.in.TransactionMonitoring.service.TransactionService;
 import neueda.in.TransactionMonitoring.specification.TransactionSpecification;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -45,6 +47,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final AccountRepository     accountRepository;
     private final PayeeRepository       payeeRepository;
     private final AlertRepository       alertRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     // ────────────────────────────────────────────────────────────────────────
     // POST /api/v1/transactions
@@ -108,6 +111,9 @@ public class TransactionServiceImpl implements TransactionService {
         Transaction saved = transactionRepository.save(transaction);
         log.info("Transaction created successfully — id: {}, account: {}, amount: {}",
                 saved.getTransactionId(), request.getAccountId(), request.getAmount());
+
+        eventPublisher.publishEvent(new TransactionRecordedEvent(this, saved.getTransactionId()));
+        log.info("TransactionRecordedEvent published for transactionId={}", saved.getTransactionId());
 
         return toResponseDTO(saved);
     }
@@ -180,7 +186,7 @@ public class TransactionServiceImpl implements TransactionService {
         Transaction txn = transactionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction", "id", id));
 
-        List<AlertSummaryDTO> alerts = alertRepository.findAllByTransactionId(id)
+        List<AlertSummaryDTO> alerts = alertRepository.findByTransaction_TransactionIdOrderByCreatedAtDesc(id)
                 .stream()
                 .map(this::toAlertSummaryDTO)
                 .collect(Collectors.toList());
@@ -198,7 +204,7 @@ public class TransactionServiceImpl implements TransactionService {
         if (!transactionRepository.existsById(id)) {
             throw new ResourceNotFoundException("Transaction", "id", id);
         }
-        return alertRepository.findAllByTransactionId(id)
+        return alertRepository.findByTransaction_TransactionIdOrderByCreatedAtDesc(id)
                 .stream()
                 .map(this::toAlertSummaryDTO)
                 .collect(Collectors.toList());
