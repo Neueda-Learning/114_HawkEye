@@ -18,6 +18,12 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    sourcemap: false,
+  },
+  optimizeDeps: {
+    exclude: [],
+  },
   test: {
     globals: true,
     environment: 'jsdom',
