@@ -11,6 +11,7 @@ import neueda.in.TransactionMonitoring.enums.AuditAction;
 import neueda.in.TransactionMonitoring.enums.RuleSeverity;
 import neueda.in.TransactionMonitoring.enums.RuleStatus;
 import neueda.in.TransactionMonitoring.enums.RuleType;
+import neueda.in.TransactionMonitoring.event.RuleChangedEvent;
 import neueda.in.TransactionMonitoring.exception.DuplicateRuleNameException;
 import neueda.in.TransactionMonitoring.exception.ResourceNotFoundException;
 import neueda.in.TransactionMonitoring.mapper.RuleMapper;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 
@@ -33,17 +35,20 @@ public class RuleService {
 	private final RuleConfigValidationService ruleConfigValidationService;
 	private final RuleAuditTrailService ruleAuditTrailService;
 	private final RuleMapper ruleMapper;
+	private final ApplicationEventPublisher eventPublisher;
 
 	public RuleService(RuleRepository ruleRepository,
 	                   RuleAuditTrailRepository ruleAuditTrailRepository,
 	                   RuleConfigValidationService ruleConfigValidationService,
 	                   RuleAuditTrailService ruleAuditTrailService,
-	                   RuleMapper ruleMapper) {
+	                   RuleMapper ruleMapper,
+	                   ApplicationEventPublisher eventPublisher) {
 		this.ruleRepository = ruleRepository;
 		this.ruleAuditTrailRepository = ruleAuditTrailRepository;
 		this.ruleConfigValidationService = ruleConfigValidationService;
 		this.ruleAuditTrailService = ruleAuditTrailService;
 		this.ruleMapper = ruleMapper;
+		this.eventPublisher = eventPublisher;
 	}
 
 	// ─── CREATE ──────────────────────────────────────────────────────────────────
@@ -72,6 +77,16 @@ public class RuleService {
 				request.getPerformedBy(),
 				request.getChangeReason(),
 				"Rule '" + saved.getName() + "' created");
+
+		eventPublisher.publishEvent(new RuleChangedEvent(
+				this,
+				"RULE_CREATED",
+				saved.getId(),
+				saved.getName(),
+				request.getPerformedBy(),
+				request.getChangeReason(),
+				saved.getUpdatedAt()
+		));
 
 		return ruleMapper.toRuleActionResponse(saved, "Rule created successfully");
 	}
