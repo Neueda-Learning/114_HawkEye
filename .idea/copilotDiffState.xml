@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="$PROJECT_DIR$/Backend/TransactionMonitoring/src/main/java/neueda/in/TransactionMonitoring/entity/RuleType.java">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/Backend/TransactionMonitoring/src/main/java/neueda/in/TransactionMonitoring/entity/RuleType.java" />
+              <option name="updatedContent" value="package neueda.in.TransactionMonitoring.entity;&#10;&#10;public enum RuleType {&#10;&#9;AMOUNT_THRESHOLD,&#10;&#9;VELOCITY,&#10;&#9;NEW_PAYEE,&#10;&#9;DAILY_LIMIT&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

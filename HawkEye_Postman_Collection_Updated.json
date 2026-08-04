@@ -1,0 +1,827 @@
+{
+  "info": {
+    "_postman_id": "b5d99f1f-2b13-46f3-bbfd-6d6e7ecda201",
+    "name": "HawkEye - Transaction Monitoring API (Updated)",
+    "description": "Importable Postman collection generated from the current Spring controllers and DTO contracts in the project.\n\nBase URL variable: {{baseUrl}}\nDefault: http://localhost:8080/api/v1\n\nNotes:\n1. Rule Engine evaluation endpoint is DEV profile only.\n2. Alert action endpoints require a valid alertId; populate it from list/detail responses if needed.\n3. Request bodies use the actual field names from the codebase.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1"
+    },
+    {
+      "key": "ruleId",
+      "value": "1"
+    },
+    {
+      "key": "transactionId",
+      "value": "1"
+    },
+    {
+      "key": "alertId",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Rule Management",
+      "description": "Rule CRUD, status toggle, audit trail, and active rules list.",
+      "item": [
+        {
+          "name": "Create Rule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201 or 200', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "const id = json?.id ?? json?.data?.id;",
+                  "if (id) { pm.collectionVariables.set('ruleId', String(id)); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Daily Transfer Limit\",\n  \"description\": \"Alert if total debit amount for the day exceeds 50,000 USD\",\n  \"ruleType\": \"DAILY_LIMIT\",\n  \"severity\": \"HIGH\",\n  \"parameters\": {\n    \"dailyLimit\": 50000,\n    \"currency\": \"USD\"\n  },\n  \"performedBy\": \"admin\",\n  \"changeReason\": \"Initial onboarding of daily limit rule\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rules"
+              ]
+            },
+            "description": "Creates a rule. Valid ruleType values: AMOUNT_THRESHOLD, VELOCITY, NEW_PAYEE, DAILY_LIMIT. Valid severity values: LOW, MEDIUM, HIGH, CRITICAL."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Rules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rules?page=0&size=10&sortBy=updatedAt&sortDir=desc&status=ACTIVE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rules"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "updatedAt"
+                },
+                {
+                  "key": "sortDir",
+                  "value": "desc"
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                },
+                {
+                  "key": "ruleType",
+                  "value": "DAILY_LIMIT",
+                  "disabled": true
+                },
+                {
+                  "key": "severity",
+                  "value": "HIGH",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "daily",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Rule by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rules/{{ruleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rules",
+                "{{ruleId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Rule",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Daily Transfer Limit - Updated\",\n  \"description\": \"Updated threshold for higher risk review\",\n  \"ruleType\": \"DAILY_LIMIT\",\n  \"severity\": \"CRITICAL\",\n  \"parameters\": {\n    \"dailyLimit\": 75000,\n    \"currency\": \"USD\"\n  },\n  \"performedBy\": \"admin\",\n  \"changeReason\": \"Threshold revised after policy update\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rules/{{ruleId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rules",
+                "{{ruleId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Toggle Rule Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": false,\n  \"performedBy\": \"analyst\",\n  \"reason\": \"Temporarily disabled during review\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rules/{{ruleId}}/toggle",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rules",
+                "{{ruleId}}",
+                "toggle"
+              ]
+            },
+            "description": "Set active=true to activate, active=false to deactivate."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Rule",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rules/{{ruleId}}?performedBy=admin&reason=Rule%20no%20longer%20needed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rules",
+                "{{ruleId}}"
+              ],
+              "query": [
+                {
+                  "key": "performedBy",
+                  "value": "admin"
+                },
+                {
+                  "key": "reason",
+                  "value": "Rule no longer needed"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Rule Audit Trail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rules/{{ruleId}}/audit-trail?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rules",
+                "{{ruleId}}",
+                "audit-trail"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Rules",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rules/active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rules",
+                "active"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Transaction Management",
+      "description": "Transaction creation, listing, detail view, and linked alert lookup.",
+      "item": [
+        {
+          "name": "Create Transaction",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201 or 200', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "const id = json?.data?.transactionId ?? json?.transactionId ?? json?.data?.id ?? json?.id;",
+                  "if (id) { pm.collectionVariables.set('transactionId', String(id)); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": \"ACC-001\",\n  \"payeeId\": \"PAY-001\",\n  \"payeeName\": \"John Doe\",\n  \"payeeType\": \"VENDOR\",\n  \"amount\": 25000.50,\n  \"currency\": \"USD\",\n  \"transactionType\": \"DEBIT\",\n  \"description\": \"Payment for invoice INV-2026-001\",\n  \"timestamp\": \"2026-08-04T10:30:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions"
+              ]
+            },
+            "description": "Valid transactionType values: DEBIT, CREDIT. Status/externalReference are not part of the current request DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/transactions?page=0&size=20&sort=timestamp,desc&accountId=ACC-001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "sort",
+                  "value": "timestamp,desc"
+                },
+                {
+                  "key": "accountId",
+                  "value": "ACC-001"
+                },
+                {
+                  "key": "status",
+                  "value": "COMPLETED",
+                  "disabled": true
+                },
+                {
+                  "key": "transactionType",
+                  "value": "DEBIT",
+                  "disabled": true
+                },
+                {
+                  "key": "payeeId",
+                  "value": "PAY-001",
+                  "disabled": true
+                },
+                {
+                  "key": "minAmount",
+                  "value": "1000",
+                  "disabled": true
+                },
+                {
+                  "key": "maxAmount",
+                  "value": "50000",
+                  "disabled": true
+                },
+                {
+                  "key": "startDate",
+                  "value": "2026-08-01T00:00:00",
+                  "disabled": true
+                },
+                {
+                  "key": "endDate",
+                  "value": "2026-08-31T23:59:59",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Transaction by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/{{transactionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                "{{transactionId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Alerts by Transaction ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "const list = json?.data ?? json ?? [];",
+                  "if (Array.isArray(list) && list.length > 0) {",
+                  "  const first = list[0];",
+                  "  const alertId = first?.alertId ?? first?.id;",
+                  "  if (alertId) pm.collectionVariables.set('alertId', String(alertId));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/{{transactionId}}/alerts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transactions",
+                "{{transactionId}}",
+                "alerts"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Alert Management",
+      "description": "Alert list, statistics, history, detail, related transactions, and lifecycle actions.",
+      "item": [
+        {
+          "name": "Get All Alerts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "const list = json?.content ?? json?.data?.content ?? json?.data ?? [];",
+                  "if (Array.isArray(list) && list.length > 0) {",
+                  "  const first = list[0];",
+                  "  const alertId = first?.alertId ?? first?.id;",
+                  "  if (alertId) pm.collectionVariables.set('alertId', String(alertId));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts?page=0&size=20&status=OPEN",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "alerts"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "OPEN"
+                },
+                {
+                  "key": "severity",
+                  "value": "HIGH",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Alert Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "alerts",
+                "stats"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Alert History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts/history?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "alerts",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "severity",
+                  "value": "HIGH",
+                  "disabled": true
+                },
+                {
+                  "key": "ruleName",
+                  "value": "Daily Transfer Limit",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Closed Alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts/history/closed?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "alerts",
+                "history",
+                "closed"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "severity",
+                  "value": "MEDIUM",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Dismissed Alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts/history/dismissed?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "alerts",
+                "history",
+                "dismissed"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "severity",
+                  "value": "LOW",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Alert by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts/{{alertId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "alerts",
+                "{{alertId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Alert Audit Trail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts/{{alertId}}/audit-trail?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "alerts",
+                "{{alertId}}",
+                "audit-trail"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Alert Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts/{{alertId}}/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "alerts",
+                "{{alertId}}",
+                "transactions"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Acknowledge Alert",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts/{{alertId}}/acknowledge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "alerts",
+                "{{alertId}}",
+                "acknowledge"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start Investigation",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts/{{alertId}}/investigate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "alerts",
+                "{{alertId}}",
+                "investigate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Close Alert",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolutionNotes\": \"Reviewed and closed after verification.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/alerts/{{alertId}}/close",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "alerts",
+                "{{alertId}}",
+                "close"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Dismiss Alert",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolutionNotes\": \"False positive; dismissed after analyst review.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/alerts/{{alertId}}/dismiss",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "alerts",
+                "{{alertId}}",
+                "dismiss"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Rule Engine (DEV Only)",
+      "description": "Only available when the Spring Boot app runs with the dev profile.",
+      "item": [
+        {
+          "name": "Manual Rule Evaluation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/rules/evaluate/{{transactionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rules",
+                "evaluate",
+                "{{transactionId}}"
+              ]
+            },
+            "description": "Manually triggers rule evaluation for a transaction. Works only under the dev profile because the controller is annotated with @Profile(\"dev\")."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
+
