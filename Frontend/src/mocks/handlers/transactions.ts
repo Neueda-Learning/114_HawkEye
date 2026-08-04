@@ -71,12 +71,15 @@ export const transactionHandlers = [
     const linkedAlerts = mockAlerts
       .filter((a) => a.transactionId === tx.transactionId)
       .map((a) => ({
-        alertId: a.alertId, alertStatus: a.alertStatus,
-        severity: a.severity, ruleName: a.ruleName,
-        ruleType: a.ruleType, createdAt: a.createdAt,
+        alertId:      a.alertId,
+        ruleId:       a.ruleId,
+        alertStatus:  a.alertStatus,
+        severity:     a.severity,
+        alertMessage: a.alertMessage,
+        createdAt:    a.createdAt,
       }));
 
-    const detail: TransactionDetailResponse = { ...tx, linkedAlerts };
+    const detail: TransactionDetailResponse = { ...tx, alerts: linkedAlerts };
     return HttpResponse.json(wrap(detail));
   }),
 
@@ -85,9 +88,12 @@ export const transactionHandlers = [
     const alerts = mockAlerts
       .filter((a) => a.transactionId === Number(params.id))
       .map((a) => ({
-        alertId: a.alertId, alertStatus: a.alertStatus,
-        severity: a.severity, ruleName: a.ruleName,
-        ruleType: a.ruleType, createdAt: a.createdAt,
+        alertId:      a.alertId,
+        ruleId:       a.ruleId,
+        alertStatus:  a.alertStatus,
+        severity:     a.severity,
+        alertMessage: a.alertMessage,
+        createdAt:    a.createdAt,
       }));
     return HttpResponse.json(wrap(alerts));
   }),

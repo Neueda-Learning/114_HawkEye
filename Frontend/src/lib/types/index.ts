@@ -78,6 +78,8 @@ export interface Payee {
 export interface TransactionRequest {
   accountId: string;
   payeeId: string;
+  payeeName?: string;   // optional — auto-creates payee if not found
+  payeeType?: string;   // optional — e.g. VENDOR, MERCHANT
   amount: number;
   currency?: string;
   transactionType: TransactionType;
@@ -101,7 +103,7 @@ export interface TransactionResponse {
 }
 
 export interface TransactionDetailResponse extends TransactionResponse {
-  linkedAlerts: AlertSummary[];
+  alerts: AlertSummary[];   // backend field name is "alerts" not "linkedAlerts"
 }
 
 export interface TransactionListParams {
@@ -120,12 +122,14 @@ export interface TransactionListParams {
 
 // ─── Alert ────────────────────────────────────────────────────────────────────
 
+// AlertSummaryDTO — read-only summary returned inside transaction detail
+// Fields match backend AlertSummaryDTO exactly
 export interface AlertSummary {
   alertId: number;
+  ruleId: number;           // backend returns ruleId (not ruleName/ruleType)
   alertStatus: AlertStatus;
   severity: Severity;
-  ruleName: string;
-  ruleType: RuleType;
+  alertMessage: string;     // human-readable alert message
   createdAt: string;
 }
 
