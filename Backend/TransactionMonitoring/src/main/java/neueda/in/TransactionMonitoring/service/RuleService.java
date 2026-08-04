@@ -58,6 +58,11 @@ public class RuleService {
 			throw new DuplicateRuleNameException("Rule with name '" + request.getName() + "' already exists");
 		}
 
+		if (ruleRepository.existsByRuleTypeAndStatusNot(request.getRuleType(), RuleStatus.DELETED)) {
+			throw new DuplicateRuleNameException("Rule type '" + request.getRuleType()
+					+ "' already exists. Use update API instead of creating a new one");
+		}
+
 		ruleConfigValidationService.validate(request.getRuleType(), request.getParameters());
 
 		Rule rule = Rule.builder()
@@ -65,7 +70,7 @@ public class RuleService {
 				.description(request.getDescription())
 				.ruleType(request.getRuleType())
 				.severity(request.getSeverity())
-				.status(RuleStatus.INACTIVE)
+				.status(RuleStatus.ACTIVE)
 				.parameters(request.getParameters())
 				.createdBy(request.getPerformedBy())
 				.updatedBy(request.getPerformedBy())
@@ -125,6 +130,11 @@ public class RuleService {
 
 		if (ruleRepository.existsByNameIgnoreCaseAndIdNotAndStatusNot(request.getName(), id, RuleStatus.DELETED)) {
 			throw new DuplicateRuleNameException("Rule with name '" + request.getName() + "' already exists");
+		}
+
+		if (ruleRepository.existsByRuleTypeAndIdNotAndStatusNot(request.getRuleType(), id, RuleStatus.DELETED)) {
+			throw new DuplicateRuleNameException("Rule type '" + request.getRuleType()
+					+ "' already exists. Only one rule per type is allowed");
 		}
 
 		ruleConfigValidationService.validate(request.getRuleType(), request.getParameters());

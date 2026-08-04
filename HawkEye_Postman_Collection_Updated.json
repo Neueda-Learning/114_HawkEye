@@ -57,7 +57,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Daily Transfer Limit\",\n  \"description\": \"Alert if total debit amount for the day exceeds 50,000 USD\",\n  \"ruleType\": \"DAILY_LIMIT\",\n  \"severity\": \"HIGH\",\n  \"parameters\": {\n    \"dailyLimit\": 50000,\n    \"currency\": \"USD\"\n  },\n  \"performedBy\": \"admin\",\n  \"changeReason\": \"Initial onboarding of daily limit rule\"\n}"
+              "raw": "{\n  \"name\": \"Daily Transfer Limit\",\n  \"description\": \"Alert if total debit amount for the day exceeds 50,000 USD\",\n  \"ruleType\": \"DAILY_LIMIT\",\n  \"severity\": \"HIGH\",\n  \"parameters\": {\n    \"dailyLimitAmount\": 50000,\n    \"currency\": \"USD\"\n  },\n  \"performedBy\": \"admin\",\n  \"changeReason\": \"Initial onboarding of daily limit rule\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/rules",
@@ -156,7 +156,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Daily Transfer Limit - Updated\",\n  \"description\": \"Updated threshold for higher risk review\",\n  \"ruleType\": \"DAILY_LIMIT\",\n  \"severity\": \"CRITICAL\",\n  \"parameters\": {\n    \"dailyLimit\": 75000,\n    \"currency\": \"USD\"\n  },\n  \"performedBy\": \"admin\",\n  \"changeReason\": \"Threshold revised after policy update\"\n}"
+              "raw": "{\n  \"name\": \"Daily Transfer Limit - Updated\",\n  \"description\": \"Updated threshold for higher risk review\",\n  \"ruleType\": \"DAILY_LIMIT\",\n  \"severity\": \"CRITICAL\",\n  \"parameters\": {\n    \"dailyLimitAmount\": 75000,\n    \"currency\": \"USD\"\n  },\n  \"performedBy\": \"admin\",\n  \"changeReason\": \"Threshold revised after policy update\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/rules/{{ruleId}}",

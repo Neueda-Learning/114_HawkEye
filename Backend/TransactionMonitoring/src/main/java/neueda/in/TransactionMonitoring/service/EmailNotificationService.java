@@ -3,33 +3,37 @@ package neueda.in.TransactionMonitoring.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import neueda.in.TransactionMonitoring.config.EmailNotificationProperties;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty(prefix = "notification.email", name = "enabled", havingValue = "true")
 public class EmailNotificationService {
 
     private final JavaMailSender mailSender;
     private final EmailNotificationProperties properties;
 
+    public boolean isEnabled() {
+        return properties.isEnabled();
+    }
+
     public void sendTransactionNotification(String subject, String body) {
-        send(subject, body, properties.getTransactionRecipients());
+        send(subject, body, resolveRecipients(properties.getTransactionRecipients()));
     }
 
     public void sendAlertNotification(String subject, String body) {
-        send(subject, body, properties.getAlertRecipients());
+        send(subject, body, resolveRecipients(properties.getAlertRecipients()));
     }
 
     public void sendRuleNotification(String subject, String body) {
-        send(subject, body, properties.getRuleRecipients());
+        send(subject, body, resolveRecipients(properties.getRuleRecipients()));
     }
 
     private void send(String subject, String body, List<String> recipients) {
@@ -54,5 +58,22 @@ public class EmailNotificationService {
             log.error("Failed to send notification email. subject='{}': {}", subject, ex.getMessage(), ex);
         }
     }
+
+          private List<String> resolveRecipients(List<String> configuredRecipients) {
+            if (configuredRecipients != null && !configuredRecipients.isEmpty()) {
+              return configuredRecipients.stream()
+                  .filter(recipient -> recipient != null && !recipient.isBlank())
+                  .collect(Collectors.toList());
+            }
+
+            if (properties.getTo() == null || properties.getTo().isBlank()) {
+              return List.of();
+            }
+
+            return Arrays.stream(properties.getTo().split(","))
+                .map(String::trim)
+                .filter(recipient -> !recipient.isBlank())
+                .collect(Collectors.toList());
+          }
 }
 

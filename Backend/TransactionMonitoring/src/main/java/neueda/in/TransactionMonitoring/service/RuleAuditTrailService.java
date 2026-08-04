@@ -45,8 +45,8 @@ public class RuleAuditTrailService {
 		snapshot.put("parameters", new LinkedHashMap<>(rule.getParameters()));
 		snapshot.put("createdBy", rule.getCreatedBy());
 		snapshot.put("updatedBy", rule.getUpdatedBy());
-		snapshot.put("createdAt", rule.getCreatedAt());
-		snapshot.put("updatedAt", rule.getUpdatedAt());
+		snapshot.put("createdAt", rule.getCreatedAt() != null ? rule.getCreatedAt().toString() : null);
+		snapshot.put("updatedAt", rule.getUpdatedAt() != null ? rule.getUpdatedAt().toString() : null);
 		snapshot.put("version", rule.getVersion());
 		return snapshot;
 	}

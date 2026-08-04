@@ -15,9 +15,10 @@ import neueda.in.TransactionMonitoring.repository.RuleRepository;
 import neueda.in.TransactionMonitoring.repository.TransactionRepository;
 import neueda.in.TransactionMonitoring.rule.RuleEvaluator;
 import neueda.in.TransactionMonitoring.rule.RuleEvaluatorFactory;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,10 +48,16 @@ public class RuleEngineService {
      * Triggered automatically when Person 1 publishes a TransactionRecordedEvent.
      */
     // listener for TransactionRecordedEvent published by TransactionService
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional
     public void onTransactionRecorded(TransactionRecordedEvent event) {
-        log.info("TransactionRecordedEvent received — transactionId={}", event.getTransactionId());
-        evaluateTransaction(event.getTransactionId());
+        log.info("🎯 TransactionRecordedEvent RECEIVED by RuleEngineService — transactionId={}", event.getTransactionId());
+        try {
+            evaluateTransaction(event.getTransactionId());
+            log.info("✅ Rules evaluation completed for transactionId={}", event.getTransactionId());
+        } catch (Exception ex) {
+            log.error("❌ Error during rules evaluation for transactionId={}: {}", event.getTransactionId(), ex.getMessage(), ex);
+        }
     }
 
     // ── Core evaluation logic ─────────────────────────────────────────────────

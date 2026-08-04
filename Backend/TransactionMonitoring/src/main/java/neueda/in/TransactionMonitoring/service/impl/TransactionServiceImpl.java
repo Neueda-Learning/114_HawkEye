@@ -119,8 +119,9 @@ public class TransactionServiceImpl implements TransactionService {
                 saved.getTransactionId(), request.getAccountId(), request.getAmount());
 
         // publishing event for further processing (e.g., rule evaluation, alert generation) using Spring's event mechanism
+        log.info("📢 Publishing TransactionRecordedEvent for transactionId={}", saved.getTransactionId());
         eventPublisher.publishEvent(new TransactionRecordedEvent(this, saved.getTransactionId()));
-        log.info("TransactionRecordedEvent published for transactionId={}", saved.getTransactionId());
+        log.info("✅ TransactionRecordedEvent published successfully — id: {}", saved.getTransactionId());
 
         return toResponseDTO(saved);
     }
