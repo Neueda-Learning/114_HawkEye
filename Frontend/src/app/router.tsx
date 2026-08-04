@@ -32,6 +32,12 @@ import AlertStatsPage  from '@/features/alerts/pages/AlertStatsPage';
 // Dashboard pages (Admin)
 import AdminDashboard from '@/features/dashboard/pages/AdminDashboard';
 import AdminMetrics   from '@/features/dashboard/pages/AdminMetrics';
+import ReportsPage    from '@/features/dashboard/pages/ReportsPage';
+import UsersPage      from '@/features/dashboard/pages/UsersPage';
+import AuditLogsPage  from '@/features/dashboard/pages/AuditLogsPage';
+import SystemHealthPage from '@/features/dashboard/pages/SystemHealthPage';
+import SettingsPage from '@/features/dashboard/pages/SettingsPage';
+
 
 const router = createBrowserRouter([
   // ─── Public ─────────────────────────────────────────────────────────────
@@ -76,9 +82,15 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/admin/dashboard" replace /> },
 
-      // Admin Dashboard
-      { path: 'admin/dashboard', element: <AdminDashboard /> },
-      { path: 'admin/metrics',   element: <AdminMetrics /> },
+      // Admin Dashboard & Management
+      { path: 'admin/dashboard',     element: <AdminDashboard /> },
+      { path: 'admin/metrics',       element: <AdminMetrics /> },
+      { path: 'admin/reports',       element: <ReportsPage /> },
+      { path: 'admin/users',         element: <UsersPage /> },
+      { path: 'admin/audit-logs',    element: <AuditLogsPage /> },
+      { path: 'admin/system-health', element: <SystemHealthPage /> },
+      { path: 'admin/settings',      element: <SettingsPage /> },
+
 
       // Rules (Admin only)
       {

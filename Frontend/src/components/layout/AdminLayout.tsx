@@ -4,12 +4,17 @@ import { AdminSidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 
 const PAGE_TITLES: Record<string, string> = {
-  '/admin/dashboard': 'Dashboard',
-  '/admin/metrics':   'Metrics & Analytics',
-  '/admin/rules':     'Rule Management',
-  '/alerts':          'Alert Management',
-  '/alerts/history':  'Alert History',
-  '/alerts/stats':    'Alert Statistics',
+  '/admin/dashboard':     'Dashboard',
+  '/admin/metrics':       'Transactions',
+  '/admin/rules':         'Rules',
+  '/alerts':              'Alerts',
+  '/alerts/history':      'Alert History',
+  '/alerts/stats':        'Alert Statistics',
+  '/admin/reports':       'Reports',
+  '/admin/users':         'Users',
+  '/admin/audit-logs':    'Audit Logs',
+  '/admin/system-health': 'System Health',
+  '/admin/settings':      'Settings',
 };
 
 export default function AdminLayout() {

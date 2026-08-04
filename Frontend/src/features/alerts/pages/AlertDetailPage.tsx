@@ -9,7 +9,7 @@ import { SeverityBadge } from '@/components/common/SeverityBadge';
 import { Timeline, type TimelineEvent } from '@/components/common/Timeline';
 import { JsonViewer } from '@/components/common/JsonViewer';
 import { PageSkeleton } from '@/components/common/SkeletonLoader';
-import { formatDate, formatCurrency, ruleTypeLabel } from '@/lib/utils';
+import { formatDate, formatCurrency } from '@/lib/utils';
 import type { AlertStatus } from '@/lib/types';
 
 type Tab = 'overview' | 'transactions' | 'rule' | 'activity';
@@ -47,10 +47,10 @@ export default function AlertDetailPage() {
   const auditTrail = auditData?.content ?? [];
 
   const timelineEvents: TimelineEvent[] = auditTrail.map((e) => ({
-    id:          e.id,  // Backend returns 'id' not 'auditId'
+    id:          e.auditId,
     title:       e.previousStatus ? `${e.previousStatus} → ${e.newStatus}` : `Alert Created (${e.newStatus})`,
     description: e.changeReason ? `by ${e.changedBy} — ${e.changeReason}` : `by ${e.changedBy}`,
-    timestamp:   e.createdAt,  // Backend returns 'createdAt' not 'changedAt'
+    timestamp:   e.changedAt,
     color:       STATUS_TO_COLOR[e.newStatus],
   }));
 
@@ -110,15 +110,15 @@ export default function AlertDetailPage() {
           <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {[
               { label: 'Alert ID',     value: `#${alert.alertId}` },
-              { label: 'Account',      value: `${alert.accountId} — ${alert.accountName}` },
+              { label: 'Account',      value: alert.accountId },
               { label: 'Transaction',  value: `#${alert.transactionId}` },
               { label: 'Rule',         value: alert.ruleName },
               { label: 'Created',      value: formatDate(alert.createdAt) },
               { label: 'Acknowledged', value: alert.acknowledgedAt ? formatDate(alert.acknowledgedAt) : '—' },
               { label: 'Investigating',value: alert.investigatingAt ? formatDate(alert.investigatingAt) : '—' },
               { label: 'Closed',       value: alert.closedAt ? formatDate(alert.closedAt) : '—' },
-              { label: 'Closed By',    value: alert.closedBy ?? '—' },
-              { label: 'Resolution',   value: alert.closedReason ?? '—' },
+              { label: 'Dismissed',    value: alert.dismissedAt ? formatDate(alert.dismissedAt) : '—' },
+              { label: 'Resolution',   value: alert.resolutionNotes ?? '—' },
             ].map(({ label, value }) => (
               <div key={label}>
                 <dt className="text-xs font-medium uppercase tracking-wide text-gray-400">{label}</dt>

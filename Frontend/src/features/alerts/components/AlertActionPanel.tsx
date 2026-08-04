@@ -20,7 +20,7 @@ interface ActionConfig {
   icon: React.ReactNode;
   colorClass: string;
   requiresNote: boolean;
-  mutationFn: (id: number, payload?: { resolutionNotes?: string }) => Promise<Alert>;
+  mutationFn: (id: number, payload?: { resolutionNotes?: string; performedBy?: string }) => Promise<Alert>;
 }
 
 export function AlertActionPanel({ alert, onUpdated }: AlertActionPanelProps) {
@@ -32,7 +32,7 @@ export function AlertActionPanel({ alert, onUpdated }: AlertActionPanelProps) {
 
   const mutation = useMutation({
     mutationFn: ({ action, note }: { action: ActionConfig; note: string }) =>
-      action.mutationFn(alert.alertId, note ? { resolutionNotes: note } : undefined),
+      action.mutationFn(alert.alertId, note ? { resolutionNotes: note, performedBy: user?.email ?? 'admin' } : { performedBy: user?.email ?? 'admin' }),
     onSuccess: (updated) => {
       toast.success(`Alert ${updated.alertStatus.toLowerCase()}`);
       void queryClient.invalidateQueries({ queryKey: ['alert', String(alert.alertId)] });
@@ -49,25 +49,25 @@ export function AlertActionPanel({ alert, onUpdated }: AlertActionPanelProps) {
       label: 'Acknowledge',   toStatus: 'ACKNOWLEDGED',  requiresNote: false,
       icon:  <CheckCircle className="h-4 w-4" />,
       colorClass: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300',
-      mutationFn: acknowledgeAlert,
+      mutationFn: (id) => acknowledgeAlert(id),
     },
     {
       label: 'Investigate',   toStatus: 'INVESTIGATING', requiresNote: false,
       icon:  <Search className="h-4 w-4" />,
       colorClass: 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300',
-      mutationFn: investigateAlert,
+      mutationFn: (id) => investigateAlert(id),
     },
     {
       label: 'Close',         toStatus: 'CLOSED',        requiresNote: true,
       icon:  <CheckCircle className="h-4 w-4" />,
       colorClass: 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300',
-      mutationFn: closeAlert,
+      mutationFn: (id, payload) => closeAlert(id, payload ? { performedBy: user?.email ?? 'admin', reason: payload.resolutionNotes } : undefined),
     },
     {
       label: 'Dismiss',       toStatus: 'DISMISSED',     requiresNote: true,
       icon:  <XCircle className="h-4 w-4" />,
       colorClass: 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400',
-      mutationFn: dismissAlert,
+      mutationFn: (id, payload) => dismissAlert(id, payload ? { performedBy: user?.email ?? 'admin', reason: payload.resolutionNotes } : undefined),
     },
   ];
 
