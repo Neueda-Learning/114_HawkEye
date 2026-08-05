@@ -116,3 +116,7 @@ Hibernate:
         accounts a1_0
 2026-08-04T11:03:58.933Z  INFO 10540 --- [TransactionMonitoring] [           main] n.i.T.seeder.DataSeeder                  : DataSeeder — data already exists, skipping seed.
 2026-08-04T13:45:55.748Z  WARN 10540 --- [TransactionMonitoring] [l-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=1h26m31s823ms369µs200ns).
+2026-08-04T15:03:13.735Z  WARN 10540 --- [TransactionMonitoring] [l-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=7m17s848ms217µs200ns).
+2026-08-05T03:24:02.999Z  WARN 10540 --- [TransactionMonitoring] [l-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=10h12m45s760ms395µs).
+2026-08-05T04:23:04.797Z  WARN 10540 --- [TransactionMonitoring] [l-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=3m59s773ms271µs800ns).
+2026-08-05T07:51:14.025Z  WARN 10540 --- [TransactionMonitoring] [l-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=1h8m8s725ms316µs700ns).
