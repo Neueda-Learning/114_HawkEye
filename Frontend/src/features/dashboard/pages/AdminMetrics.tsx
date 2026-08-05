@@ -134,13 +134,13 @@ export default function AdminMetrics() {
     { transactionId: 10025, timestamp: '2024-05-20T16:30:00Z', accountId: '6677889900', accountName: 'Sarah Lee', payeeName: 'Flipkart Online', payeeCategory: 'Shopping', amount: 120.00, currency: 'USD', transactionType: 'DEBIT' as TransactionType, status: 'FAILED' as TransactionStatus, channel: 'Card Payment' },
   ];
 
-  const transactionsList = pagedData?.content?.length
-    ? pagedData.content.map(t => ({
-        ...t,
-        payeeCategory: 'General Payment',
-        channel: t.transactionType === 'CREDIT' ? 'Internal Transfer' : 'Online Banking',
-      }))
-    : fallbackTransactions;
+  const transactionsList = (pagedData?.content || []).map(t => ({
+    ...t,
+    payeeName: t.payeeName || t.payeeId || 'Merchant Payee',
+    accountName: t.accountName || t.accountId || 'Account Holder',
+    payeeCategory: 'General Payment',
+    channel: t.transactionType === 'CREDIT' ? 'Internal Transfer' : 'Online Banking',
+  }));
 
   // Filter client side for search
   const filteredRows = transactionsList.filter(t =>

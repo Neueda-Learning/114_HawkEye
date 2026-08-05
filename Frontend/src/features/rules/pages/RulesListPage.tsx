@@ -117,15 +117,14 @@ export default function RulesListPage() {
     { ruleId: 8, ruleName: 'Dormant Account Rule', ruleType: 'Behavior', category: 'Behavior Based', condition: 'No activity in 180 days', severity: 'LOW' as Severity, status: 'INACTIVE' as RuleStatus, timeWindow: 'Daily', lastTriggered: '2024-05-19T11:20:00Z' },
   ];
 
-  const rulesList = pagedData?.content?.length
-    ? pagedData.content.map(r => ({
-        ...r,
-        category: `${r.ruleType.split('_')[0]} Based`,
-        condition: `Threshold condition for ${r.ruleName}`,
-        timeWindow: 'Per Transaction',
-        lastTriggered: r.updatedAt,
-      }))
-    : fallbackRules;
+  const rulesList = (pagedData?.content || []).map(r => ({
+    ...r,
+    ruleId: r.id,
+    category: `${(r.ruleType || 'GENERAL').split('_')[0]} Based`,
+    condition: r.ruleType === 'AMOUNT_THRESHOLD' ? `Amount > $${r.parameters?.thresholdAmount || 1000}` : r.ruleType === 'VELOCITY' ? `≥ ${r.parameters?.velocityCount || 3} txns in ${r.parameters?.velocityWindowMinutes || 60} mins` : r.ruleType === 'NEW_PAYEE' ? 'New Unregistered Payee' : `Daily Total > $${r.parameters?.dailyLimitAmount || 2000}`,
+    timeWindow: r.ruleType === 'VELOCITY' ? `${r.parameters?.velocityWindowMinutes || 60} Mins` : 'Per Transaction',
+    lastTriggered: r.updatedAt || r.createdAt || new Date().toISOString(),
+  }));
 
   // Filter client side
   const filteredRows = rulesList.filter(r =>

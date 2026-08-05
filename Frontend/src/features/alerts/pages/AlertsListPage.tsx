@@ -81,13 +81,11 @@ export default function AlertsListPage() {
     { alertId: 2380, transactionId: 10025, ruleName: 'Unusual Device Rule', severity: 'LOW' as Severity, alertStatus: 'DISMISSED' as AlertStatus, assignedTo: 'Robert Brown', createdAt: '2024-05-20T16:30:00Z', age: '17h 15m' },
   ];
 
-  const alertsList = pagedData?.content?.length
-    ? pagedData.content.map((a, i) => ({
-        ...a,
-        assignedTo: a.alertStatus === 'OPEN' ? 'Unassigned' : ['John Doe', 'Sarah Lee', 'Mike Johnson', 'Jane Smith'][i % 4],
-        age: '2h',
-      }))
-    : fallbackAlerts;
+  const alertsList = (pagedData?.content || []).map((a, i) => ({
+    ...a,
+    assignedTo: a.assignedTo || (a.alertStatus === 'OPEN' ? 'Unassigned' : ['John Doe', 'Sarah Lee', 'Mike Johnson', 'Jane Smith'][i % 4]),
+    age: 'Recent',
+  }));
 
   // Filter client side for search & assignedTo
   const filteredRows = alertsList.filter(a => {
