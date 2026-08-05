@@ -1,10 +1,12 @@
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard, ArrowRightLeft, Bell, FileText, BarChart2,
   Users, Activity, LogOut, ChevronLeft, ChevronRight,
   ShieldCheck, Sun, Moon, Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getAlerts } from '@/lib/api/alerts';
 import { useAuthStore } from '@/features/auth/store/authStore';
 
 interface NavItem {
@@ -18,7 +20,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { to: '/admin/dashboard',     label: 'Dashboard',     icon: <LayoutDashboard className="h-5 w-5" /> },
   { to: '/admin/metrics',       label: 'Transactions',  icon: <ArrowRightLeft className="h-5 w-5" /> },
-  { to: '/alerts',              label: 'Alerts',        icon: <Bell className="h-5 w-5" />, badge: 57 },
+  { to: '/alerts',              label: 'Alerts',        icon: <Bell className="h-5 w-5" /> },
   { to: '/admin/rules',         label: 'Rules',         icon: <FileText className="h-5 w-5" /> },
   { to: '/admin/reports',       label: 'Reports',       icon: <BarChart2 className="h-5 w-5" /> },
   { to: '/admin/system-health', label: 'System Health', icon: <Activity className="h-5 w-5" /> },
@@ -35,6 +37,13 @@ interface SidebarProps {
 export function AdminSidebar({ collapsed, onToggle, isDark, onThemeToggle }: SidebarProps) {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const { data: alertsCountData } = useQuery({
+    queryKey: ['alerts', 'sidebar-count'],
+    queryFn: () => getAlerts({ size: 1 }),
+    refetchInterval: 10000,
+  });
+
+  const alertsCount = alertsCountData?.totalElements ?? 0;
 
   const handleLogout = () => {
     logout();
@@ -99,9 +108,9 @@ export function AdminSidebar({ collapsed, onToggle, isDark, onThemeToggle }: Sid
           >
             {item.icon}
             {!collapsed && <span className="flex-1">{item.label}</span>}
-            {!collapsed && item.badge !== undefined && (
+            {!collapsed && item.to === '/alerts' && (
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
-                {item.badge}
+                {alertsCount}
               </span>
             )}
           </NavLink>
