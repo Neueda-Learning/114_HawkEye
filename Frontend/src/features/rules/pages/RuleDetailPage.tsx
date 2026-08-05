@@ -24,8 +24,8 @@ export default function RuleDetailPage() {
   const toggleMutation = useMutation({
     mutationFn: (active: boolean) =>
       toggleRule(Number(id), { active, performedBy: user?.email ?? 'admin', reason: 'Toggled from detail page' }),
-    onSuccess: (updated) => {
-      toast.success(`Rule ${updated.status === 'ACTIVE' ? 'activated' : 'deactivated'}`);
+    onSuccess: (_updated, active) => {
+      toast.success(`Rule ${active ? 'activated' : 'deactivated'}`);
       void queryClient.invalidateQueries({ queryKey: ['rule', id] });
       void queryClient.invalidateQueries({ queryKey: ['rules'] });
     },

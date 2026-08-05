@@ -139,8 +139,8 @@ export default function RulesListPage() {
   const toggleMutation = useMutation({
     mutationFn: ({ id, active }: { id: number; active: boolean }) =>
       toggleRule(id, { active, performedBy: user?.email ?? 'admin', reason: 'Toggled status' }),
-    onSuccess: (updated) => {
-      toast.success(`Rule ${updated.status === 'ACTIVE' ? 'activated' : 'deactivated'}`);
+    onSuccess: (_updated, variables) => {
+      toast.success(`Rule ${variables.active ? 'activated' : 'deactivated'}`);
       void queryClient.invalidateQueries({ queryKey: ['rules'] });
     },
     onError: () => toast.error('Failed to update rule status'),
