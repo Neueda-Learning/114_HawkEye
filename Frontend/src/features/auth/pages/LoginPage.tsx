@@ -1,184 +1,184 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff, ShieldCheck, AlertCircle } from 'lucide-react';
+import { ShieldCheck, UserCheck, Shield, AlertCircle, ArrowRight, Lock } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import type { UserRole } from '@/lib/types';
 
-const schema = z.object({
-  email:      z.string().email('Enter a valid email address'),
-  password:   z.string().min(6, 'Password must be at least 6 characters'),
-  rememberMe: z.boolean().optional(),
-});
-
-type FormValues = z.infer<typeof schema>;
-
 const ROLE_HOME: Record<UserRole, string> = {
   CUSTOMER: '/customer/dashboard',
-  ANALYST:  '/alerts',
+  ANALYST:  '/admin/dashboard',
   ADMIN:    '/admin/dashboard',
 };
 
-// Demo credentials shown on the page
-const DEMO_CREDENTIALS = [
-  { role: 'ADMIN',    email: 'admin@hawkeye.com',    label: 'Admin' },
-  { role: 'ANALYST',  email: 'analyst@hawkeye.com',  label: 'Analyst' },
-  { role: 'CUSTOMER', email: 'customer@hawkeye.com', label: 'Customer' },
-];
-
 export default function LoginPage() {
-  const navigate  = useNavigate();
-  const location  = useLocation();
-  const { login, user } = useAuthStore();
-  const [showPwd, setShowPwd]   = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuthStore();
+
+  const [activeTab, setActiveTab] = useState<'ADMIN' | 'USER'>('ADMIN');
+  const [email, setEmail] = useState('admin@hawkeye.com');
+  const [password, setPassword] = useState('password123');
   const [authError, setAuthError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
-
-  const onSubmit = async ({ email, password }: FormValues) => {
+  const handleTabChange = (roleTab: 'ADMIN' | 'USER') => {
+    setActiveTab(roleTab);
     setAuthError('');
-    try {
-      await login(email, password);
-      const dest = from ?? ROLE_HOME[useAuthStore.getState().user!.role];
-      navigate(dest, { replace: true });
-    } catch (e) {
-      setAuthError(e instanceof Error ? e.message : 'Login failed');
+    if (roleTab === 'ADMIN') {
+      setEmail('admin@hawkeye.com');
+      setPassword('password123');
+    } else {
+      setEmail('customer@hawkeye.com');
+      setPassword('password123');
     }
   };
 
-  const fillDemo = (email: string) => {
-    setValue('email', email);
-    setValue('password', 'password123');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    setLoading(true);
+
+    try {
+      await login(email, password);
+      const userRole = useAuthStore.getState().user!.role;
+      const dest = from ?? ROLE_HOME[userRole];
+      navigate(dest, { replace: true });
+    } catch (err: any) {
+      setAuthError(err?.message || 'Login failed. Please check credentials.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-hawk-900 via-hawk-800 to-hawk-700 p-4">
-      <div className="w-full max-w-md animate-fade-in">
-
-        {/* Logo */}
+    <div className="flex min-h-screen items-center justify-center bg-[#0B132B] p-4 text-white">
+      <div className="w-full max-w-xl animate-fade-in">
+        {/* Logo & Header */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm">
-            <ShieldCheck className="h-9 w-9 text-white" />
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600/20 border border-blue-500/30 text-blue-400 shadow-lg shadow-blue-500/10">
+            <ShieldCheck className="h-8 w-8 text-blue-400" />
           </div>
-          <h1 className="text-3xl font-bold text-white">HawkEye</h1>
-          <p className="mt-1 text-hawk-200">Transaction Monitoring Platform</p>
+          <h1 className="text-3xl font-black tracking-tight text-white">TMAS</h1>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-blue-400">
+            Transaction Monitoring & Alert System
+          </p>
+          <p className="mt-2 text-xs text-gray-400 max-w-md mx-auto">
+            Enterprise Banking Operations & Real-Time Fraud Prevention Platform
+          </p>
         </div>
 
-        {/* Card */}
-        <div className="rounded-2xl bg-white p-8 shadow-2xl dark:bg-gray-900">
-          <h2 className="mb-6 text-xl font-semibold text-gray-900 dark:text-white">Sign in</h2>
+        {/* ── 2 Distinct Login Options Selector ──────────────────────────── */}
+        <div className="mb-6 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => handleTabChange('ADMIN')}
+            className={`flex flex-col items-center justify-center rounded-2xl border p-4 text-center transition-all ${
+              activeTab === 'ADMIN'
+                ? 'border-blue-500 bg-blue-600/15 text-white shadow-lg shadow-blue-500/10 ring-2 ring-blue-500/50'
+                : 'border-gray-800 bg-gray-900/60 text-gray-400 hover:border-gray-700 hover:text-gray-200'
+            }`}
+          >
+            <Shield className={`h-6 w-6 mb-1.5 ${activeTab === 'ADMIN' ? 'text-blue-400' : 'text-gray-500'}`} />
+            <span className="font-bold text-sm">1. Administrator Login</span>
+            <span className="text-[10px] text-gray-400 mt-1">Full control, Rules, Alerts, Reports & Audit</span>
+          </button>
 
-          {/* Auth error banner */}
+          <button
+            type="button"
+            onClick={() => handleTabChange('USER')}
+            className={`flex flex-col items-center justify-center rounded-2xl border p-4 text-center transition-all ${
+              activeTab === 'USER'
+                ? 'border-emerald-500 bg-emerald-600/15 text-white shadow-lg shadow-emerald-500/10 ring-2 ring-emerald-500/50'
+                : 'border-gray-800 bg-gray-900/60 text-gray-400 hover:border-gray-700 hover:text-gray-200'
+            }`}
+          >
+            <UserCheck className={`h-6 w-6 mb-1.5 ${activeTab === 'USER' ? 'text-emerald-400' : 'text-gray-500'}`} />
+            <span className="font-bold text-sm">2. User Login</span>
+            <span className="text-[10px] text-gray-400 mt-1">Banking Operator, Transactions & Alert Status</span>
+          </button>
+        </div>
+
+        {/* ── Login Form Card ────────────────────────────────────────────── */}
+        <div className="rounded-2xl border border-gray-800 bg-gray-900/90 p-8 shadow-2xl backdrop-blur-md">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-white">
+                {activeTab === 'ADMIN' ? 'Administrator Portal' : 'Banking Operator Portal'}
+              </h2>
+              <p className="text-xs text-gray-400">
+                {activeTab === 'ADMIN'
+                  ? 'Sign in to access rules configuration, fraud investigation & system health.'
+                  : 'Sign in to record transactions and track generated security alerts.'}
+              </p>
+            </div>
+            <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${
+              activeTab === 'ADMIN' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+            }`}>
+              {activeTab === 'ADMIN' ? 'ADMIN ROLE' : 'USER ROLE'}
+            </span>
+          </div>
+
           {authError && (
-            <div className="mb-4 flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+            <div className="mb-5 flex items-center gap-2 rounded-xl bg-red-500/10 border border-red-500/20 p-3.5 text-xs text-red-400">
               <AlertCircle className="h-4 w-4 shrink-0" />
-              {authError}
+              <span>{authError}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-            {/* Email */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Email address
+              <label className="mb-1.5 block text-xs font-semibold text-gray-300">
+                Email Address
               </label>
               <input
-                {...register('email')}
                 type="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-hawk-500 focus:ring-2 focus:ring-hawk-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full rounded-xl border border-gray-800 bg-gray-950 px-3.5 py-2.5 text-xs text-white outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
-              {errors.email && (
-                <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
-              )}
             </div>
 
-            {/* Password */}
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="mb-1.5 block text-xs font-semibold text-gray-300">
                 Password
               </label>
               <div className="relative">
                 <input
-                  {...register('password')}
-                  type={showPwd ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-sm outline-none transition focus:border-hawk-500 focus:ring-2 focus:ring-hawk-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full rounded-xl border border-gray-800 bg-gray-950 px-3.5 py-2.5 text-xs text-white outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPwd((p) => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  aria-label={showPwd ? 'Hide password' : 'Show password'}
-                >
-                  {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                <Lock className="absolute right-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
               </div>
-              {errors.password && (
-                <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
-              )}
             </div>
 
-            {/* Remember me + Forgot */}
-            <div className="flex items-center justify-between">
-              <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <input
-                  {...register('rememberMe')}
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-hawk-600"
-                />
-                Remember me
-              </label>
-              <a
-                href="/forgot-password"
-                className="text-sm text-hawk-600 hover:underline dark:text-hawk-400"
-              >
-                Forgot password?
-              </a>
-            </div>
-
-            {/* Submit */}
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full rounded-lg bg-hawk-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-hawk-700 focus:outline-none focus:ring-2 focus:ring-hawk-500 focus:ring-offset-2 disabled:opacity-60"
+              disabled={loading}
+              className={`mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-xs font-bold text-white shadow-lg transition disabled:opacity-50 ${
+                activeTab === 'ADMIN'
+                  ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
+                  : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'
+              }`}
             >
-              {isSubmitting ? 'Signing in…' : 'Sign in'}
+              <span>{loading ? 'Authenticating...' : `Sign in as ${activeTab === 'ADMIN' ? 'Administrator' : 'User'}`}</span>
+              <ArrowRight className="h-4 w-4" />
             </button>
           </form>
 
-          {/* Demo credentials */}
-          <div className="mt-6 border-t pt-4 dark:border-gray-700">
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
-              Demo accounts (password: password123)
+          {/* Quick Demo Pre-fill notice */}
+          <div className="mt-6 border-t border-gray-800/80 pt-4 text-center">
+            <p className="text-[11px] text-gray-400">
+              Demo Credentials Loaded: <code className="font-mono text-blue-400">{email}</code>
             </p>
-            <div className="flex gap-2">
-              {DEMO_CREDENTIALS.map((c) => (
-                <button
-                  key={c.role}
-                  type="button"
-                  onClick={() => fillDemo(c.email)}
-                  className="flex-1 rounded-md bg-gray-100 px-2 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
