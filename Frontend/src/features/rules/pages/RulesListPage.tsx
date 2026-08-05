@@ -8,7 +8,7 @@ import {
   Search, Filter, Download, Plus, Calendar, Pencil, Trash2,
   RotateCcw, Shield, ShieldCheck, CheckCircle2, Clock, Zap,
   TrendingUp, TrendingDown, Eye, Sliders, AlertOctagon,
-  ArrowRight, ToggleLeft, ToggleRight
+  ArrowRight
 } from 'lucide-react';
 import { getRules, deleteRule, toggleRule } from '@/lib/api/rules';
 import { getAlertStats } from '@/lib/api/alerts';
@@ -471,13 +471,29 @@ export default function RulesListPage() {
                     {row.severity.charAt(0) + row.severity.slice(1).toLowerCase()}
                   </span>
                 </td>
-                <td className="px-4 py-3.5">
-                  <span className={`inline-flex items-center gap-1 text-[11px] font-semibold ${
-                    row.status === 'ACTIVE' ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
-                  }`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${row.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-gray-400'}`} />
-                    {row.status === 'ACTIVE' ? 'Active' : 'Inactive'}
-                  </span>
+                <td className="px-4 py-3.5" onClick={(e) => e.stopPropagation()}>
+                  {/* Interactive toggle switch */}
+                  <button
+                    onClick={() => toggleMutation.mutate({ id: row.ruleId, active: row.status !== 'ACTIVE' })}
+                    disabled={toggleMutation.isPending}
+                    title={row.status === 'ACTIVE' ? 'Click to Deactivate' : 'Click to Activate'}
+                    className="group flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {/* Track */}
+                    <span className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ${
+                      row.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'
+                    }`}>
+                      {/* Knob */}
+                      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                        row.status === 'ACTIVE' ? 'translate-x-4' : 'translate-x-0.5'
+                      }`} />
+                    </span>
+                    <span className={`text-[11px] font-semibold ${
+                      row.status === 'ACTIVE' ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
+                    }`}>
+                      {row.status === 'ACTIVE' ? 'Active' : 'Inactive'}
+                    </span>
+                  </button>
                 </td>
                 <td className="px-4 py-3.5 text-gray-500">
                   {row.timeWindow}
@@ -493,13 +509,6 @@ export default function RulesListPage() {
                       title="Edit Rule"
                     >
                       <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => toggleMutation.mutate({ id: row.ruleId, active: row.status !== 'ACTIVE' })}
-                      className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-amber-600 dark:hover:bg-gray-800"
-                      title={row.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-                    >
-                      {row.status === 'ACTIVE' ? <ToggleRight className="h-4 w-4 text-emerald-500" /> : <ToggleLeft className="h-4 w-4" />}
                     </button>
                     <button
                       onClick={() => setDeleteTarget(row as unknown as Rule)}
