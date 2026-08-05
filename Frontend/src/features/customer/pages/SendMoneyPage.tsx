@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -6,11 +6,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, AlertCircle, ArrowLeft, Send, Plus, CreditCard } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/store/authStore';
-import { createTransaction } from '@/lib/api/transactions';
-import { getRules } from '@/lib/api/rules';
+import { createTransaction, getTransactionAlerts } from '@/lib/api/transactions';
 import { mockPayees } from '@/mocks/data';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from '@/components/common/Toast';
+import type { AlertSummary } from '@/lib/types';
 
 const schema = z.object({
   payeeId:            z.string().min(1, 'Please select a payee'),
@@ -29,18 +29,6 @@ export default function SendMoneyPage() {
   const [step, setStep] = useState<Step>('form');
   const [formData, setFormData] = useState<FormValues | null>(null);
   const [txRef, setTxRef]       = useState<string>('');
-
-  // ── Known Payee Accounts Tracking (To prevent duplicate New Payee alert on 2nd transfer) ─
-  const [knownPayees, setKnownPayees] = useState<Set<string>>(() => {
-    const saved = localStorage.getItem('hawkeye_known_payees');
-    if (saved) {
-      try {
-        return new Set(JSON.parse(saved));
-      } catch (e) {}
-    }
-    // Initial known seed payees
-    return new Set(['ACC-908123', 'ACC-001', 'PAY-001', 'PAY-002', 'PAY-003', 'PAY-004', 'PAY-005', 'Amazon Marketplace', 'Starbucks Coffee']);
-  });
 
   // ── Source Accounts Management for Single User ─────────────────────────────
   const [userAccounts, setUserAccounts] = useState<string[]>([
@@ -69,73 +57,56 @@ export default function SendMoneyPage() {
     defaultValues: { payeeAccountNumber: 'ACC-908123' },
   });
 
-  // Query active rules from backend DB
-  const { data: rulesPage } = useQuery({
-    queryKey: ['rules', 'active-evaluate'],
-    queryFn: () => getRules({ status: 'ACTIVE', size: 100 }),
-  });
-  const activeRules = rulesPage?.content || [];
-
   const selectedPayee = mockPayees.find((p) => p.payeeId === watch('payeeId'));
 
   const [alertPopup, setAlertPopup] = useState<{ ruleName: string; severity: string; message: string } | null>(null);
   const [emailPopup, setEmailPopup] = useState<{ recipient: string; subject: string } | null>(null);
 
+  const waitForPersistedAlerts = async (transactionId: number): Promise<AlertSummary[]> => {
+    const maxAttempts = 10;
+    const delayMs = 500;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const alerts = await getTransactionAlerts(transactionId);
+      if (alerts.length > 0) {
+        return alerts;
+      }
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+
+    return [];
+  };
+
   const mutation = useMutation({
     mutationFn: createTransaction,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setTxRef(`TXN-${data.transactionId}`);
       setStep('success');
 
-      // Immediately invalidate and refetch transactions so it displays at top of Transactions page
+      // Refresh transaction datasets immediately.
       void queryClient.invalidateQueries({ queryKey: ['transactions'] });
+
+      // Source-of-truth: read persisted alerts from backend for this transaction.
+      const persistedAlerts = await waitForPersistedAlerts(data.transactionId);
+      const latestAlert = persistedAlerts[0];
+
+      setAlertPopup(
+        latestAlert
+          ? {
+              ruleName: `Rule #${latestAlert.ruleId}`,
+              severity: latestAlert.severity,
+              message: latestAlert.alertMessage,
+            }
+          : null,
+      );
+
       void queryClient.invalidateQueries({ queryKey: ['alerts'] });
-
-      // ── Evaluate ONLY against ACTIVE rules in Backend DB ───────────────────
-      const amountRule = activeRules.find((r) => r.ruleType === 'AMOUNT_THRESHOLD');
-      const dailyRule = activeRules.find((r) => r.ruleType === 'DAILY_LIMIT');
-      const newPayeeRule = activeRules.find((r) => r.ruleType === 'NEW_PAYEE');
-
-      let triggeredAlert = null;
-
-      const payeeKey = formData?.payeeAccountNumber?.trim() || formData?.payeeId || selectedPayee?.payeeName || '';
-      const isNewPayee = payeeKey ? !knownPayees.has(payeeKey) : false;
-
-      if (amountRule && formData && formData.amount >= (amountRule.parameters?.thresholdAmount || 1000)) {
-        triggeredAlert = {
-          ruleName: amountRule.ruleName || 'Amount Threshold Rule',
-          severity: amountRule.severity || 'HIGH',
-          message: `Transaction amount $${formData.amount} exceeded $${amountRule.parameters?.thresholdAmount || 1000} active limit!`,
-        };
-      } else if (dailyRule && formData && formData.amount >= (dailyRule.parameters?.dailyLimitAmount || 2000)) {
-        triggeredAlert = {
-          ruleName: dailyRule.ruleName || 'Daily Limit Rule',
-          severity: dailyRule.severity || 'CRITICAL',
-          message: `Transaction amount $${formData.amount} exceeded daily limit threshold!`,
-        };
-      } else if (newPayeeRule && isNewPayee) {
-        // Trigger New Payee Alert ONLY on 1st transfer to a new vendor
-        triggeredAlert = {
-          ruleName: newPayeeRule.ruleName || 'New Payee Detection Rule',
-          severity: newPayeeRule.severity || 'MEDIUM',
-          message: `First-time transfer to new payee account ${formData?.payeeAccountNumber} (${selectedPayee?.payeeName || formData?.payeeId})`,
-        };
-
-        // Add payee to knownPayees so 2nd transfer does NOT trigger New Payee Alert again
-        setKnownPayees((prev) => {
-          const updated = new Set(prev);
-          updated.add(payeeKey);
-          localStorage.setItem('hawkeye_known_payees', JSON.stringify(Array.from(updated)));
-          return updated;
-        });
-      }
-
-      setAlertPopup(triggeredAlert);
+      void queryClient.invalidateQueries({ queryKey: ['transaction'] });
 
       // Trigger Email Sent Notification Popup
       setEmailPopup({
         recipient: user?.email || 'customer@hawkeye.com',
-        subject: `Transaction Alert Notification — ${triggeredAlert ? triggeredAlert.ruleName : 'DEBIT Confirmation'}`,
+        subject: `Transaction Alert Notification — ${latestAlert ? `Rule #${latestAlert.ruleId}` : 'DEBIT Confirmation'}`,
       });
 
       toast.success('DEBIT Transaction submitted successfully!');

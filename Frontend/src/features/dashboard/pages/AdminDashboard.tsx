@@ -25,7 +25,6 @@ import {
 import { getAlerts, getAlertStats } from '@/lib/api/alerts';
 import { getTransactions }          from '@/lib/api/transactions';
 import { getRules }                 from '@/lib/api/rules';
-import { mockDashboardStats }       from '@/mocks/data';
 import dayjs from 'dayjs';
 
 /* ── colour constants ─────────────────────────────────────────────────────── */
@@ -154,62 +153,50 @@ export default function AdminDashboard() {
   }, []);
 
   /* ── API queries ─────────────────────────────────────────────────────── */
-  const { data: allAlerts }    = useQuery({ queryKey: ['alerts','all-db'],     queryFn: () => getAlerts({ size: 1 }) });
-  const { data: openAlerts }   = useQuery({ queryKey: ['alerts','open-db'],    queryFn: () => getAlerts({ alertStatus: 'OPEN', size: 1 }) });
-  const { data: highAlerts }   = useQuery({ queryKey: ['alerts','high-db'],    queryFn: () => getAlerts({ severity: 'HIGH', size: 1 }) });
-  const { data: closedAlerts } = useQuery({ queryKey: ['alerts','closed-db'],  queryFn: () => getAlerts({ alertStatus: 'CLOSED', size: 1 }) });
-  const { data: investAlerts } = useQuery({ queryKey: ['alerts','invest-db'],  queryFn: () => getAlerts({ alertStatus: 'INVESTIGATING', size: 1 }) });
+  const { data: allAlerts }    = useQuery({ queryKey: ['alerts','all-db'],     queryFn: () => getAlerts({ size: 1 }), refetchInterval: 10000 });
+  const { data: openAlerts }   = useQuery({ queryKey: ['alerts','open-db'],    queryFn: () => getAlerts({ alertStatus: 'OPEN', size: 1 }), refetchInterval: 10000 });
+  const { data: highAlerts }   = useQuery({ queryKey: ['alerts','high-db'],    queryFn: () => getAlerts({ severity: 'HIGH', size: 1 }), refetchInterval: 10000 });
+  const { data: closedAlerts } = useQuery({ queryKey: ['alerts','closed-db'],  queryFn: () => getAlerts({ alertStatus: 'CLOSED', size: 1 }), refetchInterval: 10000 });
+  const { data: investAlerts } = useQuery({ queryKey: ['alerts','invest-db'],  queryFn: () => getAlerts({ alertStatus: 'INVESTIGATING', size: 1 }), refetchInterval: 10000 });
   const { data: txData }       = useQuery({ queryKey: ['txns','db'],           queryFn: () => getTransactions({ size: 1 }) });
   const { data: activeRules }  = useQuery({ queryKey: ['rules','active-db'],   queryFn: () => getRules({ status: 'ACTIVE',   size: 1 }) });
   const { data: inactRules }   = useQuery({ queryKey: ['rules','inactive-db'], queryFn: () => getRules({ status: 'INACTIVE', size: 1 }) });
-  const { data: recentHigh }   = useQuery({ queryKey: ['alerts','rec-high-db'],queryFn: () => getAlerts({ severity: 'HIGH', size: 5, sort: 'createdAt,desc' }) });
-  const { data: alertStats }   = useQuery({ queryKey: ['alerts','stats-db'],   queryFn: getAlertStats });
-
-  const stats = mockDashboardStats;
+  const { data: recentAlerts } = useQuery({ queryKey: ['alerts','recent-db'],  queryFn: () => getAlerts({ size: 5, sort: 'createdAt,desc' }), refetchInterval: 10000 });
+  const { data: alertStats }   = useQuery({ queryKey: ['alerts','stats-db'],   queryFn: getAlertStats, refetchInterval: 10000 });
 
   /* ── Derived counts ──────────────────────────────────────────────────── */
-  const totalTx    = txData?.totalElements       ?? 12453;
-  const totalAlrts = allAlerts?.totalElements    ?? 328;
-  const totalHigh  = highAlerts?.totalElements   ?? 67;
-  const totalClosed= closedAlerts?.totalElements ?? 261;
-  const totalOpen  = openAlerts?.totalElements   ?? 67;
-  const totalInvest= investAlerts?.totalElements ?? 42;
-  const actRules   = activeRules?.totalElements  ?? 24;
-  const inactRulesC= inactRules?.totalElements   ?? 6;
+  const totalTx    = txData?.totalElements       ?? 0;
+  const totalAlrts = allAlerts?.totalElements    ?? 0;
+  const totalHigh  = highAlerts?.totalElements   ?? 0;
+  const totalClosed= closedAlerts?.totalElements ?? 0;
+  const totalOpen  = openAlerts?.totalElements   ?? 0;
+  const totalInvest= investAlerts?.totalElements ?? 0;
+  const actRules   = activeRules?.totalElements  ?? 0;
+  const inactRulesC= inactRules?.totalElements   ?? 0;
 
   /* ── Donut slices ────────────────────────────────────────────────────── */
   const sevData = alertStats?.bySeverity
     ? Object.entries(alertStats.bySeverity).map(([k,v]) => ({ name: k, value: v as number }))
-    : [
-        { name: 'HIGH',          value: totalHigh },
-        { name: 'MEDIUM',        value: 89 },
-        { name: 'LOW',           value: 92 },
-        { name: 'INFORMATIONAL', value: 80 },
-      ];
+      : [];
   const staData = alertStats?.byStatus
     ? Object.entries(alertStats.byStatus).map(([k,v]) => ({ name: k, value: v as number }))
-    : [
-        { name: 'OPEN',          value: totalOpen },
-        { name: 'ACKNOWLEDGED',  value: 89 },
-        { name: 'INVESTIGATING', value: 45 },
-        { name: 'CLOSED',        value: 87 },
-        { name: 'DISMISSED',     value: 40 },
-      ];
+      : [];
   const sevTotal = sevData.reduce((s,d) => s + d.value, 0);
   const staTotal = staData.reduce((s,d) => s + d.value, 0);
 
   /* ── Trend data (transactions + alerts combined) ─────────────────────── */
-  const trendData = stats.transactionVolumeTrend.map((t, i) => ({
-    date:   t.date.slice(5),
-    count:  t.count,
-    alerts: stats.alertTrend[i]?.count ?? 0,
-  }));
+  const trendData = [
+    { date: dayjs().subtract(2, 'day').format('MMM D'), count: totalTx, alerts: totalAlrts },
+    { date: dayjs().subtract(1, 'day').format('MMM D'), count: totalTx, alerts: totalAlrts },
+    { date: dayjs().format('MMM D'), count: totalTx, alerts: totalAlrts },
+  ];
 
   /* ── Volume area data ─────────────────────────────────────────────────── */
-  const volData = stats.transactionVolumeTrend.map(t => ({
-    date:  t.date.slice(5),
-    count: t.count * 100,   // scale to look like real volume
-  }));
+  const volData = [
+    { date: dayjs().subtract(2, 'day').format('MMM D'), count: totalTx },
+    { date: dayjs().subtract(1, 'day').format('MMM D'), count: totalTx },
+    { date: dayjs().format('MMM D'), count: totalTx },
+  ];
 
   /* ── Fraud trend (bar = high severity, line = total) ─────────────────── */
   const fraudData = [
@@ -232,14 +219,7 @@ export default function AdminDashboard() {
   const maxRule = Math.max(...topRules.map(r => r.count));
 
   /* ── Recent alerts list ───────────────────────────────────────────────── */
-  const fallbackAlerts = [
-    { alertId: 1, alertMessage: 'Transaction amount $12,500 exceeds threshold', transactionId: 10023, createdAt: dayjs().subtract(30,'minute').toISOString(), alertStatus: 'OPEN' },
-    { alertId: 2, alertMessage: 'Multiple transactions detected in short time',  transactionId: 10018, createdAt: dayjs().subtract(105,'minute').toISOString(), alertStatus: 'OPEN' },
-    { alertId: 3, alertMessage: 'New payee added and transaction made',           transactionId: 10031, createdAt: dayjs().subtract(1,'day').toISOString(),     alertStatus: 'ACKNOWLEDGED' },
-    { alertId: 4, alertMessage: 'Daily limit exceeded for account 123456',        transactionId: 10027, createdAt: dayjs().subtract(1,'day').toISOString(),     alertStatus: 'OPEN' },
-    { alertId: 5, alertMessage: 'Transaction from unusual location',              transactionId: 10016, createdAt: dayjs().subtract(3,'day').toISOString(),     alertStatus: 'INVESTIGATING' },
-  ];
-  const recentList = recentHigh?.content?.length ? recentHigh.content : fallbackAlerts;
+  const recentList = recentAlerts?.content ?? [];
 
   /* ── Real-time activity feed ──────────────────────────────────────────── */
   const feed: FeedItem[] = [
@@ -415,9 +395,9 @@ export default function AdminDashboard() {
       {/* ══ ROW 3 — RECENT ALERTS | TOP RULES | SYSTEM HEALTH ══════════════ */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 
-        {/* Recent High Severity Alerts */}
+        {/* Recent Alerts */}
         <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-          <SectionHeader title="Recent High Severity Alerts" linkTo="/alerts" />
+          <SectionHeader title="Recent Alerts" linkTo="/alerts" />
           <div className="space-y-0.5">
             {recentList.slice(0,5).map((a) => (
               <div key={a.alertId} onClick={() => navigate(`/alerts/${a.alertId}`)}

@@ -22,9 +22,12 @@ interface SpringPage<T> {
 
 // Backend returns RuleActionResponse (success status + rule data)
 interface RuleActionResponse {
-  success: boolean;
+  id?: number;
+  name?: string;
+  status?: Rule['status'];
+  success?: boolean;
   message: string;
-  rule: Rule;
+  rule?: Rule;
 }
 
 // Helper to convert Spring Page to PagedResponse
@@ -54,7 +57,9 @@ export const createRule = async (payload: RuleRequest): Promise<Rule> => {
     changeReason: payload.changeReason || 'Rule created',
   };
   const { data } = await apiClient.post<RuleActionResponse>(BASE, body);
-  return data.rule || (data as unknown as Rule);
+  if (data.rule) return data.rule;
+  if (data.id) return getRuleById(data.id);
+  throw new Error('Create rule response did not include rule data');
 };
 
 // GET /api/v1/rules - Backend returns Spring Page<RuleResponse> directly
@@ -83,7 +88,8 @@ export const updateRule = async (id: number, payload: RuleRequest): Promise<Rule
     changeReason: payload.changeReason || 'Rule updated',
   };
   const { data } = await apiClient.put<RuleActionResponse>(`${BASE}/${id}`, body);
-  return data.rule || (data as unknown as Rule);
+  if (data.rule) return data.rule;
+  return getRuleById(data.id ?? id);
 };
 
 // DELETE /api/v1/rules/:id - Backend requires performedBy query param, returns RuleActionResponse
@@ -95,8 +101,9 @@ export const deleteRule = async (id: number, performedBy: string, reason?: strin
 
 // PUT /api/v1/rules/:id/toggle - Backend returns RuleActionResponse directly
 export const toggleRule = async (id: number, payload: RuleToggleRequest): Promise<Rule> => {
-  const { data} = await apiClient.put<RuleActionResponse>(`${BASE}/${id}/toggle`, payload);
-  return data.rule;
+  const { data } = await apiClient.put<RuleActionResponse>(`${BASE}/${id}/toggle`, payload);
+  if (data.rule) return data.rule;
+  return getRuleById(data.id ?? id);
 };
 
 // GET /api/v1/rules/:id/audit-trail - Backend returns Spring Page<RuleAuditTrailResponse>

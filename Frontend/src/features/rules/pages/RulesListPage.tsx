@@ -77,11 +77,52 @@ export default function RulesListPage() {
   const { data: activeRulesData } = useQuery({ queryKey: ['rules', 'active-total'], queryFn: () => getRules({ status: 'ACTIVE', size: 100 }) });
   const { data: alertStatsData } = useQuery({ queryKey: ['alerts', 'stats-rules-page'], queryFn: getAlertStats });
 
-  // Dynamic Metrics
-  const liveTotalRules = allRulesData?.totalElements ?? pagedData?.totalElements ?? 64;
-  const liveActiveRules = activeRulesData?.totalElements ?? 42;
+  // Dynamic Metrics (backend-backed only)
+  const allRules = allRulesData?.content ?? [];
+  const liveTotalRules = allRulesData?.totalElements ?? pagedData?.totalElements ?? 0;
+  const liveActiveRules = activeRulesData?.totalElements ?? 0;
   const liveInactiveRules = Math.max(0, liveTotalRules - liveActiveRules);
-  const liveTriggeredCount = alertStatsData?.totalAlerts ?? 328;
+  const liveTriggeredCount = Number((alertStatsData as { total?: number } | undefined)?.total ?? 0);
+
+  const severityCounts = allRules.reduce<Record<Severity, number>>(
+    (acc, rule) => {
+      acc[rule.severity] = (acc[rule.severity] ?? 0) + 1;
+      return acc;
+    },
+    { HIGH: 0, MEDIUM: 0, LOW: 0, CRITICAL: 0 },
+  );
+
+  const typeLabelMap: Partial<Record<RuleType, string>> = {
+    AMOUNT_THRESHOLD: 'Amount Based',
+    VELOCITY: 'Velocity Based',
+    NEW_PAYEE: 'Payee Based',
+    DAILY_LIMIT: 'Daily Limit Based',
+  };
+
+  const typeCountMap = allRules.reduce<Record<string, number>>((acc, rule) => {
+    const label = typeLabelMap[rule.ruleType] ?? rule.ruleType;
+    acc[label] = (acc[label] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const typeColors = ['#2563eb', '#f59e0b', '#22c55e', '#8b5cf6', '#ec4899', '#9ca3af'];
+  const typeDonutData = Object.entries(typeCountMap).map(([name, value], index) => ({
+    name,
+    value,
+    color: typeColors[index % typeColors.length],
+  }));
+
+  const severityDonutData = [
+    { name: 'High', value: severityCounts.HIGH, color: '#ef4444' },
+    { name: 'Medium', value: severityCounts.MEDIUM, color: '#f59e0b' },
+    { name: 'Low', value: severityCounts.LOW, color: '#22c55e' },
+    { name: 'Critical', value: severityCounts.CRITICAL, color: '#3b82f6' },
+  ].filter((entry) => entry.value > 0);
+
+  const liveHighSeverityRules = severityCounts.HIGH;
+  const highSeverityRatio = liveTotalRules > 0 ? Math.round((liveHighSeverityRules / liveTotalRules) * 100) : 0;
+
+  const flatTrend = (value: number) => Array.from({ length: 5 }, () => value);
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -98,24 +139,12 @@ export default function RulesListPage() {
   const toggleMutation = useMutation({
     mutationFn: ({ id, active }: { id: number; active: boolean }) =>
       toggleRule(id, { active, performedBy: user?.email ?? 'admin', reason: 'Toggled status' }),
-    onSuccess: (updated) => {
-      toast.success(`Rule ${updated.status === 'ACTIVE' ? 'activated' : 'deactivated'}`);
+    onSuccess: (_updated, variables) => {
+      toast.success(`Rule ${variables.active ? 'activated' : 'deactivated'}`);
       void queryClient.invalidateQueries({ queryKey: ['rules'] });
     },
     onError: () => toast.error('Failed to update rule status'),
   });
-
-  // Fallback realistic rules list matching exact reference sample
-  const fallbackRules = [
-    { ruleId: 1, ruleName: 'High Amount Rule', ruleType: 'Amount Threshold', category: 'Amount Based', condition: 'Amount > ₹50,000', severity: 'HIGH' as Severity, status: 'ACTIVE' as RuleStatus, timeWindow: 'Per Transaction', lastTriggered: '2024-05-21T10:30:00Z' },
-    { ruleId: 2, ruleName: 'Velocity Rule', ruleType: 'Velocity', category: 'Velocity Based', condition: '≥ 5 transactions in 10 mins', severity: 'HIGH' as Severity, status: 'ACTIVE' as RuleStatus, timeWindow: '10 Minutes', lastTriggered: '2024-05-21T09:45:00Z' },
-    { ruleId: 3, ruleName: 'New Payee Rule', ruleType: 'New Payee', category: 'Payee Based', condition: 'First transaction to new payee', severity: 'MEDIUM' as Severity, status: 'ACTIVE' as RuleStatus, timeWindow: 'Per Transaction', lastTriggered: '2024-05-21T08:20:00Z' },
-    { ruleId: 4, ruleName: 'International Txn Rule', ruleType: 'Location', category: 'Location Based', condition: 'Country not in allowed list', severity: 'HIGH' as Severity, status: 'ACTIVE' as RuleStatus, timeWindow: 'Per Transaction', lastTriggered: '2024-05-21T07:15:00Z' },
-    { ruleId: 5, ruleName: 'Weekend Transaction Rule', ruleType: 'Time Based', category: 'Time Based', condition: 'Transaction on weekend', severity: 'LOW' as Severity, status: 'INACTIVE' as RuleStatus, timeWindow: 'Daily', lastTriggered: '2024-05-20T18:10:00Z' },
-    { ruleId: 6, ruleName: 'Multiple Failed Login Rule', ruleType: 'Authentication', category: 'Auth Based', condition: '≥ 5 failed login attempts', severity: 'HIGH' as Severity, status: 'ACTIVE' as RuleStatus, timeWindow: '15 Minutes', lastTriggered: '2024-05-20T17:30:00Z' },
-    { ruleId: 7, ruleName: 'High Risk Merchant Rule', ruleType: 'Merchant', category: 'Merchant Based', condition: 'Merchant in high risk list', severity: 'MEDIUM' as Severity, status: 'ACTIVE' as RuleStatus, timeWindow: 'Per Transaction', lastTriggered: '2024-05-20T16:05:00Z' },
-    { ruleId: 8, ruleName: 'Dormant Account Rule', ruleType: 'Behavior', category: 'Behavior Based', condition: 'No activity in 180 days', severity: 'LOW' as Severity, status: 'INACTIVE' as RuleStatus, timeWindow: 'Daily', lastTriggered: '2024-05-19T11:20:00Z' },
-  ];
 
   const rulesList = (pagedData?.content || []).map(r => ({
     ...r,
@@ -133,23 +162,6 @@ export default function RulesListPage() {
     (r.ruleName ?? '').toLowerCase().includes((search ?? '').toLowerCase()) ||
     (r.ruleType ?? '').toLowerCase().includes((search ?? '').toLowerCase())
   );
-
-  // Chart data
-  const typeDonutData = [
-    { name: 'Amount Based', value: 16, color: '#2563eb' },
-    { name: 'Velocity Based', value: 14, color: '#f59e0b' },
-    { name: 'Payee Based', value: 10, color: '#22c55e' },
-    { name: 'Location Based', value: 8, color: '#8b5cf6' },
-    { name: 'Time Based', value: 6, color: '#ec4899' },
-    { name: 'Others', value: 10, color: '#9ca3af' },
-  ];
-
-  const severityDonutData = [
-    { name: 'High', value: 16, color: '#ef4444' },
-    { name: 'Medium', value: 20, color: '#f59e0b' },
-    { name: 'Low', value: 18, color: '#22c55e' },
-    { name: 'Informational', value: 10, color: '#3b82f6' },
-  ];
 
   const clearFilters = () => {
     setSearch('');
@@ -209,16 +221,14 @@ export default function RulesListPage() {
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Total Rules</p>
               <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{liveTotalRules}</p>
-              <span className="mt-1 flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
-                <TrendingUp className="h-3 w-3" /> +12.5% from last week
-              </span>
+              <span className="mt-1 text-[10px] text-gray-400">Live backend count</span>
             </div>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/30">
               <ShieldCheck className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-2">
-            <Sparkline data={[50, 54, 58, 60, liveTotalRules]} color="#2563eb" />
+            <Sparkline data={flatTrend(liveTotalRules)} color="#2563eb" />
           </div>
         </div>
 
@@ -228,16 +238,14 @@ export default function RulesListPage() {
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Active Rules</p>
               <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{liveActiveRules}</p>
-              <span className="mt-1 flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
-                <TrendingUp className="h-3 w-3" /> +8.3% from last week
-              </span>
+              <span className="mt-1 text-[10px] text-gray-400">Live backend count</span>
             </div>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30">
               <CheckCircle2 className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-2">
-            <Sparkline data={[35, 38, 40, 41, liveActiveRules]} color="#22c55e" />
+            <Sparkline data={flatTrend(liveActiveRules)} color="#22c55e" />
           </div>
         </div>
 
@@ -247,16 +255,14 @@ export default function RulesListPage() {
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Inactive Rules</p>
               <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{liveInactiveRules}</p>
-              <span className="mt-1 flex items-center gap-0.5 text-[10px] font-semibold text-red-500">
-                <TrendingDown className="h-3 w-3" /> -5.2% from last week
-              </span>
+              <span className="mt-1 text-[10px] text-gray-400">Derived from active vs total</span>
             </div>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-900/30">
               <Clock className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-2">
-            <Sparkline data={[22, 20, 19, 18, liveInactiveRules]} color="#8b5cf6" />
+            <Sparkline data={flatTrend(liveInactiveRules)} color="#8b5cf6" />
           </div>
         </div>
 
@@ -264,18 +270,16 @@ export default function RulesListPage() {
         <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Triggered (This Week)</p>
+              <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Triggered Alerts (Total)</p>
               <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{liveTriggeredCount}</p>
-              <span className="mt-1 flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
-                <TrendingUp className="h-3 w-3" /> +18.7% from last week
-              </span>
+              <span className="mt-1 text-[10px] text-gray-400">Live backend count</span>
             </div>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-900/30">
               <Zap className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-2">
-            <Sparkline data={[280, 295, 305, 315, liveTriggeredCount]} color="#f59e0b" />
+            <Sparkline data={flatTrend(liveTriggeredCount)} color="#f59e0b" />
           </div>
         </div>
 
@@ -284,10 +288,10 @@ export default function RulesListPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">High Severity Rules</p>
-              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">16</p>
-              <span className="mt-1 text-[10px] text-gray-400">25% of total rules</span>
+              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{liveHighSeverityRules}</p>
+              <span className="mt-1 text-[10px] text-gray-400">{highSeverityRatio}% of total rules</span>
             </div>
-            <RingProgress value={16} total={64} color="#ef4444" />
+            <RingProgress value={liveHighSeverityRules} total={Math.max(1, liveTotalRules)} color="#ef4444" />
           </div>
         </div>
 
@@ -296,17 +300,15 @@ export default function RulesListPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Avg. Response Time</p>
-              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">1.24s</p>
-              <span className="mt-1 flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
-                <TrendingDown className="h-3 w-3" /> -0.35s from last week
-              </span>
+              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">N/A</p>
+              <span className="mt-1 text-[10px] text-gray-400">No backend metric exposed</span>
             </div>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600 dark:bg-cyan-900/30">
               <Clock className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-2">
-            <Sparkline data={[1.6, 1.5, 1.4, 1.3, 1.24]} color="#06b6d4" />
+            <Sparkline data={flatTrend(0)} color="#06b6d4" />
           </div>
         </div>
       </div>
@@ -336,7 +338,7 @@ export default function RulesListPage() {
           >
             <span>Active Rules</span>
             <span className="rounded-full bg-emerald-100 px-1.5 py-0.2 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-              42
+              {liveActiveRules}
             </span>
           </button>
 
@@ -350,7 +352,7 @@ export default function RulesListPage() {
           >
             <span>Inactive Rules</span>
             <span className="rounded-full bg-gray-100 px-1.5 py-0.2 text-[10px] font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-              18
+              {liveInactiveRules}
             </span>
           </button>
         </div>
@@ -526,7 +528,7 @@ export default function RulesListPage() {
 
         {/* Footer Pagination */}
         <div className="flex items-center justify-between border-t border-gray-100 bg-white px-5 py-3 text-xs text-gray-500 dark:border-gray-800 dark:bg-gray-900">
-          <span>Showing 1 to {filteredRows.length} of 64 rules</span>
+          <span>Showing {filteredRows.length} on this page of {liveTotalRules} rules</span>
           <div className="flex items-center gap-1">
             <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800">‹</button>
             <button className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 font-bold text-white shadow-sm">1</button>
@@ -556,7 +558,7 @@ export default function RulesListPage() {
                 </Pie>
               </PieChart>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-xl font-black text-gray-900 dark:text-white">64</span>
+                <span className="text-xl font-black text-gray-900 dark:text-white">{liveTotalRules}</span>
                 <span className="text-[10px] text-gray-400">Total</span>
               </div>
             </div>
@@ -588,7 +590,7 @@ export default function RulesListPage() {
                 </Pie>
               </PieChart>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-xl font-black text-gray-900 dark:text-white">64</span>
+                <span className="text-xl font-black text-gray-900 dark:text-white">{liveTotalRules}</span>
                 <span className="text-[10px] text-gray-400">Total</span>
               </div>
             </div>

@@ -12,7 +12,6 @@ const PAGE_TITLES: Record<string, string> = {
   '/alerts/stats':        'Alert Statistics',
   '/admin/reports':       'Reports',
   '/admin/users':         'Users',
-  '/admin/audit-logs':    'Audit Logs',
   '/admin/system-health': 'System Health',
   '/admin/settings':      'Settings',
 };

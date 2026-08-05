@@ -284,7 +284,6 @@ public class RuleService {
 					cb.like(cb.lower(root.get("description")), pattern)
 			));
 		}
-
 		return spec;
 	}
 }

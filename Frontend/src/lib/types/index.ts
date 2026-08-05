@@ -153,6 +153,7 @@ export interface Alert {
 }
 
 export interface AlertListParams {
+  status?: AlertStatus;
   alertStatus?: AlertStatus;
   severity?: Severity;
   ruleType?: RuleType;
