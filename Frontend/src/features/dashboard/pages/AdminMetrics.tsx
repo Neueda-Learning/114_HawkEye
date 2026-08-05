@@ -82,6 +82,7 @@ export default function AdminMetrics() {
   const [status, setStatus] = useState<TransactionStatus | ''>('');
   const [currency, setCurrency] = useState('');
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+  const [selectedTx, setSelectedTx] = useState<any | null>(null);
 
   // New Transaction Form State
   const [newAccountId, setNewAccountId] = useState('ACC-100234');
@@ -475,10 +476,17 @@ export default function AdminMetrics() {
                 </td>
                 <td className="px-5 py-3.5 text-right">
                   <div className="flex items-center justify-end gap-1">
-                    <button className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800">
+                    <button
+                      onClick={() => setSelectedTx(row)}
+                      className="rounded p-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                      title="View Details"
+                    >
                       <Eye className="h-4 w-4" />
                     </button>
-                    <button className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800">
+                    <button
+                      onClick={() => setSelectedTx(row)}
+                      className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+                    >
                       <MoreVertical className="h-4 w-4" />
                     </button>
                   </div>
@@ -673,6 +681,63 @@ export default function AdminMetrics() {
                 className="flex-1 rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50"
               >
                 {createMutation.isPending ? 'Creating...' : 'Submit Transaction'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal — View Transaction Details ──────────────────────────────── */}
+      {selectedTx && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-900">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MerchantIcon name={selectedTx.payeeName} />
+                <div>
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white">Transaction #{selectedTx.transactionId}</h3>
+                  <p className="text-xs text-gray-400">{selectedTx.payeeName}</p>
+                </div>
+              </div>
+              <button onClick={() => setSelectedTx(null)} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3 rounded-xl bg-gray-50 p-3.5 dark:bg-gray-800">
+                <div><span className="text-gray-400">Account ID:</span> <strong className="block text-gray-900 dark:text-white font-mono">{selectedTx.accountId}</strong></div>
+                <div><span className="text-gray-400">Account Holder:</span> <strong className="block text-gray-900 dark:text-white">{selectedTx.accountName || 'John Smith'}</strong></div>
+                <div><span className="text-gray-400">Amount:</span> <strong className="block text-base font-black text-gray-900 dark:text-white">{formatCurrency(selectedTx.amount)}</strong></div>
+                <div><span className="text-gray-400">Type & Channel:</span> <span className="block font-semibold text-blue-600">{selectedTx.transactionType} ({selectedTx.channel || 'Online Banking'})</span></div>
+                <div><span className="text-gray-400">Status:</span> <span className="block font-bold text-emerald-600">{selectedTx.status}</span></div>
+                <div><span className="text-gray-400">Timestamp:</span> <span className="block text-gray-600 dark:text-gray-300 font-mono">{formatDate(selectedTx.timestamp)}</span></div>
+              </div>
+
+              <div>
+                <p className="mb-1 font-bold text-gray-700 dark:text-gray-300">Transaction Raw Event Data</p>
+                <pre className="overflow-x-auto rounded-xl border border-gray-200 bg-gray-950 p-3 font-mono text-[11px] text-emerald-400">
+                  {JSON.stringify({
+                    transactionId: selectedTx.transactionId,
+                    accountId: selectedTx.accountId,
+                    payeeName: selectedTx.payeeName,
+                    amount: selectedTx.amount,
+                    currency: selectedTx.currency || 'USD',
+                    type: selectedTx.transactionType,
+                    status: selectedTx.status,
+                    channel: selectedTx.channel || 'Online Banking',
+                    timestamp: selectedTx.timestamp
+                  }, null, 2)}
+                </pre>
+              </div>
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <button
+                onClick={() => setSelectedTx(null)}
+                className="rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white hover:bg-blue-700"
+              >
+                Close Details
               </button>
             </div>
           </div>

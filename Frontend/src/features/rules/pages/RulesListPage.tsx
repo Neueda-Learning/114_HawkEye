@@ -11,6 +11,7 @@ import {
   ArrowRight, ToggleLeft, ToggleRight
 } from 'lucide-react';
 import { getRules, deleteRule, toggleRule } from '@/lib/api/rules';
+import { getAlertStats } from '@/lib/api/alerts';
 import { SeverityBadge } from '@/components/common/SeverityBadge';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { toast } from '@/components/common/Toast';
@@ -71,6 +72,16 @@ export default function RulesListPage() {
       severity: severity as Severity || undefined,
     }),
   });
+
+  const { data: allRulesData } = useQuery({ queryKey: ['rules', 'all-total'], queryFn: () => getRules({ size: 100 }) });
+  const { data: activeRulesData } = useQuery({ queryKey: ['rules', 'active-total'], queryFn: () => getRules({ status: 'ACTIVE', size: 100 }) });
+  const { data: alertStatsData } = useQuery({ queryKey: ['alerts', 'stats-rules-page'], queryFn: getAlertStats });
+
+  // Dynamic Metrics
+  const liveTotalRules = allRulesData?.totalElements ?? pagedData?.totalElements ?? 64;
+  const liveActiveRules = activeRulesData?.totalElements ?? 42;
+  const liveInactiveRules = Math.max(0, liveTotalRules - liveActiveRules);
+  const liveTriggeredCount = alertStatsData?.totalAlerts ?? 328;
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -196,7 +207,7 @@ export default function RulesListPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Total Rules</p>
-              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">64</p>
+              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{liveTotalRules}</p>
               <span className="mt-1 flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
                 <TrendingUp className="h-3 w-3" /> +12.5% from last week
               </span>
@@ -206,7 +217,7 @@ export default function RulesListPage() {
             </div>
           </div>
           <div className="mt-2">
-            <Sparkline data={[50, 54, 58, 60, 64]} color="#2563eb" />
+            <Sparkline data={[50, 54, 58, 60, liveTotalRules]} color="#2563eb" />
           </div>
         </div>
 
@@ -215,7 +226,7 @@ export default function RulesListPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Active Rules</p>
-              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">42</p>
+              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{liveActiveRules}</p>
               <span className="mt-1 flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
                 <TrendingUp className="h-3 w-3" /> +8.3% from last week
               </span>
@@ -225,7 +236,7 @@ export default function RulesListPage() {
             </div>
           </div>
           <div className="mt-2">
-            <Sparkline data={[35, 38, 40, 41, 42]} color="#22c55e" />
+            <Sparkline data={[35, 38, 40, 41, liveActiveRules]} color="#22c55e" />
           </div>
         </div>
 
@@ -234,7 +245,7 @@ export default function RulesListPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Inactive Rules</p>
-              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">18</p>
+              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{liveInactiveRules}</p>
               <span className="mt-1 flex items-center gap-0.5 text-[10px] font-semibold text-red-500">
                 <TrendingDown className="h-3 w-3" /> -5.2% from last week
               </span>
@@ -244,7 +255,7 @@ export default function RulesListPage() {
             </div>
           </div>
           <div className="mt-2">
-            <Sparkline data={[22, 20, 19, 18, 18]} color="#8b5cf6" />
+            <Sparkline data={[22, 20, 19, 18, liveInactiveRules]} color="#8b5cf6" />
           </div>
         </div>
 
@@ -253,7 +264,7 @@ export default function RulesListPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Triggered (This Week)</p>
-              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">328</p>
+              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{liveTriggeredCount}</p>
               <span className="mt-1 flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
                 <TrendingUp className="h-3 w-3" /> +18.7% from last week
               </span>
@@ -263,7 +274,7 @@ export default function RulesListPage() {
             </div>
           </div>
           <div className="mt-2">
-            <Sparkline data={[280, 290, 310, 320, 328]} color="#f59e0b" />
+            <Sparkline data={[280, 295, 305, 315, liveTriggeredCount]} color="#f59e0b" />
           </div>
         </div>
 
