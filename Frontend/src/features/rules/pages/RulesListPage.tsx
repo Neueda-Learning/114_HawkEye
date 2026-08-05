@@ -119,17 +119,19 @@ export default function RulesListPage() {
 
   const rulesList = (pagedData?.content || []).map(r => ({
     ...r,
-    ruleId: r.id,
+    ruleId: r.ruleId || (r as any).id || 1,
+    ruleName: r.ruleName || (r as any).name || 'Rule',
+    ruleType: r.ruleType || 'AMOUNT_THRESHOLD',
     category: `${(r.ruleType || 'GENERAL').split('_')[0]} Based`,
     condition: r.ruleType === 'AMOUNT_THRESHOLD' ? `Amount > $${r.parameters?.thresholdAmount || 1000}` : r.ruleType === 'VELOCITY' ? `≥ ${r.parameters?.velocityCount || 3} txns in ${r.parameters?.velocityWindowMinutes || 60} mins` : r.ruleType === 'NEW_PAYEE' ? 'New Unregistered Payee' : `Daily Total > $${r.parameters?.dailyLimitAmount || 2000}`,
     timeWindow: r.ruleType === 'VELOCITY' ? `${r.parameters?.velocityWindowMinutes || 60} Mins` : 'Per Transaction',
     lastTriggered: r.updatedAt || r.createdAt || new Date().toISOString(),
   }));
 
-  // Filter client side
+  // Filter client side with null-safe string guards
   const filteredRows = rulesList.filter(r =>
-    r.ruleName.toLowerCase().includes(search.toLowerCase()) ||
-    r.ruleType.toLowerCase().includes(search.toLowerCase())
+    (r.ruleName ?? '').toLowerCase().includes((search ?? '').toLowerCase()) ||
+    (r.ruleType ?? '').toLowerCase().includes((search ?? '').toLowerCase())
   );
 
   // Chart data
