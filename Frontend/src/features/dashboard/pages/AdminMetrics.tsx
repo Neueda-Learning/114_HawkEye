@@ -97,9 +97,10 @@ export default function AdminMetrics() {
     queryKey: ['transactions', page, status, transactionType],
     queryFn: () => getTransactions({
       page,
-      size: 8,
+      size: 15,
       status: status || undefined,
       transactionType: transactionType || undefined,
+      sort: 'createdAt,desc',
     }),
   });
 

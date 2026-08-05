@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -29,6 +29,18 @@ export default function SendMoneyPage() {
   const [step, setStep] = useState<Step>('form');
   const [formData, setFormData] = useState<FormValues | null>(null);
   const [txRef, setTxRef]       = useState<string>('');
+
+  // ── Known Payee Accounts Tracking (To prevent duplicate New Payee alert on 2nd transfer) ─
+  const [knownPayees, setKnownPayees] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('hawkeye_known_payees');
+    if (saved) {
+      try {
+        return new Set(JSON.parse(saved));
+      } catch (e) {}
+    }
+    // Initial known seed payees
+    return new Set(['ACC-908123', 'ACC-001', 'PAY-001', 'PAY-002', 'PAY-003', 'PAY-004', 'PAY-005', 'Amazon Marketplace', 'Starbucks Coffee']);
+  });
 
   // ── Source Accounts Management for Single User ─────────────────────────────
   const [userAccounts, setUserAccounts] = useState<string[]>([
@@ -74,6 +86,8 @@ export default function SendMoneyPage() {
     onSuccess: (data) => {
       setTxRef(`TXN-${data.transactionId}`);
       setStep('success');
+
+      // Immediately invalidate and refetch transactions so it displays at top of Transactions page
       void queryClient.invalidateQueries({ queryKey: ['transactions'] });
       void queryClient.invalidateQueries({ queryKey: ['alerts'] });
 
@@ -83,6 +97,9 @@ export default function SendMoneyPage() {
       const newPayeeRule = activeRules.find((r) => r.ruleType === 'NEW_PAYEE');
 
       let triggeredAlert = null;
+
+      const payeeKey = formData?.payeeAccountNumber?.trim() || formData?.payeeId || selectedPayee?.payeeName || '';
+      const isNewPayee = payeeKey ? !knownPayees.has(payeeKey) : false;
 
       if (amountRule && formData && formData.amount >= (amountRule.parameters?.thresholdAmount || 1000)) {
         triggeredAlert = {
@@ -96,13 +113,21 @@ export default function SendMoneyPage() {
           severity: dailyRule.severity || 'CRITICAL',
           message: `Transaction amount $${formData.amount} exceeded daily limit threshold!`,
         };
-      } else if (newPayeeRule && formData) {
-        // Trigger New Payee Rule Alert if newPayeeRule is active in backend rules DB
+      } else if (newPayeeRule && isNewPayee) {
+        // Trigger New Payee Alert ONLY on 1st transfer to a new vendor
         triggeredAlert = {
           ruleName: newPayeeRule.ruleName || 'New Payee Detection Rule',
           severity: newPayeeRule.severity || 'MEDIUM',
-          message: `First-time transfer to new payee account ${formData.payeeAccountNumber} (${selectedPayee?.payeeName || formData.payeeId})`,
+          message: `First-time transfer to new payee account ${formData?.payeeAccountNumber} (${selectedPayee?.payeeName || formData?.payeeId})`,
         };
+
+        // Add payee to knownPayees so 2nd transfer does NOT trigger New Payee Alert again
+        setKnownPayees((prev) => {
+          const updated = new Set(prev);
+          updated.add(payeeKey);
+          localStorage.setItem('hawkeye_known_payees', JSON.stringify(Array.from(updated)));
+          return updated;
+        });
       }
 
       setAlertPopup(triggeredAlert);
@@ -131,7 +156,7 @@ export default function SendMoneyPage() {
     mutation.mutate({
       accountId:          selectedSourceAccount.split(' ')[0],
       payeeId:            formData.payeeAccountNumber || formData.payeeId,
-      payeeName:          selectedPayee?.payeeName || 'Beneficiary Account',
+      payeeName:          selectedPayee?.payeeName || 'Vendor Payee',
       payeeType:          selectedPayee?.payeeType || 'Personal',
       amount:             formData.amount,
       transactionType:    'DEBIT', // Strictly DEBIT
@@ -209,7 +234,7 @@ export default function SendMoneyPage() {
               Send Another
             </button>
             <button
-              onClick={() => navigate('/customer/transactions')}
+              onClick={() => navigate('/admin/metrics')}
               className="rounded-lg bg-hawk-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-hawk-700"
             >
               View Transactions
@@ -282,7 +307,7 @@ export default function SendMoneyPage() {
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
         <form onSubmit={handleSubmit(onReview)} className="space-y-4">
 
-          {/* Source Account Selector (Supports Multiple Accounts for Single User) */}
+          {/* Source Account Selector */}
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
@@ -388,7 +413,7 @@ export default function SendMoneyPage() {
             <input
               {...register('description')}
               type="text"
-              placeholder="e.g. Invoice payment"
+              placeholder="e.g. Vendor invoice payment"
               className="w-full rounded-xl border border-gray-300 px-3 py-2 text-xs outline-none focus:border-hawk-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             />
           </div>
