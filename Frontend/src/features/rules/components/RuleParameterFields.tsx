@@ -28,7 +28,8 @@ export function RuleParameterFields({ ruleType }: Props) {
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
             <input
               {...register('parameters.thresholdAmount', { valueAsNumber: true })}
-              type="number" step="100" min="1"
+              type="number"
+              step="any"
               placeholder="10000"
               className="w-full rounded-lg border border-gray-300 py-2.5 pl-7 pr-3 text-sm outline-none focus:border-hawk-500 focus:ring-2 focus:ring-hawk-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             />
@@ -48,7 +49,8 @@ export function RuleParameterFields({ ruleType }: Props) {
             <p className="mb-1.5 text-xs text-gray-400">Time window to count transactions in.</p>
             <input
               {...register('parameters.windowMinutes', { valueAsNumber: true })}
-              type="number" min="1" max="1440"
+              type="number"
+              step="any"
               placeholder="10"
               className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-hawk-500 focus:ring-2 focus:ring-hawk-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             />
@@ -60,7 +62,8 @@ export function RuleParameterFields({ ruleType }: Props) {
             <p className="mb-1.5 text-xs text-gray-400">Alert if transactions exceed this count within the window.</p>
             <input
               {...register('parameters.maxTransactions', { valueAsNumber: true })}
-              type="number" min="1"
+              type="number"
+              step="any"
               placeholder="5"
               className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-hawk-500 focus:ring-2 focus:ring-hawk-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             />
@@ -78,7 +81,8 @@ export function RuleParameterFields({ ruleType }: Props) {
           </p>
           <input
             {...register('parameters.lookbackDays', { valueAsNumber: true })}
-            type="number" min="1" max="3650"
+            type="number"
+            step="any"
             placeholder="365"
             className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-hawk-500 focus:ring-2 focus:ring-hawk-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           />
@@ -95,7 +99,8 @@ export function RuleParameterFields({ ruleType }: Props) {
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
             <input
               {...register('parameters.dailyLimitAmount', { valueAsNumber: true })}
-              type="number" step="1000" min="1"
+              type="number"
+              step="any"
               placeholder="50000"
               className="w-full rounded-lg border border-gray-300 py-2.5 pl-7 pr-3 text-sm outline-none focus:border-hawk-500 focus:ring-2 focus:ring-hawk-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             />
@@ -105,4 +110,3 @@ export function RuleParameterFields({ ruleType }: Props) {
     </div>
   );
 }
-

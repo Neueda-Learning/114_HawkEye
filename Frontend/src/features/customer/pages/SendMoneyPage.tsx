@@ -277,7 +277,7 @@ export default function SendMoneyPage() {
               <input
                 {...register('amount')}
                 type="number"
-                step="0.01"
+                step="any"
                 placeholder="0.00"
                 className="w-full rounded-lg border border-gray-300 py-2.5 pl-7 pr-3 text-sm outline-none transition focus:border-hawk-500 focus:ring-2 focus:ring-hawk-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
               />

@@ -637,6 +637,7 @@ export default function AdminMetrics() {
                 <label className="mb-1 block font-semibold text-gray-700 dark:text-gray-300">Amount ($)</label>
                 <input
                   type="number"
+                  step="any"
                   value={newAmount}
                   onChange={(e) => setNewAmount(e.target.value)}
                   placeholder="150.00"
