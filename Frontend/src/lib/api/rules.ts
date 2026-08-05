@@ -42,8 +42,19 @@ function toPagedResponse<T>(springPage: SpringPage<T>) {
 
 // POST /api/v1/rules - Backend returns RuleActionResponse directly
 export const createRule = async (payload: RuleRequest): Promise<Rule> => {
-  const { data } = await apiClient.post<RuleActionResponse>(BASE, payload);
-  return data.rule;
+  const body = {
+    ruleName: payload.name,
+    name: payload.name,
+    description: payload.description || '',
+    ruleType: payload.ruleType,
+    severity: payload.severity,
+    parameters: payload.parameters,
+    createdBy: payload.performedBy || 'admin@hawkeye.com',
+    performedBy: payload.performedBy || 'admin@hawkeye.com',
+    changeReason: payload.changeReason || 'Rule created',
+  };
+  const { data } = await apiClient.post<RuleActionResponse>(BASE, body);
+  return data.rule || (data as unknown as Rule);
 };
 
 // GET /api/v1/rules - Backend returns Spring Page<RuleResponse> directly
@@ -60,8 +71,19 @@ export const getRuleById = async (id: number): Promise<Rule> => {
 
 // PUT /api/v1/rules/:id - Backend returns RuleActionResponse directly
 export const updateRule = async (id: number, payload: RuleRequest): Promise<Rule> => {
-  const { data } = await apiClient.put<RuleActionResponse>(`${BASE}/${id}`, payload);
-  return data.rule;
+  const body = {
+    ruleName: payload.name,
+    name: payload.name,
+    description: payload.description || '',
+    ruleType: payload.ruleType,
+    severity: payload.severity,
+    parameters: payload.parameters,
+    updatedBy: payload.performedBy || 'admin@hawkeye.com',
+    performedBy: payload.performedBy || 'admin@hawkeye.com',
+    changeReason: payload.changeReason || 'Rule updated',
+  };
+  const { data } = await apiClient.put<RuleActionResponse>(`${BASE}/${id}`, body);
+  return data.rule || (data as unknown as Rule);
 };
 
 // DELETE /api/v1/rules/:id - Backend requires performedBy query param, returns RuleActionResponse
