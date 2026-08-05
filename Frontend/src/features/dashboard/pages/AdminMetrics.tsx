@@ -87,6 +87,7 @@ export default function AdminMetrics() {
   // New Transaction Form State
   const [newAccountId, setNewAccountId] = useState('ACC-100234');
   const [newPayeeName, setNewPayeeName] = useState('');
+  const [newPayeeAccNo, setNewPayeeAccNo] = useState('ACC-908123');
   const [newAmount, setNewAmount] = useState('');
   const [newTxType, setNewTxType] = useState<TransactionType>('DEBIT');
   const [newDesc, setNewDesc] = useState('');
@@ -634,6 +635,17 @@ export default function AdminMetrics() {
               </div>
 
               <div>
+                <label className="mb-1 block font-semibold text-gray-700 dark:text-gray-300">Payee Account Number</label>
+                <input
+                  type="text"
+                  value={newPayeeAccNo}
+                  onChange={(e) => setNewPayeeAccNo(e.target.value)}
+                  placeholder="e.g. ACC-908123"
+                  className="w-full rounded-xl border border-gray-200 p-2.5 text-xs font-mono outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
+              </div>
+
+              <div>
                 <label className="mb-1 block font-semibold text-gray-700 dark:text-gray-300">Amount ($)</label>
                 <input
                   type="number"
@@ -646,15 +658,10 @@ export default function AdminMetrics() {
               </div>
 
               <div>
-                <label className="mb-1 block font-semibold text-gray-700 dark:text-gray-300">Type</label>
-                <select
-                  value={newTxType}
-                  onChange={(e) => setNewTxType(e.target.value as TransactionType)}
-                  className="w-full rounded-xl border border-gray-200 p-2.5 text-xs outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="DEBIT">Debit</option>
-                  <option value="CREDIT">Credit</option>
-                </select>
+                <label className="mb-1 block font-semibold text-gray-700 dark:text-gray-300">Transaction Type</label>
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-2.5 text-xs font-bold text-red-600 dark:border-gray-700 dark:bg-gray-800">
+                  DEBIT (Outward Transfer)
+                </div>
               </div>
 
               <div>
