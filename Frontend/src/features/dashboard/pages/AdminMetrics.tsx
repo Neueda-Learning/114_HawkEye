@@ -73,6 +73,7 @@ function RingProgress({ value, total, color }: { value: number; total: number; c
 export default function AdminMetrics() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const pageSize = 15;
 
   // Filters & State
   const [page, setPage] = useState(0);
@@ -97,11 +98,26 @@ export default function AdminMetrics() {
     queryKey: ['transactions', page, status, transactionType],
     queryFn: () => getTransactions({
       page,
-      size: 15,
+      size: pageSize,
       status: status || undefined,
       transactionType: transactionType || undefined,
       sort: 'createdAt,desc',
     }),
+  });
+
+  const { data: debitCountData } = useQuery({
+    queryKey: ['transactions', 'count', 'DEBIT'],
+    queryFn: () => getTransactions({ page: 0, size: 1, transactionType: 'DEBIT' }),
+  });
+
+  const { data: creditCountData } = useQuery({
+    queryKey: ['transactions', 'count', 'CREDIT'],
+    queryFn: () => getTransactions({ page: 0, size: 1, transactionType: 'CREDIT' }),
+  });
+
+  const { data: completedCountData } = useQuery({
+    queryKey: ['transactions', 'count', 'COMPLETED'],
+    queryFn: () => getTransactions({ page: 0, size: 1, status: 'COMPLETED' }),
   });
 
   // Mutation to create new transaction
@@ -124,56 +140,61 @@ export default function AdminMetrics() {
     },
   });
 
-  // Mock Fallback Transactions list matching the exact sample reference UI
-  const fallbackTransactions = [
-    { transactionId: 10032, timestamp: '2024-05-21T10:30:00Z', accountId: '1234567890', accountName: 'John Smith', payeeName: 'Amazon Marketplace', payeeCategory: 'Online Shopping', amount: 1540.00, currency: 'USD', transactionType: 'DEBIT' as TransactionType, status: 'COMPLETED' as TransactionStatus, channel: 'Online Banking' },
-    { transactionId: 10031, timestamp: '2024-05-21T09:45:00Z', accountId: '9876543210', accountName: 'Maria Garcia', payeeName: 'Starbucks Coffee', payeeCategory: 'Food & Beverages', amount: 15.60, currency: 'USD', transactionType: 'DEBIT' as TransactionType, status: 'COMPLETED' as TransactionStatus, channel: 'Mobile App' },
-    { transactionId: 10030, timestamp: '2024-05-21T08:20:00Z', accountId: '1234567890', accountName: 'John Smith', payeeName: 'Salary Credit', payeeCategory: 'Acme Corp', amount: 5200.00, currency: 'USD', transactionType: 'CREDIT' as TransactionType, status: 'COMPLETED' as TransactionStatus, channel: 'Internal Transfer' },
-    { transactionId: 10029, timestamp: '2024-05-21T07:15:00Z', accountId: '5566778899', accountName: 'Robert Brown', payeeName: 'Shell Oil Station', payeeCategory: 'Fuel', amount: 65.40, currency: 'USD', transactionType: 'DEBIT' as TransactionType, status: 'COMPLETED' as TransactionStatus, channel: 'Card Payment' },
-    { transactionId: 10028, timestamp: '2024-05-20T22:45:00Z', accountId: '1234567890', accountName: 'John Smith', payeeName: 'Netflix Subscription', payeeCategory: 'Entertainment', amount: 15.99, currency: 'USD', transactionType: 'DEBIT' as TransactionType, status: 'COMPLETED' as TransactionStatus, channel: 'Online Banking' },
-    { transactionId: 10027, timestamp: '2024-05-20T20:30:00Z', accountId: '9876543210', accountName: 'Maria Garcia', payeeName: 'Electricity Board', payeeCategory: 'Utility Payment', amount: 86.00, currency: 'USD', transactionType: 'DEBIT' as TransactionType, status: 'PENDING' as TransactionStatus, channel: 'Mobile App' },
-    { transactionId: 10026, timestamp: '2024-05-20T18:00:00Z', accountId: '1122334455', accountName: 'James Wilson', payeeName: 'John Doe', payeeCategory: 'Personal Transfer', amount: 750.00, currency: 'USD', transactionType: 'CREDIT' as TransactionType, status: 'COMPLETED' as TransactionStatus, channel: 'UPI Transfer' },
-    { transactionId: 10025, timestamp: '2024-05-20T16:30:00Z', accountId: '6677889900', accountName: 'Sarah Lee', payeeName: 'Flipkart Online', payeeCategory: 'Shopping', amount: 120.00, currency: 'USD', transactionType: 'DEBIT' as TransactionType, status: 'FAILED' as TransactionStatus, channel: 'Card Payment' },
-  ];
-
   const transactionsList = (pagedData?.content || []).map(t => ({
     ...t,
-    payeeName: t.payeeName || t.payeeId || 'Merchant Payee',
-    accountName: t.accountName || t.accountId || 'Account Holder',
-    payeeCategory: 'General Payment',
-    channel: t.transactionType === 'CREDIT' ? 'Internal Transfer' : 'Online Banking',
+    payeeName: t.payeeName || t.payeeId || 'UNKNOWN',
+    accountName: t.accountName || t.accountId,
+    payeeCategory: t.payeeId || 'N/A',
+    channel: (t as unknown as { channel?: string }).channel || 'N/A',
   }));
 
   // Filter client side for search
   const filteredRows = transactionsList.filter(t =>
-    t.payeeName.toLowerCase().includes(search.toLowerCase()) ||
-    t.accountId.includes(search) ||
+    (t.payeeName || '').toLowerCase().includes(search.toLowerCase()) ||
+    (t.accountId || '').includes(search) ||
     t.transactionId.toString().includes(search)
   );
 
-  // Chart data
-  const volumeTrendData = [
-    { date: 'May 15', amount: 850000 },
-    { date: 'May 16', amount: 980000 },
-    { date: 'May 17', amount: 910000 },
-    { date: 'May 18', amount: 1050000 },
-    { date: 'May 19', amount: 1254750 },
-    { date: 'May 20', amount: 1120000 },
-    { date: 'May 21', amount: 1180000 },
-  ];
+  const totalTransactions = pagedData?.totalElements ?? 0;
+  const debitTransactions = debitCountData?.totalElements ?? 0;
+  const creditTransactions = creditCountData?.totalElements ?? 0;
+  const completedTransactions = completedCountData?.totalElements ?? 0;
+  const successRate = totalTransactions > 0 ? (completedTransactions / totalTransactions) * 100 : 0;
+
+  const totalAmount = filteredRows.reduce((sum, row) => sum + row.amount, 0);
+  const avgAmount = filteredRows.length > 0 ? totalAmount / filteredRows.length : 0;
+
+  const volumeByDate = filteredRows.reduce<Record<string, number>>((acc, row) => {
+    const dateLabel = new Date(row.timestamp).toLocaleDateString(undefined, { month: 'short', day: '2-digit' });
+    acc[dateLabel] = (acc[dateLabel] ?? 0) + row.amount;
+    return acc;
+  }, {});
+
+  const volumeTrendData = Object.entries(volumeByDate).map(([date, amount]) => ({ date, amount }));
 
   const typeDonutData = [
-    { name: 'Debit', value: 7126, color: '#ef4444' },
-    { name: 'Credit', value: 5327, color: '#22c55e' },
+    { name: 'Debit', value: debitTransactions, color: '#ef4444' },
+    { name: 'Credit', value: creditTransactions, color: '#22c55e' },
   ];
 
-  const topMerchants = [
-    { name: 'Amazon Marketplace', count: 1245, pct: 100 },
-    { name: 'Flipkart', count: 945, pct: 75 },
-    { name: 'Starbucks Coffee', count: 743, pct: 60 },
-    { name: 'Netflix', count: 542, pct: 43 },
-    { name: 'Shell Oil Station', count: 412, pct: 33 },
-  ];
+  const merchantCounts = filteredRows.reduce<Record<string, number>>((acc, row) => {
+    const key = row.payeeName || 'UNKNOWN';
+    acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const maxMerchantCount = Math.max(1, ...Object.values(merchantCounts));
+  const topMerchants = Object.entries(merchantCounts)
+    .map(([name, count]) => ({
+      name,
+      count,
+      pct: Math.round((count / maxMerchantCount) * 100),
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  const pageStart = totalTransactions === 0 ? 0 : page * pageSize + 1;
+  const pageEnd = totalTransactions === 0 ? 0 : page * pageSize + filteredRows.length;
 
   const clearFilters = () => {
     setSearch('');
@@ -233,17 +254,15 @@ export default function AdminMetrics() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Total Transactions</p>
-              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">12,453</p>
-              <span className="mt-1 flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
-                <TrendingUp className="h-3 w-3" /> +15.8% from last week
-              </span>
+              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{totalTransactions.toLocaleString()}</p>
+              <span className="mt-1 text-[10px] text-gray-400">Live backend total</span>
             </div>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-900/30">
               <Landmark className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-2">
-            <Sparkline data={[10000, 11200, 10800, 11800, 12453]} color="#2563eb" />
+            <Sparkline data={[totalTransactions, totalTransactions, totalTransactions, totalTransactions, totalTransactions]} color="#2563eb" />
           </div>
         </div>
 
@@ -252,17 +271,15 @@ export default function AdminMetrics() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Total Amount</p>
-              <p className="mt-1 text-xl font-black text-gray-900 dark:text-white">$1,254,750.00</p>
-              <span className="mt-1 flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
-                <TrendingUp className="h-3 w-3" /> +18.4% from last week
-              </span>
+              <p className="mt-1 text-xl font-black text-gray-900 dark:text-white">{formatCurrency(totalAmount)}</p>
+              <span className="mt-1 text-[10px] text-gray-400">Current page amount</span>
             </div>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30">
               <CheckCircle2 className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-2">
-            <Sparkline data={[850000, 980000, 910000, 1050000, 1254750]} color="#22c55e" />
+            <Sparkline data={[totalAmount, totalAmount, totalAmount, totalAmount, totalAmount]} color="#22c55e" />
           </div>
         </div>
 
@@ -271,17 +288,15 @@ export default function AdminMetrics() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Average Amount</p>
-              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">$100.78</p>
-              <span className="mt-1 flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
-                <TrendingUp className="h-3 w-3" /> +6.3% from last week
-              </span>
+              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{formatCurrency(avgAmount)}</p>
+              <span className="mt-1 text-[10px] text-gray-400">Current page average</span>
             </div>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-900/30">
               <Zap className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-2">
-            <Sparkline data={[92, 95, 94, 98, 100.78]} color="#8b5cf6" />
+            <Sparkline data={[avgAmount, avgAmount, avgAmount, avgAmount, avgAmount]} color="#8b5cf6" />
           </div>
         </div>
 
@@ -290,10 +305,10 @@ export default function AdminMetrics() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Debit Transactions</p>
-              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">7,126</p>
-              <span className="mt-1 text-[10px] text-gray-400">57.2% of total</span>
+              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{debitTransactions.toLocaleString()}</p>
+              <span className="mt-1 text-[10px] text-gray-400">{((debitTransactions / Math.max(1, totalTransactions)) * 100).toFixed(1)}% of total</span>
             </div>
-            <RingProgress value={7126} total={12453} color="#ef4444" />
+            <RingProgress value={debitTransactions} total={Math.max(1, totalTransactions)} color="#ef4444" />
           </div>
         </div>
 
@@ -302,10 +317,10 @@ export default function AdminMetrics() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Credit Transactions</p>
-              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">5,327</p>
-              <span className="mt-1 text-[10px] text-gray-400">42.8% of total</span>
+              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{creditTransactions.toLocaleString()}</p>
+              <span className="mt-1 text-[10px] text-gray-400">{((creditTransactions / Math.max(1, totalTransactions)) * 100).toFixed(1)}% of total</span>
             </div>
-            <RingProgress value={5327} total={12453} color="#22c55e" />
+            <RingProgress value={creditTransactions} total={Math.max(1, totalTransactions)} color="#22c55e" />
           </div>
         </div>
 
@@ -314,17 +329,15 @@ export default function AdminMetrics() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Success Rate</p>
-              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">98.7%</p>
-              <span className="mt-1 flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
-                <TrendingUp className="h-3 w-3" /> +1.2% from last week
-              </span>
+              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{successRate.toFixed(1)}%</p>
+              <span className="mt-1 text-[10px] text-gray-400">Completed/Total from backend</span>
             </div>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-900/30">
               <CheckCircle2 className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-2">
-            <Sparkline data={[97.2, 97.8, 98.1, 98.4, 98.7]} color="#f59e0b" />
+            <Sparkline data={[successRate, successRate, successRate, successRate, successRate]} color="#f59e0b" />
           </div>
         </div>
       </div>
@@ -435,7 +448,7 @@ export default function AdminMetrics() {
                     <MerchantIcon name={row.payeeName} />
                     <div>
                       <p className="font-bold text-gray-900 dark:text-white">{row.payeeName}</p>
-                      <p className="text-[10px] text-gray-400">{row.payeeCategory}</p>
+                          <p className="text-[10px] text-gray-400">{row.payeeCategory}</p>
                     </div>
                   </div>
                 </td>
@@ -492,7 +505,7 @@ export default function AdminMetrics() {
 
         {/* Footer Pagination */}
         <div className="flex items-center justify-between border-t border-gray-100 bg-white px-5 py-3 text-xs text-gray-500 dark:border-gray-800 dark:bg-gray-900">
-          <span>Showing 1 to {filteredRows.length} of 12,453 transactions</span>
+          <span>Showing {pageStart} to {pageEnd} of {totalTransactions.toLocaleString()} transactions</span>
           <div className="flex items-center gap-1">
             <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800">‹</button>
             <button className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 font-bold text-white shadow-sm">1</button>
@@ -546,7 +559,7 @@ export default function AdminMetrics() {
                 </Pie>
               </PieChart>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-xl font-black text-gray-900 dark:text-white">12,453</span>
+                <span className="text-xl font-black text-gray-900 dark:text-white">{totalTransactions.toLocaleString()}</span>
                 <span className="text-[10px] text-gray-400">Total</span>
               </div>
             </div>
@@ -556,14 +569,14 @@ export default function AdminMetrics() {
                   <span className="h-2.5 w-2.5 rounded-sm bg-red-500" />
                   <span className="font-medium text-gray-700 dark:text-gray-300">Debit</span>
                 </div>
-                <span className="font-bold text-gray-900 dark:text-white">7,126 <span className="font-normal text-gray-400">(57.2%)</span></span>
+                <span className="font-bold text-gray-900 dark:text-white">{debitTransactions.toLocaleString()} <span className="font-normal text-gray-400">({((debitTransactions / Math.max(1, totalTransactions)) * 100).toFixed(1)}%)</span></span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" />
                   <span className="font-medium text-gray-700 dark:text-gray-300">Credit</span>
                 </div>
-                <span className="font-bold text-gray-900 dark:text-white">5,327 <span className="font-normal text-gray-400">(42.8%)</span></span>
+                <span className="font-bold text-gray-900 dark:text-white">{creditTransactions.toLocaleString()} <span className="font-normal text-gray-400">({((creditTransactions / Math.max(1, totalTransactions)) * 100).toFixed(1)}%)</span></span>
               </div>
             </div>
           </div>
@@ -708,9 +721,9 @@ export default function AdminMetrics() {
             <div className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3 rounded-xl bg-gray-50 p-3.5 dark:bg-gray-800">
                 <div><span className="text-gray-400">Account ID:</span> <strong className="block text-gray-900 dark:text-white font-mono">{selectedTx.accountId}</strong></div>
-                <div><span className="text-gray-400">Account Holder:</span> <strong className="block text-gray-900 dark:text-white">{selectedTx.accountName || 'John Smith'}</strong></div>
-                <div><span className="text-gray-400">Amount:</span> <strong className="block text-base font-black text-gray-900 dark:text-white">{formatCurrency(selectedTx.amount)}</strong></div>
-                <div><span className="text-gray-400">Type & Channel:</span> <span className="block font-semibold text-blue-600">{selectedTx.transactionType} ({selectedTx.channel || 'Online Banking'})</span></div>
+                <div><span className="text-gray-400">Account Holder:</span> <strong className="block text-gray-900 dark:text-white">{selectedTx.accountName || '--'}</strong></div>
+                <div><span className="text-gray-400">Amount:</span> <strong className="block text-base font-black text-gray-900 dark:text-white">{formatCurrency(selectedTx.amount, selectedTx.currency)}</strong></div>
+                <div><span className="text-gray-400">Type & Channel:</span> <span className="block font-semibold text-blue-600">{selectedTx.transactionType} ({selectedTx.channel || 'N/A'})</span></div>
                 <div><span className="text-gray-400">Status:</span> <span className="block font-bold text-emerald-600">{selectedTx.status}</span></div>
                 <div><span className="text-gray-400">Timestamp:</span> <span className="block text-gray-600 dark:text-gray-300 font-mono">{formatDate(selectedTx.timestamp)}</span></div>
               </div>
@@ -723,10 +736,10 @@ export default function AdminMetrics() {
                     accountId: selectedTx.accountId,
                     payeeName: selectedTx.payeeName,
                     amount: selectedTx.amount,
-                    currency: selectedTx.currency || 'USD',
+                    currency: selectedTx.currency,
                     type: selectedTx.transactionType,
                     status: selectedTx.status,
-                    channel: selectedTx.channel || 'Online Banking',
+                    channel: selectedTx.channel,
                     timestamp: selectedTx.timestamp
                   }, null, 2)}
                 </pre>
