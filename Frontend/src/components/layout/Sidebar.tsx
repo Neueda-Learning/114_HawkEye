@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, ArrowRightLeft, Bell, FileText, BarChart2,
-  Users, ClipboardList, Activity, LogOut, ChevronLeft, ChevronRight,
+  Users, Activity, LogOut, ChevronLeft, ChevronRight,
   ShieldCheck, Sun, Moon, Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -21,7 +21,6 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/alerts',              label: 'Alerts',        icon: <Bell className="h-5 w-5" />, badge: 57 },
   { to: '/admin/rules',         label: 'Rules',         icon: <FileText className="h-5 w-5" /> },
   { to: '/admin/reports',       label: 'Reports',       icon: <BarChart2 className="h-5 w-5" /> },
-  { to: '/admin/audit-logs',    label: 'Audit Logs',    icon: <ClipboardList className="h-5 w-5" /> },
   { to: '/admin/system-health', label: 'System Health', icon: <Activity className="h-5 w-5" /> },
   { to: '/admin/settings',      label: 'Settings',      icon: <Settings className="h-5 w-5" /> },
 ];
