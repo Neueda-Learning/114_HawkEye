@@ -14,7 +14,7 @@ export default function RuleCreatePage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Mutation for Creating Rule
+  // Mutation for Creating Rule (POST /api/v1/rules)
   const createMutation = useMutation({
     mutationFn: (values: RuleFormValues) =>
       createRule({
@@ -27,17 +27,17 @@ export default function RuleCreatePage() {
         changeReason: values.changeReason || 'Initial Creation',
       }),
     onSuccess: (rule) => {
-      toast.success(`Rule "${rule?.ruleName || 'New Rule'}" created in backend database!`);
+      toast.success(`Rule "${rule?.ruleName || 'New Rule'}" created and saved in backend DB!`);
       void queryClient.invalidateQueries({ queryKey: ['rules'] });
       navigate('/admin/rules');
     },
     onError: (err: any) => {
-      toast.error('Failed to create rule', err?.message || 'Server error');
+      toast.error('Failed to create rule', err?.message || 'Backend validation error');
       setIsSubmitting(false);
     },
   });
 
-  // Mutation for Updating Pre-existing Rule via PUT /api/v1/rules/{id}
+  // Mutation for Updating Pre-existing Rule (PUT /api/v1/rules/{id})
   const updateMutation = useMutation({
     mutationFn: ({ id, values }: { id: number; values: RuleFormValues }) =>
       updateRule(id, {
@@ -47,20 +47,20 @@ export default function RuleCreatePage() {
         severity: values.severity,
         parameters: values.parameters,
         performedBy: values.performedBy,
-        changeReason: values.changeReason || 'Updated pre-existing rule via backend API',
+        changeReason: values.changeReason || 'Updated pre-existing rule parameters',
       }),
     onSuccess: (rule) => {
-      toast.success(`Pre-existing Rule #${rule?.ruleId || ''} updated successfully in backend database!`);
+      toast.success(`Rule #${rule?.ruleId || ''} updated successfully in backend DB!`);
       void queryClient.invalidateQueries({ queryKey: ['rules'] });
       navigate('/admin/rules');
     },
     onError: (err: any) => {
-      toast.error('Failed to update existing rule', err?.message || 'Server error');
+      toast.error('Failed to update rule', err?.message || 'Backend validation error');
       setIsSubmitting(false);
     },
   });
 
-  // Handle Form Submission: Check for Pre-Existing Rule in Backend DB
+  // Handle Form Submission with Backend Rule Type & Name Matching
   const handleSubmit = async (values: RuleFormValues) => {
     setIsSubmitting(true);
     try {
@@ -68,18 +68,20 @@ export default function RuleCreatePage() {
       const paged = await getRules({ size: 100 });
       const currentRules = paged?.content || [];
 
-      // Check if a rule with matching ruleName or name exists in backend DB
+      // Check if a rule of matching ruleType or ruleName already exists in backend DB
       const match = currentRules.find(
         (r) =>
+          r.ruleType === values.ruleType ||
           r.ruleName?.toLowerCase().trim() === values.name.toLowerCase().trim() ||
           (r as any).name?.toLowerCase().trim() === values.name.toLowerCase().trim()
       );
 
       if (match) {
-        // Pre-existing rule found -> automatically update using PUT /api/v1/rules/{id} API
-        updateMutation.mutate({ id: match.ruleId || (match as any).id, values });
+        // Pre-existing rule found for this ruleType -> update using PUT /api/v1/rules/{id} API
+        const targetId = match.ruleId || (match as any).id;
+        updateMutation.mutate({ id: Number(targetId), values });
       } else {
-        // New rule -> create in backend DB using POST /api/v1/rules API
+        // No match -> create new rule in backend DB using POST /api/v1/rules API
         createMutation.mutate(values);
       }
     } catch (e) {
@@ -97,7 +99,7 @@ export default function RuleCreatePage() {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Configure Monitoring Rule</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Create or update rule parameters directly in Rule Engine backend database</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Define rule threshold & parameters for Rule Engine</p>
           </div>
         </div>
       </div>
@@ -107,7 +109,7 @@ export default function RuleCreatePage() {
         <RuleForm
           onSubmit={handleSubmit}
           isLoading={isSubmitting || createMutation.isPending || updateMutation.isPending}
-          submitLabel="Save / Update Rule in Backend"
+          submitLabel="Save / Update Rule"
           performedBy={user?.email ?? 'admin@hawkeye.com'}
         />
       </div>
