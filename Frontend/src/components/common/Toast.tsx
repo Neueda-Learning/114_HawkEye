@@ -105,7 +105,7 @@ export function ToastContainer() {
   }, [addToast]);
 
   return (
-    <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2" aria-live="polite">
+    <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-2" aria-live="polite">
       {toasts.map((t) => (
         <ToastItem key={t.id} toast={t} onDismiss={() => removeToast(t.id)} />
       ))}
