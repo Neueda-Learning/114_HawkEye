@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -10,8 +10,9 @@ import {
   RotateCcw, Bell, AlertTriangle, ShieldCheck, CheckCircle2,
   Clock, TrendingUp, TrendingDown, UserCheck, Activity, Shield
 } from 'lucide-react';
-import { getAlerts, getAlertStats } from '@/lib/api/alerts';
+import { getAlerts, getAlertStats, acknowledgeAlert, investigateAlert, closeAlert, dismissAlert } from '@/lib/api/alerts';
 import { formatDate, relativeTime } from '@/lib/utils';
+import { toast } from '@/components/common/Toast';
 import type { Alert, AlertStatus, Severity } from '@/lib/types';
 
 // Sparkline Mini Component
@@ -43,6 +44,7 @@ function RingProgress({ value, total, color }: { value: number; total: number; c
 
 export default function AlertsListPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Filters & State
   const [page, setPage] = useState(0);
@@ -443,15 +445,93 @@ export default function AlertsListPage() {
                   {row.age}
                 </td>
                 <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center justify-end gap-1">
+                  <div className="flex items-center justify-end gap-1.5">
+                    {/* Acknowledge Button */}
+                    {row.alertStatus === 'OPEN' && (
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            await acknowledgeAlert(row.alertId);
+                            toast.success(`Alert ALERT-${row.alertId} Acknowledged`);
+                            void queryClient.invalidateQueries({ queryKey: ['alerts'] });
+                          } catch (err: any) {
+                            toast.error('Action failed', err?.message || 'Server error');
+                          }
+                        }}
+                        title="Acknowledge Alert"
+                        className="rounded-lg bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300"
+                      >
+                        Ack
+                      </button>
+                    )}
+
+                    {/* Investigate Button */}
+                    {(row.alertStatus === 'OPEN' || row.alertStatus === 'ACKNOWLEDGED') && (
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            await investigateAlert(row.alertId);
+                            toast.success(`Alert ALERT-${row.alertId} under Investigation`);
+                            void queryClient.invalidateQueries({ queryKey: ['alerts'] });
+                          } catch (err: any) {
+                            toast.error('Action failed', err?.message || 'Server error');
+                          }
+                        }}
+                        title="Start Investigation"
+                        className="rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300"
+                      >
+                        Investigate
+                      </button>
+                    )}
+
+                    {/* Close Button */}
+                    {row.alertStatus !== 'CLOSED' && row.alertStatus !== 'DISMISSED' && (
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            await closeAlert(row.alertId, { resolutionNotes: 'Resolved by Admin', performedBy: 'admin@hawkeye.com' });
+                            toast.success(`Alert ALERT-${row.alertId} Closed & Resolved`);
+                            void queryClient.invalidateQueries({ queryKey: ['alerts'] });
+                          } catch (err: any) {
+                            toast.error('Action failed', err?.message || 'Server error');
+                          }
+                        }}
+                        title="Close Alert"
+                        className="rounded-lg bg-green-50 px-2 py-1 text-[11px] font-bold text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300"
+                      >
+                        Close
+                      </button>
+                    )}
+
+                    {/* Dismiss Button */}
+                    {row.alertStatus !== 'CLOSED' && row.alertStatus !== 'DISMISSED' && (
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            await dismissAlert(row.alertId, { resolutionNotes: 'Dismissed as False Positive by Admin', performedBy: 'admin@hawkeye.com' });
+                            toast.success(`Alert ALERT-${row.alertId} Dismissed`);
+                            void queryClient.invalidateQueries({ queryKey: ['alerts'] });
+                          } catch (err: any) {
+                            toast.error('Action failed', err?.message || 'Server error');
+                          }
+                        }}
+                        title="Dismiss Alert"
+                        className="rounded-lg bg-gray-100 px-2 py-1 text-[11px] font-bold text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
+                      >
+                        Dismiss
+                      </button>
+                    )}
+
+                    {/* Eye Button */}
                     <button
                       onClick={() => navigate(`/alerts/${row.alertId}`)}
                       className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-blue-600 dark:hover:bg-gray-800"
                     >
                       <Eye className="h-4 w-4" />
-                    </button>
-                    <button className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800">
-                      <MoreVertical className="h-4 w-4" />
                     </button>
                   </div>
                 </td>
