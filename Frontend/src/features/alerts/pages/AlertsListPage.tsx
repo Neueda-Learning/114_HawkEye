@@ -46,56 +46,41 @@ export default function AlertsListPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Filters & State
+  // Filters & State — server-side filtering via GET /api/v1/alerts?status=&severity=
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<string>('ALL');
   const [status, setStatus] = useState<string>('');
   const [severity, setSeverity] = useState<string>('');
-  const [assignedTo, setAssignedTo] = useState<string>('');
 
-  // API Queries
+  // API Queries — severity & status sent to backend server-side
   const { data: pagedData, isLoading } = useQuery({
     queryKey: ['alerts', page, activeTab, status, severity],
     queryFn: () => getAlerts({
       page,
-      size: 8,
-      sort: 'createdAt,desc',
+      size: 15,
       alertStatus: (activeTab !== 'ALL' ? activeTab : status) as AlertStatus || undefined,
       severity: severity as Severity || undefined,
     }),
   });
 
   const { data: statsData } = useQuery({
-    queryKey: ['alerts', 'stats-list-page'],
+    queryKey: ['alerts', 'stats'],
     queryFn: getAlertStats,
   });
 
-  // Mock Fallback Alerts list matching exact sample reference UI
-  const fallbackAlerts = [
-    { alertId: 2387, transactionId: 10032, ruleName: 'Amount Threshold Rule', severity: 'HIGH' as Severity, alertStatus: 'OPEN' as AlertStatus, assignedTo: 'Unassigned', createdAt: '2024-05-21T10:30:00Z', age: '15m' },
-    { alertId: 2386, transactionId: 10031, ruleName: 'Velocity Rule', severity: 'HIGH' as Severity, alertStatus: 'ACKNOWLEDGED' as AlertStatus, assignedTo: 'John Doe', createdAt: '2024-05-21T09:45:00Z', age: '1h' },
-    { alertId: 2385, transactionId: 10030, ruleName: 'New Payee Rule', severity: 'MEDIUM' as Severity, alertStatus: 'INVESTIGATING' as AlertStatus, assignedTo: 'Sarah Lee', createdAt: '2024-05-21T08:20:00Z', age: '2h 25m' },
-    { alertId: 2384, transactionId: 10029, ruleName: 'Daily Limit Rule', severity: 'HIGH' as Severity, alertStatus: 'OPEN' as AlertStatus, assignedTo: 'Unassigned', createdAt: '2024-05-21T07:15:00Z', age: '3h 30m' },
-    { alertId: 2383, transactionId: 10028, ruleName: 'Location Rule', severity: 'LOW' as Severity, alertStatus: 'CLOSED' as AlertStatus, assignedTo: 'Mike Johnson', createdAt: '2024-05-20T22:45:00Z', age: '11h' },
-    { alertId: 2382, transactionId: 10027, ruleName: 'Amount Threshold Rule', severity: 'HIGH' as Severity, alertStatus: 'INVESTIGATING' as AlertStatus, assignedTo: 'Jane Smith', createdAt: '2024-05-20T20:30:00Z', age: '13h 15m' },
-    { alertId: 2381, transactionId: 10026, ruleName: 'Multiple Transactions Rule', severity: 'MEDIUM' as Severity, alertStatus: 'ACKNOWLEDGED' as AlertStatus, assignedTo: 'John Doe', createdAt: '2024-05-20T18:00:00Z', age: '15h 45m' },
-    { alertId: 2380, transactionId: 10025, ruleName: 'Unusual Device Rule', severity: 'LOW' as Severity, alertStatus: 'DISMISSED' as AlertStatus, assignedTo: 'Robert Brown', createdAt: '2024-05-20T16:30:00Z', age: '17h 15m' },
-  ];
-
-  const alertsList = (pagedData?.content || []).map((a, i) => ({
+  const alertsList = (pagedData?.content || []).map((a) => ({
     ...a,
-    assignedTo: a.assignedTo || (a.alertStatus === 'OPEN' ? 'Unassigned' : ['John Doe', 'Sarah Lee', 'Mike Johnson', 'Jane Smith'][i % 4]),
     age: 'Recent',
   }));
 
-  // Filter client side for search & assignedTo
+  // Client-side search-only filter (status & severity are already server-side)
   const filteredRows = alertsList.filter(a => {
-    const matchesSearch = a.ruleName.toLowerCase().includes(search.toLowerCase()) ||
+    const matchesSearch = !search ||
+      (a.ruleName || '').toLowerCase().includes(search.toLowerCase()) ||
       a.alertId.toString().includes(search) ||
-      a.transactionId.toString().includes(search);
-    const matchesAssigned = !assignedTo || a.assignedTo === assignedTo;
-    return matchesSearch && matchesAssigned;
+      (a.transactionId || '').toString().includes(search);
+    return matchesSearch;
   });
 
   // Chart data
@@ -158,7 +143,6 @@ export default function AlertsListPage() {
     setActiveTab('ALL');
     setStatus('');
     setSeverity('');
-    setAssignedTo('');
     setPage(0);
   };
 
@@ -324,16 +308,16 @@ export default function AlertsListPage() {
           ))}
         </div>
 
-        {/* Dropdowns */}
+        {/* Dropdowns — server-side filtered via GET /api/v1/alerts?severity=&status= */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
             <span>Severity</span>
             <select
               value={severity}
-              onChange={(e) => setSeverity(e.target.value)}
+              onChange={(e) => { setSeverity(e.target.value); setPage(0); }}
               className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1 text-xs text-gray-700 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             >
-              <option value="">All</option>
+              <option value="">All Severities</option>
               <option value="HIGH">High</option>
               <option value="MEDIUM">Medium</option>
               <option value="LOW">Low</option>
@@ -344,32 +328,15 @@ export default function AlertsListPage() {
             <span>Status</span>
             <select
               value={status}
-              onChange={(e) => setStatus(e.target.value)}
+              onChange={(e) => { setStatus(e.target.value); setActiveTab('ALL'); setPage(0); }}
               className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1 text-xs text-gray-700 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             >
-              <option value="">All</option>
+              <option value="">All Statuses</option>
               <option value="OPEN">Open</option>
               <option value="ACKNOWLEDGED">Acknowledged</option>
               <option value="INVESTIGATING">Investigating</option>
               <option value="CLOSED">Closed</option>
               <option value="DISMISSED">Dismissed</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
-            <span>Assigned To</span>
-            <select
-              value={assignedTo}
-              onChange={(e) => setAssignedTo(e.target.value)}
-              className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1 text-xs text-gray-700 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-            >
-              <option value="">All</option>
-              <option value="Unassigned">Unassigned</option>
-              <option value="John Doe">John Doe</option>
-              <option value="Sarah Lee">Sarah Lee</option>
-              <option value="Mike Johnson">Mike Johnson</option>
-              <option value="Jane Smith">Jane Smith</option>
-              <option value="Robert Brown">Robert Brown</option>
             </select>
           </div>
 
@@ -393,9 +360,7 @@ export default function AlertsListPage() {
               <th className="px-5 py-3.5">Triggered Rule</th>
               <th className="px-5 py-3.5">Severity</th>
               <th className="px-5 py-3.5">Status</th>
-              <th className="px-5 py-3.5">Assigned To</th>
               <th className="px-5 py-3.5">Generated Time</th>
-              <th className="px-5 py-3.5">Age</th>
               <th className="px-5 py-3.5 text-right">Actions</th>
             </tr>
           </thead>
@@ -435,14 +400,9 @@ export default function AlertsListPage() {
                     {row.alertStatus.charAt(0) + row.alertStatus.slice(1).toLowerCase()}
                   </span>
                 </td>
-                <td className="px-5 py-3.5 text-gray-700 dark:text-gray-300 font-medium">
-                  {row.assignedTo}
-                </td>
+
                 <td className="px-5 py-3.5 text-gray-500 dark:text-gray-400">
                   {formatDate(row.createdAt)}
-                </td>
-                <td className="px-5 py-3.5 text-gray-400">
-                  {row.age}
                 </td>
                 <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-1.5">
