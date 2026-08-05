@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -11,8 +11,9 @@ import {
   Clock, TrendingUp, TrendingDown, UserCheck, Activity, Shield
 } from 'lucide-react';
 import { getAlerts, getAlertStats, acknowledgeAlert, investigateAlert, closeAlert, dismissAlert } from '@/lib/api/alerts';
-import { formatDate, relativeTime } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { toast } from '@/components/common/Toast';
+import { useAuthStore } from '@/features/auth/store/authStore';
 import type { Alert, AlertStatus, Severity } from '@/lib/types';
 
 // Sparkline Mini Component
@@ -45,6 +46,8 @@ function RingProgress({ value, total, color }: { value: number; total: number; c
 export default function AlertsListPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 'ADMIN';
 
   // Filters & State — server-side filtering via GET /api/v1/alerts?status=&severity=
   const [page, setPage] = useState(0);
@@ -52,6 +55,50 @@ export default function AlertsListPage() {
   const [activeTab, setActiveTab] = useState<string>('ALL');
   const [status, setStatus] = useState<string>('');
   const [severity, setSeverity] = useState<string>('');
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
+
+  // Status change mutation — calls the correct endpoint per target status
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, newStatus }: { id: number; newStatus: AlertStatus }) => {
+      setUpdatingId(id);
+      if (newStatus === 'ACKNOWLEDGED') return acknowledgeAlert(id);
+      if (newStatus === 'INVESTIGATING') return investigateAlert(id);
+      if (newStatus === 'CLOSED') return closeAlert(id, { resolutionNotes: 'Resolved by Admin', performedBy: user?.email ?? 'admin@hawkeye.com' });
+      if (newStatus === 'DISMISSED') return dismissAlert(id, { resolutionNotes: 'Dismissed by Admin', performedBy: user?.email ?? 'admin@hawkeye.com' });
+      throw new Error('Unknown status');
+    },
+    onSuccess: (_data, vars) => {
+      const labels: Record<AlertStatus, string> = {
+        OPEN: 'Opened',
+        ACKNOWLEDGED: 'Acknowledged',
+        INVESTIGATING: 'Under Investigation',
+        CLOSED: 'Closed',
+        DISMISSED: 'Dismissed',
+      };
+      toast.success(`ALERT-${vars.id} → ${labels[vars.newStatus]}`);
+      void queryClient.invalidateQueries({ queryKey: ['alerts'] });
+    },
+    onError: () => toast.error('Failed to update alert status'),
+    onSettled: () => setUpdatingId(null),
+  });
+
+  // Returns allowed next statuses based on current status
+  const getNextStatuses = (current: AlertStatus): AlertStatus[] => {
+    switch (current) {
+      case 'OPEN':         return ['ACKNOWLEDGED', 'INVESTIGATING', 'DISMISSED'];
+      case 'ACKNOWLEDGED': return ['INVESTIGATING', 'CLOSED', 'DISMISSED'];
+      case 'INVESTIGATING':return ['CLOSED', 'DISMISSED'];
+      default:             return [];
+    }
+  };
+
+  const statusLabel: Record<AlertStatus, string> = {
+    OPEN: 'Open',
+    ACKNOWLEDGED: 'Acknowledge',
+    INVESTIGATING: 'Investigate',
+    CLOSED: 'Close',
+    DISMISSED: 'Dismiss',
+  };
 
   // API Queries — severity & status sent to backend server-side
   const { data: pagedData, isLoading } = useQuery({
@@ -359,9 +406,10 @@ export default function AlertsListPage() {
               <th className="px-5 py-3.5">Transaction ID</th>
               <th className="px-5 py-3.5">Triggered Rule</th>
               <th className="px-5 py-3.5">Severity</th>
-              <th className="px-5 py-3.5">Status</th>
+              <th className="px-5 py-3.5">Current Status</th>
               <th className="px-5 py-3.5">Generated Time</th>
-              <th className="px-5 py-3.5 text-right">Actions</th>
+              {isAdmin && <th className="px-5 py-3.5 text-center">Change Status</th>}
+              <th className="px-5 py-3.5 text-right">View</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -404,96 +452,45 @@ export default function AlertsListPage() {
                 <td className="px-5 py-3.5 text-gray-500 dark:text-gray-400">
                   {formatDate(row.createdAt)}
                 </td>
+
+                {/* Admin: Change Status dropdown */}
+                {isAdmin && (
+                  <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
+                    {getNextStatuses(row.alertStatus as AlertStatus).length > 0 ? (
+                      <select
+                        disabled={updatingId === row.alertId || statusMutation.isPending}
+                        defaultValue=""
+                        onChange={(e) => {
+                          const next = e.target.value as AlertStatus;
+                          if (next) statusMutation.mutate({ id: row.alertId, newStatus: next });
+                          e.target.value = '';
+                        }}
+                        className="w-36 rounded-lg border border-blue-200 bg-blue-50 px-2 py-1.5 text-[11px] font-semibold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50 cursor-pointer dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300"
+                      >
+                        <option value="" disabled>
+                          {updatingId === row.alertId ? 'Updating…' : '— Set Status —'}
+                        </option>
+                        {getNextStatuses(row.alertStatus as AlertStatus).map((s) => (
+                          <option key={s} value={s}>{statusLabel[s]}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                        ✓ Resolved
+                      </span>
+                    )}
+                  </td>
+                )}
+
+                {/* View button */}
                 <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center justify-end gap-1.5">
-                    {/* Acknowledge Button */}
-                    {row.alertStatus === 'OPEN' && (
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          try {
-                            await acknowledgeAlert(row.alertId);
-                            toast.success(`Alert ALERT-${row.alertId} Acknowledged`);
-                            void queryClient.invalidateQueries({ queryKey: ['alerts'] });
-                          } catch (err: any) {
-                            toast.error('Action failed', err?.message || 'Server error');
-                          }
-                        }}
-                        title="Acknowledge Alert"
-                        className="rounded-lg bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300"
-                      >
-                        Ack
-                      </button>
-                    )}
-
-                    {/* Investigate Button */}
-                    {(row.alertStatus === 'OPEN' || row.alertStatus === 'ACKNOWLEDGED') && (
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          try {
-                            await investigateAlert(row.alertId);
-                            toast.success(`Alert ALERT-${row.alertId} under Investigation`);
-                            void queryClient.invalidateQueries({ queryKey: ['alerts'] });
-                          } catch (err: any) {
-                            toast.error('Action failed', err?.message || 'Server error');
-                          }
-                        }}
-                        title="Start Investigation"
-                        className="rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300"
-                      >
-                        Investigate
-                      </button>
-                    )}
-
-                    {/* Close Button */}
-                    {row.alertStatus !== 'CLOSED' && row.alertStatus !== 'DISMISSED' && (
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          try {
-                            await closeAlert(row.alertId, { resolutionNotes: 'Resolved by Admin', performedBy: 'admin@hawkeye.com' });
-                            toast.success(`Alert ALERT-${row.alertId} Closed & Resolved`);
-                            void queryClient.invalidateQueries({ queryKey: ['alerts'] });
-                          } catch (err: any) {
-                            toast.error('Action failed', err?.message || 'Server error');
-                          }
-                        }}
-                        title="Close Alert"
-                        className="rounded-lg bg-green-50 px-2 py-1 text-[11px] font-bold text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300"
-                      >
-                        Close
-                      </button>
-                    )}
-
-                    {/* Dismiss Button */}
-                    {row.alertStatus !== 'CLOSED' && row.alertStatus !== 'DISMISSED' && (
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          try {
-                            await dismissAlert(row.alertId, { resolutionNotes: 'Dismissed as False Positive by Admin', performedBy: 'admin@hawkeye.com' });
-                            toast.success(`Alert ALERT-${row.alertId} Dismissed`);
-                            void queryClient.invalidateQueries({ queryKey: ['alerts'] });
-                          } catch (err: any) {
-                            toast.error('Action failed', err?.message || 'Server error');
-                          }
-                        }}
-                        title="Dismiss Alert"
-                        className="rounded-lg bg-gray-100 px-2 py-1 text-[11px] font-bold text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
-                      >
-                        Dismiss
-                      </button>
-                    )}
-
-                    {/* Eye Button */}
-                    <button
-                      onClick={() => navigate(`/alerts/${row.alertId}`)}
-                      className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-blue-600 dark:hover:bg-gray-800"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => navigate(`/alerts/${row.alertId}`)}
+                    className="rounded-lg border border-gray-200 p-1.5 text-gray-400 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-gray-700 dark:hover:bg-blue-900/20"
+                    title="View Alert Details"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                  </button>
                 </td>
               </tr>
             ))}
