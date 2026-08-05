@@ -222,14 +222,6 @@ export default function AdminMetrics() {
             <Download className="h-3.5 w-3.5" />
             <span>Export</span>
           </button>
-
-          <button
-            onClick={() => setIsNewModalOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700"
-          >
-            <Plus className="h-4 w-4" />
-            <span>New Transaction</span>
-          </button>
         </div>
       </div>
 

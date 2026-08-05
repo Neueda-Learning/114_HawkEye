@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, AlertCircle, ArrowLeft, Send } from 'lucide-react';
+import { CheckCircle2, AlertCircle, ArrowLeft, Send, Plus, CreditCard } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { createTransaction } from '@/lib/api/transactions';
 import { getRules } from '@/lib/api/rules';
@@ -30,12 +30,34 @@ export default function SendMoneyPage() {
   const [formData, setFormData] = useState<FormValues | null>(null);
   const [txRef, setTxRef]       = useState<string>('');
 
+  // ── Source Accounts Management for Single User ─────────────────────────────
+  const [userAccounts, setUserAccounts] = useState<string[]>([
+    user?.accountId || 'ACC-001',
+    'ACC-002 (Savings)',
+    'ACC-003 (Corporate)',
+  ]);
+  const [selectedSourceAccount, setSelectedSourceAccount] = useState<string>(user?.accountId || 'ACC-001');
+  const [isAddingNewAccount, setIsAddingNewAccount] = useState(false);
+  const [newAccountInput, setNewAccountInput] = useState('');
+
+  const handleAddNewSourceAccount = () => {
+    if (!newAccountInput.trim()) return;
+    const formatted = newAccountInput.trim().toUpperCase();
+    if (!userAccounts.includes(formatted)) {
+      setUserAccounts((prev) => [...prev, formatted]);
+    }
+    setSelectedSourceAccount(formatted);
+    setIsAddingNewAccount(false);
+    setNewAccountInput('');
+    toast.success(`Account ${formatted} added to your account list!`);
+  };
+
   const { register, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { payeeAccountNumber: 'ACC-908123' },
   });
 
-  // Query active rules from backend
+  // Query active rules from backend DB
   const { data: rulesPage } = useQuery({
     queryKey: ['rules', 'active-evaluate'],
     queryFn: () => getRules({ status: 'ACTIVE', size: 100 }),
@@ -55,7 +77,7 @@ export default function SendMoneyPage() {
       void queryClient.invalidateQueries({ queryKey: ['transactions'] });
       void queryClient.invalidateQueries({ queryKey: ['alerts'] });
 
-      // ── Evaluate ONLY against ACTIVE backend rules in DB ─────────────────
+      // ── Evaluate ONLY against ACTIVE rules in Backend DB ───────────────────
       const amountRule = activeRules.find((r) => r.ruleType === 'AMOUNT_THRESHOLD');
       const dailyRule = activeRules.find((r) => r.ruleType === 'DAILY_LIMIT');
       const newPayeeRule = activeRules.find((r) => r.ruleType === 'NEW_PAYEE');
@@ -74,20 +96,21 @@ export default function SendMoneyPage() {
           severity: dailyRule.severity || 'CRITICAL',
           message: `Transaction amount $${formData.amount} exceeded daily limit threshold!`,
         };
-      } else if (newPayeeRule && formData && !mockPayees.some((p) => p.payeeId === formData.payeeId)) {
+      } else if (newPayeeRule && formData) {
+        // Trigger New Payee Rule Alert if newPayeeRule is active in backend rules DB
         triggeredAlert = {
-          ruleName: newPayeeRule.ruleName || 'New Payee Rule',
+          ruleName: newPayeeRule.ruleName || 'New Payee Detection Rule',
           severity: newPayeeRule.severity || 'MEDIUM',
-          message: `First time transfer to unregistered payee account ${formData.payeeAccountNumber}`,
+          message: `First-time transfer to new payee account ${formData.payeeAccountNumber} (${selectedPayee?.payeeName || formData.payeeId})`,
         };
       }
 
       setAlertPopup(triggeredAlert);
 
-      // Trigger Email Notification Sent Popup
+      // Trigger Email Sent Notification Popup
       setEmailPopup({
         recipient: user?.email || 'customer@hawkeye.com',
-        subject: 'Transaction DEBIT & Security Receipt Notification',
+        subject: `Transaction Alert Notification — ${triggeredAlert ? triggeredAlert.ruleName : 'DEBIT Confirmation'}`,
       });
 
       toast.success('DEBIT Transaction submitted successfully!');
@@ -104,9 +127,9 @@ export default function SendMoneyPage() {
   };
 
   const onConfirm = () => {
-    if (!formData || !user?.accountId) return;
+    if (!formData) return;
     mutation.mutate({
-      accountId:          user.accountId,
+      accountId:          selectedSourceAccount.split(' ')[0],
       payeeId:            formData.payeeAccountNumber || formData.payeeId,
       payeeName:          selectedPayee?.payeeName || 'Beneficiary Account',
       payeeType:          selectedPayee?.payeeType || 'Personal',
@@ -205,7 +228,7 @@ export default function SendMoneyPage() {
           <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Review DEBIT Transaction</h3>
           <dl className="space-y-3 text-sm">
             {[
-              { label: 'From Account',         value: user?.accountId },
+              { label: 'From Account',         value: selectedSourceAccount },
               { label: 'Payee',                value: selectedPayee?.payeeName ?? formData.payeeId },
               { label: 'Payee Account No.',    value: <span className="font-mono text-xs">{formData.payeeAccountNumber}</span> },
               { label: 'Amount',               value: <span className="font-bold text-red-600">-{formatCurrency(formData.amount)}</span> },
@@ -220,7 +243,7 @@ export default function SendMoneyPage() {
           </dl>
           <div className="mt-4 rounded-lg bg-yellow-50 px-4 py-3 text-xs text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400 flex gap-2">
             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-            Please confirm the details above before submitting. DEBIT transfers are final.
+            Please confirm details above before submitting. DEBIT transfers are final.
           </div>
           <div className="mt-5 flex gap-3">
             <button
@@ -259,12 +282,59 @@ export default function SendMoneyPage() {
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
         <form onSubmit={handleSubmit(onReview)} className="space-y-4">
 
-          {/* Source account */}
+          {/* Source Account Selector (Supports Multiple Accounts for Single User) */}
           <div>
-            <label className="mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-300">From Account</label>
-            <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 font-mono dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
-              {user?.accountId} ({user?.name})
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                <CreditCard className="h-3.5 w-3.5 text-blue-500" />
+                From Account (Source Account)
+              </label>
+              {!isAddingNewAccount && (
+                <button
+                  type="button"
+                  onClick={() => setIsAddingNewAccount(true)}
+                  className="flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:underline"
+                >
+                  <Plus className="h-3 w-3" /> Add New Account
+                </button>
+              )}
             </div>
+
+            {isAddingNewAccount ? (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newAccountInput}
+                  onChange={(e) => setNewAccountInput(e.target.value)}
+                  placeholder="e.g. ACC-004 / 987654321"
+                  className="flex-1 rounded-xl border border-gray-300 px-3 py-2 text-xs font-mono outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddNewSourceAccount}
+                  className="rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700"
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAddingNewAccount(false)}
+                  className="rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <select
+                value={selectedSourceAccount}
+                onChange={(e) => setSelectedSourceAccount(e.target.value)}
+                className="w-full rounded-xl border border-gray-300 px-3 py-2 text-xs font-mono outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              >
+                {userAccounts.map((acc) => (
+                  <option key={acc} value={acc}>{acc}</option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Payee Selection */}
