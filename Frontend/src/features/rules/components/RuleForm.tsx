@@ -44,14 +44,22 @@ export function RuleForm({ defaultValues, onSubmit, isLoading, submitLabel = 'Sa
   const watchedParams    = useWatch({ control, name: 'parameters' });
   const watchedAll       = useWatch({ control });
 
-  // Reset parameters when ruleType changes
+  // Set default parameters when ruleType changes so backend @NotEmpty validation passes
   useEffect(() => {
-    methods.setValue('parameters', {});
+    if (watchedRuleType === 'AMOUNT_THRESHOLD') {
+      methods.setValue('parameters', { thresholdAmount: 10000 });
+    } else if (watchedRuleType === 'VELOCITY') {
+      methods.setValue('parameters', { windowMinutes: 10, maxTransactions: 5 });
+    } else if (watchedRuleType === 'DAILY_LIMIT') {
+      methods.setValue('parameters', { dailyLimitAmount: 50000 });
+    } else if (watchedRuleType === 'NEW_PAYEE') {
+      methods.setValue('parameters', { lookbackDays: 365 });
+    }
   }, [watchedRuleType, methods]);
 
   // Sync performedBy
   useEffect(() => {
-    methods.setValue('performedBy', performedBy);
+    methods.setValue('performedBy', performedBy || 'admin@hawkeye.com');
   }, [performedBy, methods]);
 
   useEffect(() => {
@@ -67,9 +75,24 @@ export function RuleForm({ defaultValues, onSubmit, isLoading, submitLabel = 'Sa
     changeReason: watchedAll.changeReason,
   };
 
+  const handleFormSubmit = (data: RuleFormValues) => {
+    const sanitizedParams = data.parameters && Object.keys(data.parameters).length > 0
+      ? data.parameters
+      : data.ruleType === 'AMOUNT_THRESHOLD' ? { thresholdAmount: 10000 }
+      : data.ruleType === 'VELOCITY' ? { windowMinutes: 10, maxTransactions: 5 }
+      : data.ruleType === 'DAILY_LIMIT' ? { dailyLimitAmount: 50000 }
+      : { lookbackDays: 365 };
+
+    onSubmit({
+      ...data,
+      performedBy: data.performedBy || 'admin@hawkeye.com',
+      parameters: sanitizedParams,
+    });
+  };
+
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
 
         {/* Name */}
         <div>
