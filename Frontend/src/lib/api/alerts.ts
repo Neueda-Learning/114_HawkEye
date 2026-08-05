@@ -15,7 +15,12 @@ const BASE = '/api/v1/alerts';
 export const getAlerts = async (
   params: AlertListParams = {},
 ): Promise<PagedResponse<Alert>> => {
-  const { data } = await apiClient.get<PagedResponse<Alert>>(BASE, { params });
+  const { alertStatus, ...rest } = params;
+  const queryParams = {
+    ...rest,
+    status: params.status ?? alertStatus,
+  };
+  const { data } = await apiClient.get<PagedResponse<Alert>>(BASE, { params: queryParams });
   return data;
 };
 

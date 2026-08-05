@@ -15,10 +15,9 @@ import neueda.in.TransactionMonitoring.repository.RuleRepository;
 import neueda.in.TransactionMonitoring.repository.TransactionRepository;
 import neueda.in.TransactionMonitoring.rule.RuleEvaluator;
 import neueda.in.TransactionMonitoring.rule.RuleEvaluatorFactory;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +47,7 @@ public class RuleEngineService {
      * Triggered automatically when Person 1 publishes a TransactionRecordedEvent.
      */
     // listener for TransactionRecordedEvent published by TransactionService
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @EventListener
     public void onTransactionRecorded(TransactionRecordedEvent event) {
         log.info("🎯 TransactionRecordedEvent RECEIVED by RuleEngineService — transactionId={}", event.getTransactionId());
         try {

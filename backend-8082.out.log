@@ -120,3 +120,517 @@ Hibernate:
 2026-08-05T03:24:02.999Z  WARN 10540 --- [TransactionMonitoring] [l-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=10h12m45s760ms395µs).
 2026-08-05T04:23:04.797Z  WARN 10540 --- [TransactionMonitoring] [l-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=3m59s773ms271µs800ns).
 2026-08-05T07:51:14.025Z  WARN 10540 --- [TransactionMonitoring] [l-1:housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=1h8m8s725ms316µs700ns).
+2026-08-05T10:53:00.869Z  INFO 10540 --- [TransactionMonitoring] [nio-8082-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-08-05T10:53:00.877Z  INFO 10540 --- [TransactionMonitoring] [nio-8082-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-08-05T10:53:00.886Z  INFO 10540 --- [TransactionMonitoring] [nio-8082-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 6 ms
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.created_at,
+        r1_0.created_by,
+        r1_0.description,
+        r1_0.name,
+        r1_0.parameters_json,
+        r1_0.rule_type,
+        r1_0.severity,
+        r1_0.status,
+        r1_0.updated_at,
+        r1_0.updated_by,
+        r1_0.version 
+    from
+        rules r1_0 
+    where
+        r1_0.status<>? 
+    order by
+        r1_0.updated_at desc 
+    limit
+        ?, ?
+2026-08-05T10:53:01.759Z  WARN 10540 --- [TransactionMonitoring] [nio-8082-exec-1] ration$PageModule$WarningLoggingModifier : Serializing PageImpl instances as-is is not supported, meaning that there is no guarantee about the stability of the resulting JSON structure!
+	For a stable JSON structure, please use Spring Data's PagedModel (globally via @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO))
+	or Spring HATEOAS and Spring Data's PagedResourcesAssembler as documented in https://docs.spring.io/spring-data/commons/reference/repositories/core-extensions.html#core.web.pageables.
+
+Hibernate: 
+    select
+        a1_0.alert_id,
+        a1_0.account_id,
+        a1_0.acknowledged_at,
+        a1_0.alert_details,
+        a1_0.alert_message,
+        a1_0.alert_status,
+        a1_0.closed_at,
+        a1_0.closed_by,
+        a1_0.closed_reason,
+        a1_0.created_at,
+        a1_0.dismissed_at,
+        a1_0.investigating_at,
+        a1_0.resolution_notes,
+        a1_0.rule_id,
+        a1_0.severity,
+        a1_0.transaction_id,
+        a1_0.updated_at 
+    from
+        alerts a1_0 
+    where
+        1=1 
+    order by
+        a1_0.created_at desc 
+    limit
+        ?, ?
+2026-08-05T10:53:15.881Z  INFO 10540 --- [TransactionMonitoring] [nio-8082-exec-3] n.i.T.controller.TransactionController   : POST /api/v1/transactions — account: ACC-001, amount: 1000
+Hibernate: 
+    select
+        a1_0.account_id,
+        a1_0.account_name,
+        a1_0.account_type,
+        a1_0.created_at,
+        a1_0.daily_limit,
+        a1_0.status,
+        a1_0.updated_at 
+    from
+        accounts a1_0 
+    where
+        a1_0.account_id=?
+Hibernate: 
+    select
+        p1_0.payee_id,
+        p1_0.created_at,
+        p1_0.payee_name,
+        p1_0.payee_type 
+    from
+        payees p1_0 
+    where
+        p1_0.payee_id=?
+2026-08-05T10:53:15.948Z  INFO 10540 --- [TransactionMonitoring] [nio-8082-exec-3] n.i.T.s.impl.TransactionServiceImpl      : New payee detected — auto-creating: PAY-TEST-002
+Hibernate: 
+    select
+        p1_0.payee_id,
+        p1_0.created_at,
+        p1_0.payee_name,
+        p1_0.payee_type 
+    from
+        payees p1_0 
+    where
+        p1_0.payee_id=?
+Hibernate: 
+    select
+        t1_0.transaction_id 
+    from
+        transactions t1_0 
+    where
+        t1_0.account_id=? 
+        and t1_0.payee_id=? 
+        and t1_0.amount=? 
+        and t1_0.timestamp=? 
+    limit
+        ?
+Hibernate: 
+    insert 
+    into
+        payees
+        (created_at, payee_name, payee_type, payee_id) 
+    values
+        (?, ?, ?, ?)
+Hibernate: 
+    insert 
+    into
+        transactions
+        (account_id, amount, created_at, currency, description, payee_id, status, timestamp, transaction_type, updated_at) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-08-05T10:53:16.325Z  INFO 10540 --- [TransactionMonitoring] [nio-8082-exec-3] n.i.T.s.impl.TransactionServiceImpl      : Transaction created successfully — id: 23, account: ACC-001, amount: 1000
+2026-08-05T10:53:16.345Z  INFO 10540 --- [TransactionMonitoring] [nio-8082-exec-3] n.i.T.service.RuleEngineService          : TransactionRecordedEvent received — transactionId=23
+Hibernate: 
+    select
+        r1_0.id,
+        r1_0.created_at,
+        r1_0.created_by,
+        r1_0.description,
+        r1_0.name,
+        r1_0.parameters_json,
+        r1_0.rule_type,
+        r1_0.severity,
+        r1_0.status,
+        r1_0.updated_at,
+        r1_0.updated_by,
+        r1_0.version 
+    from
+        rules r1_0 
+    where
+        r1_0.status=?
+2026-08-05T10:53:16.419Z  INFO 10540 --- [TransactionMonitoring] [nio-8082-exec-3] n.i.T.service.RuleEngineService          : Evaluation complete — transactionId=23 rules=1 matched=0 alertsCreated=0
+2026-08-05T10:53:16.428Z  INFO 10540 --- [TransactionMonitoring] [nio-8082-exec-3] n.i.T.s.impl.TransactionServiceImpl      : TransactionRecordedEvent published for transactionId=23
+Hibernate: 
+    select
+        t1_0.transaction_id,
+        t1_0.account_id,
+        t1_0.amount,
+        t1_0.created_at,
+        t1_0.currency,
+        t1_0.description,
+        t1_0.payee_id,
+        t1_0.status,
+        t1_0.timestamp,
+        t1_0.transaction_type,
+        t1_0.updated_at 
+    from
+        transactions t1_0 
+    where
+        t1_0.transaction_id=?
+2026-08-05T10:53:16.506Z ERROR 10540 --- [TransactionMonitoring] [ notification-1] n.i.T.service.NotificationEventListener  : Failed to process transaction notification for transactionId=23: Could not initialize proxy [neueda.in.TransactionMonitoring.entity.Account#ACC-001] - no session
+
+org.hibernate.LazyInitializationException: Could not initialize proxy [neueda.in.TransactionMonitoring.entity.Account#ACC-001] - no session
+	at org.hibernate.proxy.AbstractLazyInitializer.initialize(AbstractLazyInitializer.java:178) ~[hibernate-core-7.4.1.Final.jar:7.4.1.Final]
+	at org.hibernate.proxy.AbstractLazyInitializer.getImplementation(AbstractLazyInitializer.java:348) ~[hibernate-core-7.4.1.Final.jar:7.4.1.Final]
+	at org.hibernate.proxy.pojo.bytebuddy.ByteBuddyInterceptor.call(ByteBuddyInterceptor.java:45) ~[hibernate-core-7.4.1.Final.jar:7.4.1.Final]
+	at org.hibernate.proxy.pojo.BasicLazyInitializer.invoke(BasicLazyInitializer.java:88) ~[hibernate-core-7.4.1.Final.jar:7.4.1.Final]
+	at org.hibernate.proxy.pojo.bytebuddy.ByteBuddyInterceptor.intercept(ByteBuddyInterceptor.java:40) ~[hibernate-core-7.4.1.Final.jar:7.4.1.Final]
+	at org.hibernate.proxy.ProxyConfiguration$InterceptorDispatcher.intercept(ProxyConfiguration.java:95) ~[hibernate-core-7.4.1.Final.jar:7.4.1.Final]
+	at neueda.in.TransactionMonitoring.entity.Account$HibernateProxy.getAccountName(Unknown Source) ~[classes/:na]
+	at neueda.in.TransactionMonitoring.service.NotificationEventListener.onTransactionRecorded(NotificationEventListener.java:45) ~[classes/:na]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[na:na]
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:359) ~[spring-aop-7.0.8.jar:7.0.8]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:190) ~[spring-aop-7.0.8.jar:7.0.8]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:158) ~[spring-aop-7.0.8.jar:7.0.8]
+	at org.springframework.aop.interceptor.AsyncExecutionInterceptor.lambda$invoke$0(AsyncExecutionInterceptor.java:112) ~[spring-aop-7.0.8.jar:7.0.8]
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090) ~[na:na]
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1474) ~[na:na]
+
+2026-08-05T10:53:19.503Z  INFO 10540 --- [TransactionMonitoring] [nio-8082-exec-4] n.i.T.controller.TransactionController   : GET /api/v1/transactions/23/alerts
+Hibernate: 
+    select
+        count(*) 
+    from
+        transactions t1_0 
+    where
+        t1_0.transaction_id=?
+Hibernate: 
+    select
+        a1_0.alert_id,
+        a1_0.account_id,
+        a1_0.acknowledged_at,
+        a1_0.alert_details,
+        a1_0.alert_message,
+        a1_0.alert_status,
+        a1_0.closed_at,
+        a1_0.closed_by,
+        a1_0.closed_reason,
+        a1_0.created_at,
+        a1_0.dismissed_at,
+        a1_0.investigating_at,
+        a1_0.resolution_notes,
+        a1_0.rule_id,
+        a1_0.severity,
+        a1_0.transaction_id,
+        a1_0.updated_at 
+    from
+        alerts a1_0 
+    where
+        a1_0.transaction_id=? 
+    order by
+        a1_0.created_at desc
+Hibernate: 
+    select
+        at1_0.id,
+        at1_0.alert_id,
+        at1_0.linked_at,
+        at1_0.transaction_id 
+    from
+        alert_transactions at1_0 
+    where
+        at1_0.transaction_id=? 
+    order by
+        at1_0.linked_at desc
+2026-08-05T10:53:19.697Z  INFO 10540 --- [TransactionMonitoring] [nio-8082-exec-6] n.i.T.controller.TransactionController   : GET /api/v1/transactions/23/alerts
+Hibernate: 
+    select
+        count(*) 
+    from
+        transactions t1_0 
+    where
+        t1_0.transaction_id=?
+Hibernate: 
+    select
+        a1_0.alert_id,
+        a1_0.account_id,
+        a1_0.acknowledged_at,
+        a1_0.alert_details,
+        a1_0.alert_message,
+        a1_0.alert_status,
+        a1_0.closed_at,
+        a1_0.closed_by,
+        a1_0.closed_reason,
+        a1_0.created_at,
+        a1_0.dismissed_at,
+        a1_0.investigating_at,
+        a1_0.resolution_notes,
+        a1_0.rule_id,
+        a1_0.severity,
+        a1_0.transaction_id,
+        a1_0.updated_at 
+    from
+        alerts a1_0 
+    where
+        a1_0.transaction_id=? 
+    order by
+        a1_0.created_at desc
+Hibernate: 
+    select
+        at1_0.id,
+        at1_0.alert_id,
+        at1_0.linked_at,
+        at1_0.transaction_id 
+    from
+        alert_transactions at1_0 
+    where
+        at1_0.transaction_id=? 
+    order by
+        at1_0.linked_at desc
+2026-08-05T10:53:30.477Z  INFO 10540 --- [TransactionMonitoring] [nio-8082-exec-7] n.i.T.controller.TransactionController   : GET /api/v1/transactions/23/alerts
+Hibernate: 
+    select
+        count(*) 
+    from
+        transactions t1_0 
+    where
+        t1_0.transaction_id=?
+Hibernate: 
+    select
+        a1_0.alert_id,
+        a1_0.account_id,
+        a1_0.acknowledged_at,
+        a1_0.alert_details,
+        a1_0.alert_message,
+        a1_0.alert_status,
+        a1_0.closed_at,
+        a1_0.closed_by,
+        a1_0.closed_reason,
+        a1_0.created_at,
+        a1_0.dismissed_at,
+        a1_0.investigating_at,
+        a1_0.resolution_notes,
+        a1_0.rule_id,
+        a1_0.severity,
+        a1_0.transaction_id,
+        a1_0.updated_at 
+    from
+        alerts a1_0 
+    where
+        a1_0.transaction_id=? 
+    order by
+        a1_0.created_at desc
+Hibernate: 
+    select
+        at1_0.id,
+        at1_0.alert_id,
+        at1_0.linked_at,
+        at1_0.transaction_id 
+    from
+        alert_transactions at1_0 
+    where
+        at1_0.transaction_id=? 
+    order by
+        at1_0.linked_at desc
+2026-08-05T10:53:30.513Z  INFO 10540 --- [TransactionMonitoring] [nio-8082-exec-9] n.i.T.controller.TransactionController   : GET /api/v1/transactions/23/alerts
+Hibernate: 
+    select
+        count(*) 
+    from
+        transactions t1_0 
+    where
+        t1_0.transaction_id=?
+Hibernate: 
+    select
+        a1_0.alert_id,
+        a1_0.account_id,
+        a1_0.acknowledged_at,
+        a1_0.alert_details,
+        a1_0.alert_message,
+        a1_0.alert_status,
+        a1_0.closed_at,
+        a1_0.closed_by,
+        a1_0.closed_reason,
+        a1_0.created_at,
+        a1_0.dismissed_at,
+        a1_0.investigating_at,
+        a1_0.resolution_notes,
+        a1_0.rule_id,
+        a1_0.severity,
+        a1_0.transaction_id,
+        a1_0.updated_at 
+    from
+        alerts a1_0 
+    where
+        a1_0.transaction_id=? 
+    order by
+        a1_0.created_at desc
+Hibernate: 
+    select
+        at1_0.id,
+        at1_0.alert_id,
+        at1_0.linked_at,
+        at1_0.transaction_id 
+    from
+        alert_transactions at1_0 
+    where
+        at1_0.transaction_id=? 
+    order by
+        at1_0.linked_at desc
+2026-08-05T10:54:03.186Z  WARN 10540 --- [TransactionMonitoring] [io-8082-exec-10] o.s.b.mail.health.MailHealthIndicator    : Mail health check failed
+
+jakarta.mail.AuthenticationFailedException: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 5b1f17b1804b1-4994e98adc4sm38173255e9.2 - gsmtp
+
+	at org.eclipse.angus.mail.smtp.SMTPTransport$Authenticator.authenticate(SMTPTransport.java:954) ~[angus-mail-2.0.5.jar:na]
+	at org.eclipse.angus.mail.smtp.SMTPTransport.authenticate(SMTPTransport.java:865) ~[angus-mail-2.0.5.jar:na]
+	at org.eclipse.angus.mail.smtp.SMTPTransport.protocolConnect(SMTPTransport.java:769) ~[angus-mail-2.0.5.jar:na]
+	at jakarta.mail.Service.connect(Service.java:345) ~[jakarta.mail-api-2.1.5.jar:na]
+	at org.springframework.mail.javamail.JavaMailSenderImpl.connectTransport(JavaMailSenderImpl.java:467) ~[spring-context-support-7.0.8.jar:7.0.8]
+	at org.springframework.mail.javamail.JavaMailSenderImpl.testConnection(JavaMailSenderImpl.java:347) ~[spring-context-support-7.0.8.jar:7.0.8]
+	at org.springframework.boot.mail.health.MailHealthIndicator.doHealthCheck(MailHealthIndicator.java:52) ~[spring-boot-mail-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.contributor.AbstractHealthIndicator.health(AbstractHealthIndicator.java:80) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.contributor.HealthIndicator.health(HealthIndicator.java:37) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.Contributor$Blocking.getDescriptor(Contributor.java:148) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.Contributor$Blocking.getDescriptor(Contributor.java:126) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.HealthEndpointSupport.getDescriptorAndLogIfSlow(HealthEndpointSupport.java:172) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.HealthEndpointSupport.getDescriptor(HealthEndpointSupport.java:145) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.HealthEndpointSupport.getAggregateDescriptor(HealthEndpointSupport.java:157) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.HealthEndpointSupport.getDescriptor(HealthEndpointSupport.java:141) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.HealthEndpointSupport.getResult(HealthEndpointSupport.java:110) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.HealthEndpointSupport.getResult(HealthEndpointSupport.java:82) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.HealthEndpointWebExtension.health(HealthEndpointWebExtension.java:85) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.HealthEndpointWebExtension.health(HealthEndpointWebExtension.java:73) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[na:na]
+	at org.springframework.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:281) ~[spring-core-7.0.8.jar:7.0.8]
+	at org.springframework.boot.actuate.endpoint.invoke.reflect.ReflectiveOperationInvoker.invoke(ReflectiveOperationInvoker.java:76) ~[spring-boot-actuator-4.1.0.jar:4.1.0]
+	at org.springframework.boot.actuate.endpoint.annotation.AbstractDiscoveredOperation.invoke(AbstractDiscoveredOperation.java:62) ~[spring-boot-actuator-4.1.0.jar:4.1.0]
+	at org.springframework.boot.webmvc.actuate.endpoint.web.AbstractWebMvcEndpointHandlerMapping$ServletWebOperationAdapter.handle(AbstractWebMvcEndpointHandlerMapping.java:347) ~[spring-boot-webmvc-4.1.0.jar:4.1.0]
+	at org.springframework.boot.webmvc.actuate.endpoint.web.AbstractWebMvcEndpointHandlerMapping$OperationHandler.handle(AbstractWebMvcEndpointHandlerMapping.java:476) ~[spring-boot-webmvc-4.1.0.jar:4.1.0]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[na:na]
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:252) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:184) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:934) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:853) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:86) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:963) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:866) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1000) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:892) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:622) ~[tomcat-embed-core-11.0.22.jar:6.1]
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:874) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:710) ~[tomcat-embed-core-11.0.22.jar:6.1]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:128) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53) ~[tomcat-embed-websocket-11.0.22.jar:11.0.22]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:110) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:199) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:165) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:77) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:492) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:113) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:83) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:72) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:341) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:397) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:1272) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1801) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:946) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:480) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:57) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at java.base/java.lang.Thread.run(Thread.java:1474) ~[na:na]
+
+2026-08-05T10:54:11.824Z  WARN 10540 --- [TransactionMonitoring] [nio-8082-exec-1] o.s.b.mail.health.MailHealthIndicator    : Mail health check failed
+
+jakarta.mail.AuthenticationFailedException: 535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials 5b1f17b1804b1-49949fcb345sm168645375e9.6 - gsmtp
+
+	at org.eclipse.angus.mail.smtp.SMTPTransport$Authenticator.authenticate(SMTPTransport.java:954) ~[angus-mail-2.0.5.jar:na]
+	at org.eclipse.angus.mail.smtp.SMTPTransport.authenticate(SMTPTransport.java:865) ~[angus-mail-2.0.5.jar:na]
+	at org.eclipse.angus.mail.smtp.SMTPTransport.protocolConnect(SMTPTransport.java:769) ~[angus-mail-2.0.5.jar:na]
+	at jakarta.mail.Service.connect(Service.java:345) ~[jakarta.mail-api-2.1.5.jar:na]
+	at org.springframework.mail.javamail.JavaMailSenderImpl.connectTransport(JavaMailSenderImpl.java:467) ~[spring-context-support-7.0.8.jar:7.0.8]
+	at org.springframework.mail.javamail.JavaMailSenderImpl.testConnection(JavaMailSenderImpl.java:347) ~[spring-context-support-7.0.8.jar:7.0.8]
+	at org.springframework.boot.mail.health.MailHealthIndicator.doHealthCheck(MailHealthIndicator.java:52) ~[spring-boot-mail-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.contributor.AbstractHealthIndicator.health(AbstractHealthIndicator.java:80) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.contributor.HealthIndicator.health(HealthIndicator.java:37) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.Contributor$Blocking.getDescriptor(Contributor.java:148) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.Contributor$Blocking.getDescriptor(Contributor.java:126) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.HealthEndpointSupport.getDescriptorAndLogIfSlow(HealthEndpointSupport.java:172) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.HealthEndpointSupport.getDescriptor(HealthEndpointSupport.java:145) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.HealthEndpointSupport.getAggregateDescriptor(HealthEndpointSupport.java:157) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.HealthEndpointSupport.getDescriptor(HealthEndpointSupport.java:141) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.HealthEndpointSupport.getResult(HealthEndpointSupport.java:110) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.HealthEndpointSupport.getResult(HealthEndpointSupport.java:82) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.HealthEndpointWebExtension.health(HealthEndpointWebExtension.java:85) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at org.springframework.boot.health.actuate.endpoint.HealthEndpointWebExtension.health(HealthEndpointWebExtension.java:73) ~[spring-boot-health-4.1.0.jar:4.1.0]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[na:na]
+	at org.springframework.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:281) ~[spring-core-7.0.8.jar:7.0.8]
+	at org.springframework.boot.actuate.endpoint.invoke.reflect.ReflectiveOperationInvoker.invoke(ReflectiveOperationInvoker.java:76) ~[spring-boot-actuator-4.1.0.jar:4.1.0]
+	at org.springframework.boot.actuate.endpoint.annotation.AbstractDiscoveredOperation.invoke(AbstractDiscoveredOperation.java:62) ~[spring-boot-actuator-4.1.0.jar:4.1.0]
+	at org.springframework.boot.webmvc.actuate.endpoint.web.AbstractWebMvcEndpointHandlerMapping$ServletWebOperationAdapter.handle(AbstractWebMvcEndpointHandlerMapping.java:347) ~[spring-boot-webmvc-4.1.0.jar:4.1.0]
+	at org.springframework.boot.webmvc.actuate.endpoint.web.AbstractWebMvcEndpointHandlerMapping$OperationHandler.handle(AbstractWebMvcEndpointHandlerMapping.java:476) ~[spring-boot-webmvc-4.1.0.jar:4.1.0]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[na:na]
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:252) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:184) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:934) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:853) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:86) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:963) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:866) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1000) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:892) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:622) ~[tomcat-embed-core-11.0.22.jar:6.1]
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:874) ~[spring-webmvc-7.0.8.jar:7.0.8]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:710) ~[tomcat-embed-core-11.0.22.jar:6.1]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:128) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53) ~[tomcat-embed-websocket-11.0.22.jar:11.0.22]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:110) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:199) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-7.0.8.jar:7.0.8]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:165) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:77) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:492) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:113) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:83) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:72) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:341) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:397) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:1272) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1801) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:946) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:480) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:57) ~[tomcat-embed-core-11.0.22.jar:11.0.22]
+	at java.base/java.lang.Thread.run(Thread.java:1474) ~[na:na]
+

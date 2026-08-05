@@ -11,7 +11,7 @@ import {
   Clock, TrendingUp, TrendingDown, UserCheck, Activity, Shield
 } from 'lucide-react';
 import { getAlerts, getAlertStats } from '@/lib/api/alerts';
-import { formatDate, relativeTime } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import type { Alert, AlertStatus, Severity } from '@/lib/types';
 
 // Sparkline Mini Component
@@ -62,29 +62,70 @@ export default function AlertsListPage() {
       alertStatus: (activeTab !== 'ALL' ? activeTab : status) as AlertStatus || undefined,
       severity: severity as Severity || undefined,
     }),
+    refetchInterval: 10000,
   });
 
   const { data: statsData } = useQuery({
     queryKey: ['alerts', 'stats-list-page'],
     queryFn: getAlertStats,
+    refetchInterval: 10000,
   });
 
-  // Mock Fallback Alerts list matching exact sample reference UI
-  const fallbackAlerts = [
-    { alertId: 2387, transactionId: 10032, ruleName: 'Amount Threshold Rule', severity: 'HIGH' as Severity, alertStatus: 'OPEN' as AlertStatus, assignedTo: 'Unassigned', createdAt: '2024-05-21T10:30:00Z', age: '15m' },
-    { alertId: 2386, transactionId: 10031, ruleName: 'Velocity Rule', severity: 'HIGH' as Severity, alertStatus: 'ACKNOWLEDGED' as AlertStatus, assignedTo: 'John Doe', createdAt: '2024-05-21T09:45:00Z', age: '1h' },
-    { alertId: 2385, transactionId: 10030, ruleName: 'New Payee Rule', severity: 'MEDIUM' as Severity, alertStatus: 'INVESTIGATING' as AlertStatus, assignedTo: 'Sarah Lee', createdAt: '2024-05-21T08:20:00Z', age: '2h 25m' },
-    { alertId: 2384, transactionId: 10029, ruleName: 'Daily Limit Rule', severity: 'HIGH' as Severity, alertStatus: 'OPEN' as AlertStatus, assignedTo: 'Unassigned', createdAt: '2024-05-21T07:15:00Z', age: '3h 30m' },
-    { alertId: 2383, transactionId: 10028, ruleName: 'Location Rule', severity: 'LOW' as Severity, alertStatus: 'CLOSED' as AlertStatus, assignedTo: 'Mike Johnson', createdAt: '2024-05-20T22:45:00Z', age: '11h' },
-    { alertId: 2382, transactionId: 10027, ruleName: 'Amount Threshold Rule', severity: 'HIGH' as Severity, alertStatus: 'INVESTIGATING' as AlertStatus, assignedTo: 'Jane Smith', createdAt: '2024-05-20T20:30:00Z', age: '13h 15m' },
-    { alertId: 2381, transactionId: 10026, ruleName: 'Multiple Transactions Rule', severity: 'MEDIUM' as Severity, alertStatus: 'ACKNOWLEDGED' as AlertStatus, assignedTo: 'John Doe', createdAt: '2024-05-20T18:00:00Z', age: '15h 45m' },
-    { alertId: 2380, transactionId: 10025, ruleName: 'Unusual Device Rule', severity: 'LOW' as Severity, alertStatus: 'DISMISSED' as AlertStatus, assignedTo: 'Robert Brown', createdAt: '2024-05-20T16:30:00Z', age: '17h 15m' },
-  ];
+  const { data: allAlertsCount } = useQuery({
+    queryKey: ['alerts', 'count', 'all'],
+    queryFn: () => getAlerts({ page: 0, size: 1 }),
+    refetchInterval: 10000,
+  });
 
-  const alertsList = (pagedData?.content || []).map((a, i) => ({
+  const { data: highAlertsCount } = useQuery({
+    queryKey: ['alerts', 'count', 'high'],
+    queryFn: () => getAlerts({ page: 0, size: 1, severity: 'HIGH' }),
+    refetchInterval: 10000,
+  });
+
+  const { data: mediumAlertsCount } = useQuery({
+    queryKey: ['alerts', 'count', 'medium'],
+    queryFn: () => getAlerts({ page: 0, size: 1, severity: 'MEDIUM' }),
+    refetchInterval: 10000,
+  });
+
+  const { data: lowAlertsCount } = useQuery({
+    queryKey: ['alerts', 'count', 'low'],
+    queryFn: () => getAlerts({ page: 0, size: 1, severity: 'LOW' }),
+    refetchInterval: 10000,
+  });
+
+  const stats = (statsData ?? {}) as {
+    open?: number;
+    acknowledged?: number;
+    investigating?: number;
+    closed?: number;
+    dismissed?: number;
+    total?: number;
+  };
+
+  const totalAlerts = allAlertsCount?.totalElements ?? Number(stats.total ?? 0);
+  const highSeverityCount = highAlertsCount?.totalElements ?? 0;
+  const mediumSeverityCount = mediumAlertsCount?.totalElements ?? 0;
+  const lowSeverityCount = lowAlertsCount?.totalElements ?? 0;
+  const openCount = Number(stats.open ?? 0);
+  const acknowledgedCount = Number(stats.acknowledged ?? 0);
+  const investigatingCount = Number(stats.investigating ?? 0);
+  const closedCount = Number(stats.closed ?? 0);
+  const dismissedCount = Number(stats.dismissed ?? 0);
+
+  const ageLabel = (createdAt: string) => {
+    const diffMinutes = Math.max(0, Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000));
+    if (diffMinutes < 1) return 'Now';
+    if (diffMinutes < 60) return `${diffMinutes}m`;
+    if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)}h`;
+    return `${Math.floor(diffMinutes / 1440)}d`;
+  };
+
+  const alertsList = (pagedData?.content || []).map((a) => ({
     ...a,
-    assignedTo: a.assignedTo || (a.alertStatus === 'OPEN' ? 'Unassigned' : ['John Doe', 'Sarah Lee', 'Mike Johnson', 'Jane Smith'][i % 4]),
-    age: 'Recent',
+    assignedTo: (a as unknown as { assignedTo?: string }).assignedTo || 'Unassigned',
+    age: ageLabel(a.createdAt),
   }));
 
   // Filter client side for search & assignedTo
@@ -96,60 +137,89 @@ export default function AlertsListPage() {
     return matchesSearch && matchesAssigned;
   });
 
-  // Chart data
-  const stackedAreaTrend = [
-    { date: 'May 15', high: 45, medium: 50, low: 40 },
-    { date: 'May 16', high: 55, medium: 60, low: 45 },
-    { date: 'May 17', high: 40, medium: 52, low: 38 },
-    { date: 'May 18', high: 62, medium: 58, low: 48 },
-    { date: 'May 19', high: 50, medium: 65, low: 52 },
-    { date: 'May 20', high: 75, medium: 70, low: 55 },
-    { date: 'May 21', high: 67, medium: 89, low: 92 },
-  ];
+  const alertsForAnalytics = pagedData?.content ?? [];
 
+  const trendMap = alertsForAnalytics.reduce<Record<string, { date: string; high: number; medium: number; low: number }>>((acc, row) => {
+    const date = new Date(row.createdAt).toLocaleDateString(undefined, { month: 'short', day: '2-digit' });
+    if (!acc[date]) {
+      acc[date] = { date, high: 0, medium: 0, low: 0 };
+    }
+    if (row.severity === 'HIGH' || row.severity === 'CRITICAL') acc[date].high += 1;
+    else if (row.severity === 'MEDIUM') acc[date].medium += 1;
+    else acc[date].low += 1;
+    return acc;
+  }, {});
+  const stackedAreaTrend = Object.values(trendMap);
+
+  const otherSeverityCount = Math.max(0, totalAlerts - highSeverityCount - mediumSeverityCount - lowSeverityCount);
   const severityDonutData = [
-    { name: 'High', value: 67, color: '#ef4444' },
-    { name: 'Medium', value: 89, color: '#f59e0b' },
-    { name: 'Low', value: 92, color: '#22c55e' },
-    { name: 'Informational', value: 80, color: '#3b82f6' },
-  ];
+    { name: 'High', value: highSeverityCount, color: '#ef4444' },
+    { name: 'Medium', value: mediumSeverityCount, color: '#f59e0b' },
+    { name: 'Low', value: lowSeverityCount, color: '#22c55e' },
+    { name: 'Other', value: otherSeverityCount, color: '#3b82f6' },
+  ].filter((d) => d.value > 0);
 
   const statusDonutData = [
-    { name: 'Open', value: 167, color: '#3b82f6' },
-    { name: 'Acknowledged', value: 89, color: '#f59e0b' },
-    { name: 'Investigating', value: 45, color: '#8b5cf6' },
-    { name: 'Closed', value: 87, color: '#22c55e' },
-    { name: 'Dismissed', value: 40, color: '#9ca3af' },
-  ];
+    { name: 'Open', value: openCount, color: '#3b82f6' },
+    { name: 'Acknowledged', value: acknowledgedCount, color: '#f59e0b' },
+    { name: 'Investigating', value: investigatingCount, color: '#8b5cf6' },
+    { name: 'Closed', value: closedCount, color: '#22c55e' },
+    { name: 'Dismissed', value: dismissedCount, color: '#9ca3af' },
+  ].filter((d) => d.value > 0);
 
-  const ruleBars = [
-    { name: 'Amount Threshold Rule', count: 134, color: '#ef4444', pct: 100 },
-    { name: 'Velocity Rule', count: 87, color: '#f59e0b', pct: 65 },
-    { name: 'New Payee Rule', count: 56, color: '#22c55e', pct: 42 },
-    { name: 'Daily Limit Rule', count: 51, color: '#3b82f6', pct: 38 },
-    { name: 'Location Rule', count: 40, color: '#8b5cf6', pct: 30 },
-  ];
+  const ruleCountMap = alertsForAnalytics.reduce<Record<string, number>>((acc, row) => {
+    const key = row.ruleName || `Rule #${row.ruleId}`;
+    acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  }, {});
+  const maxRuleCount = Math.max(1, ...Object.values(ruleCountMap));
+  const ruleColors = ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#8b5cf6'];
+  const ruleBars = Object.entries(ruleCountMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([name, count], index) => ({
+      name,
+      count,
+      color: ruleColors[index % ruleColors.length],
+      pct: Math.round((count / maxRuleCount) * 100),
+    }));
 
-  const topRiskyAccounts = [
-    { accId: '1234567890', name: 'John Smith', score: 92 },
-    { accId: '9876543210', name: 'Maria Garcia', score: 88 },
-    { accId: '1122334455', name: 'James Wilson', score: 76 },
-    { accId: '5566778899', name: 'Robert Brown', score: 72 },
-    { accId: '6677889900', name: 'Sarah Lee', score: 65 },
-  ];
+  const accountCountMap = alertsForAnalytics.reduce<Record<string, number>>((acc, row) => {
+    const key = row.accountId || 'UNKNOWN';
+    acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  }, {});
+  const maxAccountCount = Math.max(1, ...Object.values(accountCountMap));
+  const topRiskyAccounts = Object.entries(accountCountMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([accId, count]) => ({
+      accId,
+      name: `Alerts: ${count}`,
+      score: Math.round((count / maxAccountCount) * 100),
+    }));
 
   // 7x6 Heatmap matrix (Mon-Sun vs 6 time slots)
   const heatmapDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const heatmapTimes = ['12 AM', '4 AM', '8 AM', '12 PM', '4 PM', '8 PM'];
-  const heatmapValues = [
-    [12, 5, 24, 45, 62, 38],
-    [8,  3, 30, 52, 70, 42],
-    [15, 6, 28, 48, 65, 35],
-    [10, 4, 35, 58, 80, 50],
-    [20, 8, 40, 72, 95, 60],
-    [5,  2, 12, 25, 30, 18],
-    [4,  1, 10, 20, 22, 14],
-  ];
+  const heatmapValues = Array.from({ length: 7 }, () => Array.from({ length: 6 }, () => 0));
+  alertsForAnalytics.forEach((row) => {
+    const createdAt = new Date(row.createdAt);
+    const dayIndex = (createdAt.getDay() + 6) % 7;
+    const timeIndex = Math.floor(createdAt.getHours() / 4);
+    heatmapValues[dayIndex][timeIndex] += 1;
+  });
+
+  const recentActivity = alertsForAnalytics.slice(0, 5).map((row) => ({
+    time: new Date(row.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    title: row.alertMessage,
+    ref: `ALERT-${row.alertId} • TXN-${row.transactionId}`,
+    color:
+      row.alertStatus === 'OPEN' ? 'bg-red-500' :
+      row.alertStatus === 'ACKNOWLEDGED' ? 'bg-amber-500' :
+      row.alertStatus === 'INVESTIGATING' ? 'bg-blue-500' :
+      row.alertStatus === 'CLOSED' ? 'bg-emerald-500' : 'bg-gray-400',
+  }));
 
   const clearFilters = () => {
     setSearch('');
@@ -214,17 +284,15 @@ export default function AlertsListPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Total Alerts</p>
-              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">328</p>
-              <span className="mt-1 flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
-                <TrendingUp className="h-3 w-3" /> +22.4% from last week
-              </span>
+              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{totalAlerts}</p>
+              <span className="mt-1 text-[10px] text-gray-400">Live backend total</span>
             </div>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50 text-red-600 dark:bg-red-900/30">
               <Bell className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-2">
-            <Sparkline data={[280, 310, 290, 340, 328]} color="#ef4444" />
+            <Sparkline data={[totalAlerts, totalAlerts, totalAlerts, totalAlerts, totalAlerts]} color="#ef4444" />
           </div>
         </div>
 
@@ -233,10 +301,10 @@ export default function AlertsListPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">High Severity</p>
-              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">67</p>
-              <span className="mt-1 text-[10px] text-gray-400">20.4% of total</span>
+              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{highSeverityCount}</p>
+              <span className="mt-1 text-[10px] text-gray-400">{((highSeverityCount / Math.max(1, totalAlerts)) * 100).toFixed(1)}% of total</span>
             </div>
-            <RingProgress value={67} total={328} color="#ef4444" />
+            <RingProgress value={highSeverityCount} total={Math.max(1, totalAlerts)} color="#ef4444" />
           </div>
         </div>
 
@@ -245,10 +313,10 @@ export default function AlertsListPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Medium Severity</p>
-              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">89</p>
-              <span className="mt-1 text-[10px] text-gray-400">27.1% of total</span>
+              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{mediumSeverityCount}</p>
+              <span className="mt-1 text-[10px] text-gray-400">{((mediumSeverityCount / Math.max(1, totalAlerts)) * 100).toFixed(1)}% of total</span>
             </div>
-            <RingProgress value={89} total={328} color="#f59e0b" />
+            <RingProgress value={mediumSeverityCount} total={Math.max(1, totalAlerts)} color="#f59e0b" />
           </div>
         </div>
 
@@ -257,10 +325,10 @@ export default function AlertsListPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Low Severity</p>
-              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">92</p>
-              <span className="mt-1 text-[10px] text-gray-400">28.0% of total</span>
+              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{lowSeverityCount}</p>
+              <span className="mt-1 text-[10px] text-gray-400">{((lowSeverityCount / Math.max(1, totalAlerts)) * 100).toFixed(1)}% of total</span>
             </div>
-            <RingProgress value={92} total={328} color="#eab308" />
+            <RingProgress value={lowSeverityCount} total={Math.max(1, totalAlerts)} color="#eab308" />
           </div>
         </div>
 
@@ -269,10 +337,10 @@ export default function AlertsListPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Open Alerts</p>
-              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">167</p>
-              <span className="mt-1 text-[10px] text-gray-400">50.9% of total</span>
+              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{openCount}</p>
+              <span className="mt-1 text-[10px] text-gray-400">{((openCount / Math.max(1, totalAlerts)) * 100).toFixed(1)}% of total</span>
             </div>
-            <RingProgress value={167} total={328} color="#8b5cf6" />
+            <RingProgress value={openCount} total={Math.max(1, totalAlerts)} color="#8b5cf6" />
           </div>
         </div>
 
@@ -281,10 +349,10 @@ export default function AlertsListPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">Closed Alerts</p>
-              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">161</p>
-              <span className="mt-1 text-[10px] text-gray-400">49.1% of total</span>
+              <p className="mt-1 text-2xl font-black text-gray-900 dark:text-white">{closedCount}</p>
+              <span className="mt-1 text-[10px] text-gray-400">{((closedCount / Math.max(1, totalAlerts)) * 100).toFixed(1)}% of total</span>
             </div>
-            <RingProgress value={161} total={328} color="#22c55e" />
+            <RingProgress value={closedCount} total={Math.max(1, totalAlerts)} color="#22c55e" />
           </div>
         </div>
       </div>
@@ -295,11 +363,11 @@ export default function AlertsListPage() {
         <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold">
           {[
             { key: 'ALL', label: 'All Alerts', count: undefined },
-            { key: 'OPEN', label: 'Open', count: 167 },
-            { key: 'ACKNOWLEDGED', label: 'Acknowledged', count: 89 },
-            { key: 'INVESTIGATING', label: 'Investigating', count: 45 },
-            { key: 'CLOSED', label: 'Closed', count: 161 },
-            { key: 'DISMISSED', label: 'Dismissed', count: 40 },
+            { key: 'OPEN', label: 'Open', count: openCount },
+            { key: 'ACKNOWLEDGED', label: 'Acknowledged', count: acknowledgedCount },
+            { key: 'INVESTIGATING', label: 'Investigating', count: investigatingCount },
+            { key: 'CLOSED', label: 'Closed', count: closedCount },
+            { key: 'DISMISSED', label: 'Dismissed', count: dismissedCount },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -462,7 +530,7 @@ export default function AlertsListPage() {
 
         {/* Footer Pagination */}
         <div className="flex items-center justify-between border-t border-gray-100 bg-white px-5 py-3 text-xs text-gray-500 dark:border-gray-800 dark:bg-gray-900">
-          <span>Showing 1 to {filteredRows.length} of 328 alerts</span>
+          <span>Showing {filteredRows.length} on this page of {totalAlerts} alerts</span>
           <div className="flex items-center gap-1">
             <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800">‹</button>
             <button className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 font-bold text-white shadow-sm">1</button>
@@ -517,7 +585,7 @@ export default function AlertsListPage() {
                 </Pie>
               </PieChart>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-lg font-black text-gray-900 dark:text-white">328</span>
+                <span className="text-lg font-black text-gray-900 dark:text-white">{totalAlerts}</span>
                 <span className="text-[9px] text-gray-400">Total</span>
               </div>
             </div>
@@ -567,7 +635,7 @@ export default function AlertsListPage() {
                 </Pie>
               </PieChart>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-lg font-black text-gray-900 dark:text-white">328</span>
+                <span className="text-lg font-black text-gray-900 dark:text-white">{totalAlerts}</span>
                 <span className="text-[9px] text-gray-400">Total</span>
               </div>
             </div>
@@ -654,13 +722,7 @@ export default function AlertsListPage() {
             <a href="#" className="text-xs font-semibold text-blue-600 hover:underline">View All</a>
           </div>
           <div className="space-y-3 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-100 dark:before:bg-gray-800">
-            {[
-              { time: '10:30 AM', title: 'New high severity alert generated', ref: 'ALERT-2387 • TXN-10032', color: 'bg-red-500' },
-              { time: '10:28 AM', title: 'Alert acknowledged', ref: 'ALERT-2386 • John Doe', color: 'bg-amber-500' },
-              { time: '10:25 AM', title: 'Investigation started', ref: 'ALERT-2385 • Sarah Lee', color: 'bg-blue-500' },
-              { time: '10:20 AM', title: 'Alert closed', ref: 'ALERT-2383 • Mike Johnson', color: 'bg-emerald-500' },
-              { time: '10:15 AM', title: 'Alert dismissed', ref: 'ALERT-2380 • Robert Brown', color: 'bg-gray-400' },
-            ].map((item, i) => (
+            {recentActivity.map((item, i) => (
               <div key={i} className="flex items-start gap-3 relative pl-6">
                 <span className={`absolute left-0 top-1 h-4 w-4 rounded-full border-2 border-white dark:border-gray-900 ${item.color}`} />
                 <div className="flex-1">

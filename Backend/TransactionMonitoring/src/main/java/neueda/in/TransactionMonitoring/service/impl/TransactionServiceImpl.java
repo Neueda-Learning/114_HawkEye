@@ -24,6 +24,7 @@ import neueda.in.TransactionMonitoring.repository.AlertRepository;
 import neueda.in.TransactionMonitoring.repository.AlertTransactionRepository;
 import neueda.in.TransactionMonitoring.repository.PayeeRepository;
 import neueda.in.TransactionMonitoring.repository.TransactionRepository;
+import neueda.in.TransactionMonitoring.service.RuleEngineService;
 import neueda.in.TransactionMonitoring.service.TransactionService;
 import neueda.in.TransactionMonitoring.specification.TransactionSpecification;
 import org.springframework.context.ApplicationEventPublisher;
@@ -54,6 +55,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final AlertRepository       alertRepository;
     private final AlertTransactionRepository alertTransactionRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final RuleEngineService ruleEngineService;
 
     // ────────────────────────────────────────────────────────────────────────
     // POST /api/v1/transactions
@@ -122,6 +124,16 @@ public class TransactionServiceImpl implements TransactionService {
         log.info("📢 Publishing TransactionRecordedEvent for transactionId={}", saved.getTransactionId());
         eventPublisher.publishEvent(new TransactionRecordedEvent(this, saved.getTransactionId()));
         log.info("✅ TransactionRecordedEvent published successfully — id: {}", saved.getTransactionId());
+
+        // Synchronous fallback: ensure alerts are generated for this transaction even
+        // if event-driven listener execution is delayed/misconfigured in runtime.
+        try {
+            ruleEngineService.evaluateTransaction(saved.getTransactionId());
+            log.info("✅ Synchronous rule evaluation completed for transactionId={}", saved.getTransactionId());
+        } catch (Exception ex) {
+            log.error("❌ Synchronous rule evaluation failed for transactionId={}: {}",
+                    saved.getTransactionId(), ex.getMessage(), ex);
+        }
 
         return toResponseDTO(saved);
     }
