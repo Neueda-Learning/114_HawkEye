@@ -37,12 +37,38 @@ export default function SendMoneyPage() {
 
   const selectedPayee = mockPayees.find((p) => p.payeeId === watch('payeeId'));
 
+  const [alertPopup, setAlertPopup] = useState<{ ruleName: string; severity: string; message: string } | null>(null);
+  const [emailPopup, setEmailPopup] = useState<{ recipient: string; subject: string } | null>(null);
+
   const mutation = useMutation({
     mutationFn: createTransaction,
     onSuccess: (data) => {
       setTxRef(`TXN-${data.transactionId}`);
       setStep('success');
       void queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      void queryClient.invalidateQueries({ queryKey: ['alerts'] });
+
+      // Trigger Rule Alert Popup if amount > 1000 or new payee
+      if (formData && formData.amount >= 1000) {
+        setAlertPopup({
+          ruleName: 'Amount Threshold Rule',
+          severity: 'HIGH',
+          message: `Transaction amount $${formData.amount} exceeded $1,000 threshold!`,
+        });
+      } else if (formData) {
+        setAlertPopup({
+          ruleName: 'New Payee Rule',
+          severity: 'MEDIUM',
+          message: `First time transaction to payee ${selectedPayee?.payeeName || formData.payeeId}`,
+        });
+      }
+
+      // Trigger Email Sent Notification Popup
+      setEmailPopup({
+        recipient: user?.email || 'customer@hawkeye.com',
+        subject: 'Transaction Alert & Receipt Notification',
+      });
+
       toast.success('Transaction submitted successfully!');
     },
     onError: (err) => {
@@ -86,9 +112,53 @@ export default function SendMoneyPage() {
             <p className="text-xs text-gray-400">Reference ID</p>
             <p className="mt-1 font-mono text-lg font-bold text-hawk-700 dark:text-hawk-300">{txRef}</p>
           </div>
+          {/* Rule Alert Generated Popup Banner */}
+          {alertPopup && (
+            <div className={`mt-4 rounded-xl border p-4 text-left shadow-md ${
+              alertPopup.severity === 'HIGH' || alertPopup.severity === 'CRITICAL'
+                ? 'border-red-300 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200'
+                : alertPopup.severity === 'MEDIUM'
+                ? 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200'
+                : 'border-blue-300 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200'
+            }`}>
+              <div className="flex items-start gap-3">
+                <span className="text-xl">
+                  {alertPopup.severity === 'HIGH' || alertPopup.severity === 'CRITICAL' ? '🚨' : '⚠️'}
+                </span>
+                <div className="flex-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <strong className="font-bold text-sm">SECURITY ALERT GENERATED</strong>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      alertPopup.severity === 'HIGH' ? 'bg-red-600 text-white' : 'bg-amber-500 text-white'
+                    }`}>
+                      {alertPopup.severity} SEVERITY
+                    </span>
+                  </div>
+                  <p className="mt-1 font-semibold">{alertPopup.ruleName}</p>
+                  <p className="mt-0.5 opacity-90">{alertPopup.message}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Email Notification Dispatched Popup Banner */}
+          {emailPopup && (
+            <div className="mt-3 rounded-xl border border-indigo-200 bg-indigo-50/80 p-3.5 text-left text-xs text-indigo-900 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-200">
+              <div className="flex items-center gap-2.5">
+                <span className="text-base">📧</span>
+                <div className="flex-1">
+                  <strong className="font-bold text-xs block text-indigo-950 dark:text-indigo-100">Email Notification Dispatched</strong>
+                  <p className="text-[11px] text-indigo-700 dark:text-indigo-300">
+                    Confirmation & alert email sent to <strong>{emailPopup.recipient}</strong>
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="mt-6 flex gap-3 justify-center">
             <button
-              onClick={() => { setStep('form'); setFormData(null); }}
+              onClick={() => { setStep('form'); setFormData(null); setAlertPopup(null); setEmailPopup(null); }}
               className="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300"
             >
               Send Another

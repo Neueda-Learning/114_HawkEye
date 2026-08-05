@@ -58,7 +58,7 @@ export function AdminSidebar({ collapsed, onToggle, isDark, onThemeToggle }: Sid
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div>
-              <span className="text-base font-extrabold tracking-wide text-white">TMAS</span>
+              <span className="text-base font-extrabold tracking-wide text-white">HAWKEYE</span>
               <p className="text-[9px] text-gray-400 font-medium leading-none">Transaction Monitoring</p>
             </div>
           </div>
