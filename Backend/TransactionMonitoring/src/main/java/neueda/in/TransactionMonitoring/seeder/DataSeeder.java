@@ -54,7 +54,7 @@ public class DataSeeder implements CommandLineRunner {
     private void seedAccounts() {
         accountRepository.save(Account.builder()
                 .accountId("ACC-001")
-                .accountName("John Doe")
+                .accountName("fourgrads")
                 .accountType(AccountType.PERSONAL)
                 .dailyLimit(new BigDecimal("50000.00"))
                 .status(AccountStatus.ACTIVE)

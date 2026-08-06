@@ -6,11 +6,11 @@ import type { AuthUser, UserRole } from '@/lib/types';
 export const MOCK_USERS: Record<string, { password: string; user: AuthUser }> = {
   'customer@hawkeye.com': {
     password: 'password123',
-    user: { id: 'U001', email: 'customer@hawkeye.com', name: 'John Smith', role: 'CUSTOMER', accountId: 'ACC-001' },
+    user: { id: 'U001', email: 'customer@hawkeye.com', name: 'fourgrads', role: 'CUSTOMER', accountId: 'ACC-001' },
   },
   'user@hawkeye.com': {
     password: 'password123',
-    user: { id: 'U001', email: 'user@hawkeye.com', name: 'John Smith', role: 'CUSTOMER', accountId: 'ACC-001' },
+    user: { id: 'U001', email: 'user@hawkeye.com', name: 'fourgrads', role: 'CUSTOMER', accountId: 'ACC-001' },
   },
   'analyst@hawkeye.com': {
     password: 'password123',
@@ -56,7 +56,8 @@ export const useAuthStore = create<AuthStore>()(
         // Real API call (when backend auth is ready)
         const { default: apiClient } = await import('@/lib/api/axios');
         const { data } = await apiClient.post('/api/v1/auth/login', { email, password });
-        const { user, accessToken } = data.data;
+        const { user: fetchedUser, accessToken } = data.data;
+        const user = fetchedUser?.role === 'CUSTOMER' ? { ...fetchedUser, name: 'fourgrads' } : fetchedUser;
         sessionStorage.setItem('hawkeye_token', accessToken);
         set({ user, accessToken, isAuthenticated: true });
       },

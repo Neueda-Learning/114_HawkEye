@@ -9,6 +9,7 @@ import {
   Clock, TrendingUp, TrendingDown, Sliders, X
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { toast } from '@/components/common/Toast';
 
 // Sparkline Mini Component
 function Sparkline({ data, color }: { data: number[]; color: string }) {
@@ -38,7 +39,7 @@ export default function UsersPage() {
 
   // Fallback realistic users list matching exact reference sample
   const [usersList, setUsersList] = useState([
-    { id: 1, name: 'John Smith', titleRole: 'Administrator', email: 'john.smith@tmas.com', role: 'Administrator', dept: 'IT Operations', status: 'Active', lastLogin: '2024-05-21T10:30:00Z', mfa: true },
+    { id: 1, name: 'fourgrads', titleRole: 'Administrator', email: 'fourgrads@tmas.com', role: 'Administrator', dept: 'IT Operations', status: 'Active', lastLogin: '2024-05-21T10:30:00Z', mfa: true },
     { id: 2, name: 'Sarah Lee', titleRole: 'Analyst', email: 'sarah.lee@tmas.com', role: 'Fraud Analyst', dept: 'Fraud Management', status: 'Active', lastLogin: '2024-05-21T09:45:00Z', mfa: true },
     { id: 3, name: 'Mike Johnson', titleRole: '', email: 'mike.johnson@tmas.com', role: 'Investigator', dept: 'Investigations', status: 'Active', lastLogin: '2024-05-21T08:20:00Z', mfa: true },
     { id: 4, name: 'Emily Davis', titleRole: 'Analyst', email: 'emily.davis@tmas.com', role: 'Fraud Analyst', dept: 'Fraud Management', status: 'Active', lastLogin: '2024-05-21T07:15:00Z', mfa: true },
@@ -49,7 +50,10 @@ export default function UsersPage() {
   ]);
 
   const handleAddUser = () => {
-    if (!newName || !newEmail) return;
+    if (!newName || !newEmail) {
+      toast.error('Please enter name and email');
+      return;
+    }
     const userObj = {
       id: Date.now(),
       name: newName,
@@ -63,8 +67,31 @@ export default function UsersPage() {
     };
     setUsersList([userObj, ...usersList]);
     setIsAddModalOpen(false);
+    toast.success(`User "${newName}" created successfully!`);
     setNewName('');
     setNewEmail('');
+  };
+
+  const handleToggleStatus = (id: number) => {
+    setUsersList(prev => prev.map(u => {
+      if (u.id === id) {
+        const nextStatus = u.status === 'Active' ? 'Inactive' : 'Active';
+        toast.success(`User ${u.name} status updated to ${nextStatus}`);
+        return { ...u, status: nextStatus };
+      }
+      return u;
+    }));
+  };
+
+  const handleToggleMfa = (id: number) => {
+    setUsersList(prev => prev.map(u => {
+      if (u.id === id) {
+        const nextMfa = !u.mfa;
+        toast.success(`MFA ${nextMfa ? 'enabled' : 'disabled'} for ${u.name}`);
+        return { ...u, mfa: nextMfa };
+      }
+      return u;
+    }));
   };
 
   // Filter list
@@ -409,30 +436,46 @@ export default function UsersPage() {
                   {u.dept}
                 </td>
                 <td className="px-5 py-3.5">
-                  <span className={`inline-flex items-center gap-1 text-[11px] font-semibold ${
-                    u.status === 'Active' ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
-                  }`}>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleStatus(u.id)}
+                    className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition ${
+                      u.status === 'Active' ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
+                    }`}
+                  >
                     <span className={`h-1.5 w-1.5 rounded-full ${u.status === 'Active' ? 'bg-emerald-500' : 'bg-gray-400'}`} />
                     {u.status}
-                  </span>
+                  </button>
                 </td>
                 <td className="px-5 py-3.5 text-gray-500 dark:text-gray-400">
                   {formatDate(u.lastLogin)}
                 </td>
                 <td className="px-5 py-3.5">
-                  <span className={`inline-flex items-center gap-1 text-xs font-semibold ${
-                    u.mfa ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
-                  }`}>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleMfa(u.id)}
+                    className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition ${
+                      u.mfa ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'
+                    }`}
+                  >
                     {u.mfa ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <XCircle className="h-3.5 w-3.5 text-gray-400" />}
                     {u.mfa ? 'Enabled' : 'Disabled'}
-                  </span>
+                  </button>
                 </td>
                 <td className="px-5 py-3.5 text-right">
                   <div className="flex items-center justify-end gap-1">
-                    <button className="rounded p-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30">
+                    <button
+                      type="button"
+                      onClick={() => toast.info(`Editing settings for ${u.name}`)}
+                      className="rounded p-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                    >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
-                    <button className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800">
+                    <button
+                      type="button"
+                      onClick={() => toast.info(`User options opened for ${u.name}`)}
+                      className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
                       <MoreVertical className="h-3.5 w-3.5" />
                     </button>
                   </div>

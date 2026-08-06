@@ -33,7 +33,12 @@ export function AlertActionPanel({ alert, onUpdated }: AlertActionPanelProps) {
     mutationFn: ({ action, note }: { action: ActionConfig; note: string }) =>
       action.mutationFn(alert.alertId, note ? { resolutionNotes: note, performedBy: user?.email ?? 'admin' } : { performedBy: user?.email ?? 'admin' }),
     onSuccess: (updated) => {
-      toast.success(`Alert ${updated.alertStatus.toLowerCase()}`);
+      toast.success(`Alert #${alert.alertId} status updated to ${updated.alertStatus.toLowerCase()}`);
+      toast.email(
+        `Security Email Notification Dispatched`,
+        `An automated alert notification email detailing status change to ${updated.alertStatus} has been dispatched to fourgrads (customer@hawkeye.com) and risk compliance.`,
+        'customer@hawkeye.com, risk-team@hawkeye.com'
+      );
       void queryClient.invalidateQueries({ queryKey: ['alert', String(alert.alertId)] });
       void queryClient.invalidateQueries({ queryKey: ['alerts'] });
       setPendingAction(null);

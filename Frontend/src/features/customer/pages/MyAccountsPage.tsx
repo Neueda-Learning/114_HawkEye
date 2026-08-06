@@ -395,7 +395,7 @@ export default function MyAccountsPage() {
         </div>
         <button
           type="button"
-          onClick={() => navigate('/admin/settings')}
+          onClick={() => navigate('/customer/settings')}
           className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl border border-blue-200 bg-white text-xs font-extrabold text-blue-700 hover:bg-blue-600 hover:text-white transition shadow-sm"
         >
           Security Settings

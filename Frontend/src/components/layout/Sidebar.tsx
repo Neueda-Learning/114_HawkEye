@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard, ArrowRightLeft, Bell, FileText, BarChart2,
   Activity, LogOut, ChevronLeft,
-  ShieldCheck, Sun, Moon, Settings, CreditCard, Send
+  ShieldCheck, Sun, Moon, Settings, CreditCard, Send, User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAlerts } from '@/lib/api/alerts';
@@ -167,9 +167,10 @@ export function CustomerSidebarNav() {
     { to: '/customer/accounts',     label: 'My Accounts',      icon: <CreditCard className="h-4.5 w-4.5" /> },
     { to: '/customer/transactions', label: 'My Transactions',  icon: <ArrowRightLeft className="h-4.5 w-4.5" /> },
     { to: '/customer/send-money',   label: 'Send Money',       icon: <Send className="h-4.5 w-4.5" /> },
-    { to: '/alerts',                label: 'Alerts',           icon: <Bell className="h-4.5 w-4.5" />, badge: alertsCount },
-    { to: '/admin/reports',         label: 'Reports',          icon: <BarChart2 className="h-4.5 w-4.5" /> },
-    { to: '/admin/settings',        label: 'Settings',         icon: <Settings className="h-4.5 w-4.5" /> },
+    { to: '/customer/alerts',       label: 'Alerts',           icon: <Bell className="h-4.5 w-4.5" />, badge: alertsCount },
+    { to: '/customer/reports',      label: 'Reports',          icon: <BarChart2 className="h-4.5 w-4.5" /> },
+    { to: '/customer/profile',      label: 'My Profile',       icon: <User className="h-4.5 w-4.5" /> },
+    { to: '/customer/settings',     label: 'Settings',         icon: <Settings className="h-4.5 w-4.5" /> },
   ];
 
   return (
@@ -212,24 +213,6 @@ export function CustomerSidebarNav() {
         ))}
       </nav>
 
-      {/* Sidebar Promo Security Card */}
-      <div className="mx-3.5 mb-4 p-4 rounded-2xl bg-[#101a30] border border-slate-800 text-center relative overflow-hidden">
-        <div className="w-10 h-10 rounded-2xl bg-blue-600/20 border border-blue-500/30 text-blue-400 flex items-center justify-center mx-auto mb-2 text-lg shadow-sm">
-          <ShieldCheck className="h-5 w-5 text-blue-400" />
-        </div>
-        <h4 className="text-xs font-black text-white">Your Security, Our Priority</h4>
-        <p className="text-[10px] text-slate-400 mt-1 leading-relaxed font-medium">
-          We continuously monitor your accounts 24/7 to keep you safe.
-        </p>
-        <button
-          type="button"
-          onClick={() => navigate('/admin/settings')}
-          className="mt-3 w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold py-1.5 transition shadow-sm"
-        >
-          Learn More
-        </button>
-      </div>
-
       {/* User Profile Footer */}
       <div className="border-t border-slate-800/80 p-3.5 relative">
         <div 
@@ -237,11 +220,11 @@ export function CustomerSidebarNav() {
           className="flex items-center gap-3 rounded-xl bg-slate-900/80 px-3 py-2 border border-slate-800 hover:border-slate-700 transition cursor-pointer"
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-xs font-extrabold text-white shadow-sm">
-            {user?.name?.charAt(0) || 'J'}
+            {user?.name?.charAt(0) || 'F'}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-bold text-white leading-tight">{user?.name || 'John Doe'}</p>
-            <p className="truncate text-[10px] text-slate-400 font-medium">{user?.email || 'john.doe@email.com'}</p>
+            <p className="truncate text-xs font-bold text-white leading-tight">{user?.name || 'fourgrads'}</p>
+            <p className="truncate text-[10px] text-slate-400 font-medium">{user?.email || 'fourgrads@email.com'}</p>
           </div>
           <button
             onClick={(e) => { e.stopPropagation(); logout(); navigate('/login'); }}

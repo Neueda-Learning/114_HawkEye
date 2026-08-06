@@ -137,7 +137,13 @@ export default function RulesListPage() {
       toggleRule(id, { active, performedBy: user?.email ?? 'admin@hawkeye.com', reason: 'Toggled status' }),
     onSuccess: (_updated, variables) => {
       queryClient.invalidateQueries({ queryKey: ['rules'] });
-      toast.success(`Rule ${variables.active ? 'activated' : 'deactivated'}`);
+      const statusText = variables.active ? 'Activated' : 'Deactivated';
+      toast.success(`Rule ${statusText.toLowerCase()}`);
+      toast.email(
+        `Email Notification Sent: Rule ${statusText}`,
+        `An automated notification email detailing the rule status change to ${statusText} has been sent to system administrators and risk team.`,
+        'admin@hawkeye.com, analyst@hawkeye.com'
+      );
     },
     onError: () => toast.error('Failed to update rule status'),
   });

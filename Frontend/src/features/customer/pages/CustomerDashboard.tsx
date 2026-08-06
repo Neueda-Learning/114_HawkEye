@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
   Bell, Building2, Wallet, SlidersHorizontal, AlertTriangle,
-  ChevronRight, Calendar, ChevronDown, Send, FileText,
+  ChevronRight, Send, FileText,
   PlusCircle, Settings, HelpCircle, Lock,
   CreditCard, User
 } from 'lucide-react';
@@ -11,6 +11,7 @@ import { useAuthStore } from '@/features/auth/store/authStore';
 import { getTransactions } from '@/lib/api/transactions';
 import { getAlerts } from '@/lib/api/alerts';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { DateRangePicker } from '@/components/common/DateRangePicker';
 
 export default function CustomerDashboard() {
   const { user } = useAuthStore();
@@ -81,7 +82,7 @@ export default function CustomerDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-            Welcome back, {user?.name?.split(' ')[0] || 'John'}! 👋
+            Welcome back, {user?.name?.split(' ')[0] || 'fourgrads'}! 👋
           </h1>
           <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-1">
             Here's what's happening across your accounts.
@@ -92,7 +93,7 @@ export default function CustomerDashboard() {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/alerts')}
+            onClick={() => navigate('/customer/alerts')}
             className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition shadow-sm cursor-pointer"
             title="View Alerts"
           >
@@ -104,11 +105,7 @@ export default function CustomerDashboard() {
             )}
           </button>
 
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 shadow-sm cursor-pointer hover:bg-slate-50 transition">
-            <Calendar className="h-4 w-4 text-slate-400" />
-            <span>May 15 – May 21, 2024</span>
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-          </div>
+          <DateRangePicker />
         </div>
       </div>
 
@@ -609,7 +606,7 @@ export default function CustomerDashboard() {
             {/* Card 5: Account Settings */}
             <button
               type="button"
-              onClick={() => navigate('/admin/settings')}
+              onClick={() => navigate('/customer/settings')}
               className="p-4 rounded-2xl border border-slate-100 bg-[#f8fafc] hover:bg-[#f1f5f9] hover:border-slate-300 hover:shadow-md transition text-left group cursor-pointer"
             >
               <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center group-hover:scale-105 transition">
@@ -626,7 +623,7 @@ export default function CustomerDashboard() {
             {/* Card 6: Help Center */}
             <button
               type="button"
-              onClick={() => navigate('/admin/settings')}
+              onClick={() => navigate('/customer/settings')}
               className="p-4 rounded-2xl border border-slate-100 bg-[#f8fafc] hover:bg-[#f1f5f9] hover:border-slate-300 hover:shadow-md transition text-left group cursor-pointer"
             >
               <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-105 transition">

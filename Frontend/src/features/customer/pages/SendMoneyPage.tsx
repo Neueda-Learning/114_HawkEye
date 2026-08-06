@@ -110,6 +110,11 @@ export default function SendMoneyPage() {
       });
 
       toast.success('DEBIT Transaction submitted successfully!');
+      toast.email(
+        'Email Receipt & Confirmation Dispatched',
+        `An automated transaction receipt and security confirmation email has been sent to fourgrads (customer@hawkeye.com).`,
+        user?.email || 'customer@hawkeye.com'
+      );
     },
     onError: (err) => {
       toast.error('Transaction failed', err instanceof Error ? err.message : 'Unknown error');
@@ -205,7 +210,7 @@ export default function SendMoneyPage() {
               Send Another
             </button>
             <button
-              onClick={() => navigate('/admin/metrics')}
+              onClick={() => navigate('/customer/transactions')}
               className="rounded-lg bg-hawk-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-hawk-700"
             >
               View Transactions
