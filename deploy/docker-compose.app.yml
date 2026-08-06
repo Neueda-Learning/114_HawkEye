@@ -90,7 +90,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "80:80"                     # EC2:80 → container:80 (HTTP default, already open)
+      - "8081:80"                     # EC2:8081 → container:80 (frontend access port)
     networks:
       - hawkeye-net
 
