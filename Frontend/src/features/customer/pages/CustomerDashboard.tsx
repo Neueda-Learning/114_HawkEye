@@ -65,15 +65,43 @@ export default function CustomerDashboard() {
     setTimeout(() => setStatementSuccess(false), 3000);
   };
 
-  // Mock Accounts Data linked to user
+  // Dynamic Accounts Data linked to user (matching My Accounts page)
+  const debitTotal = transactions.filter(t => t.transactionType === 'DEBIT').reduce((s, t) => s + t.amount, 0);
+  const creditTotal = transactions.filter(t => t.transactionType === 'CREDIT').reduce((s, t) => s + t.amount, 0);
+  const primaryLiveBalance = Math.max(15000, 48500 + (creditTotal - debitTotal));
+
   const accountsList = [
-    { name: 'Primary Checking', number: '•••• 1234', type: 'Checking', balance: 45250.75, status: 'Active', alerts: 2, iconColor: 'bg-blue-100 text-blue-600' },
-    { name: 'Savings Account', number: '•••• 5678', type: 'Savings', balance: 28560.00, status: 'Active', alerts: 0, iconColor: 'bg-purple-100 text-purple-600' },
-    { name: 'Business Account', number: '•••• 9012', type: 'Checking', balance: 32120.30, status: 'Active', alerts: 3, iconColor: 'bg-amber-100 text-amber-600' },
-    { name: 'Credit Card', number: '•••• 3456', type: 'Credit Card', balance: -3210.45, status: 'Active', alerts: 1, iconColor: 'bg-cyan-100 text-cyan-600' },
-    { name: 'Personal Loan', number: '•••• 7890', type: 'Loan', balance: 18750.00, status: 'Active', alerts: 1, iconColor: 'bg-rose-100 text-rose-600' },
-    { name: 'Investment Account', number: '•••• 2468', type: 'Investment', balance: 4890.90, status: 'Active', alerts: 1, iconColor: 'bg-orange-100 text-orange-600' },
+    {
+      name: 'Primary Checking',
+      number: `${user?.accountId || 'ACC-001'} (•••• 0001)`,
+      type: 'Checking',
+      balance: primaryLiveBalance,
+      status: 'Active',
+      alerts: totalAlertsCount,
+      iconColor: 'bg-purple-100 text-purple-600',
+    },
+    {
+      name: 'Savings Reserve',
+      number: `${user?.accountId || 'ACC-001'}-SAV (•••• 5678)`,
+      type: 'Savings',
+      balance: 24850.00,
+      status: 'Active',
+      alerts: 0,
+      iconColor: 'bg-blue-100 text-blue-600',
+    },
+    {
+      name: 'Business Account',
+      number: `${user?.accountId || 'ACC-001'}-BUS (•••• 9012)`,
+      type: 'Checking',
+      balance: 18420.50,
+      status: 'Active',
+      alerts: Math.min(2, totalAlertsCount),
+      iconColor: 'bg-amber-100 text-amber-600',
+    },
   ];
+
+  const totalAccountsCount = accountsList.length;
+  const totalBalanceAmount = accountsList.reduce((sum, acc) => sum + acc.balance, 0);
 
   return (
     <div className="space-y-6 pb-12 animate-fade-in font-sans text-slate-800 bg-[#f8fafc] p-6 -m-6 rounded-none min-h-screen">
@@ -122,7 +150,7 @@ export default function CustomerDashboard() {
               </div>
             </div>
             <div className="mt-2">
-              <h3 className="text-2xl sm:text-3xl font-black text-slate-900">6</h3>
+              <h3 className="text-2xl sm:text-3xl font-black text-slate-900">{totalAccountsCount}</h3>
               <p className="text-xs font-semibold text-slate-500 mt-1">Active Accounts</p>
             </div>
           </div>
@@ -151,7 +179,7 @@ export default function CustomerDashboard() {
               </div>
             </div>
             <div className="mt-2">
-              <h3 className="text-2xl sm:text-3xl font-black text-slate-900">$126,560.50</h3>
+              <h3 className="text-2xl sm:text-3xl font-black text-slate-900">{formatCurrency(totalBalanceAmount)}</h3>
               <p className="text-xs font-semibold text-slate-500 mt-1">Across all accounts</p>
             </div>
           </div>
@@ -247,8 +275,8 @@ export default function CustomerDashboard() {
               </div>
               <button
                 type="button"
-                onClick={() => navigate('/customer/dashboard')}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition shadow-sm"
+                onClick={() => navigate('/customer/accounts')}
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition shadow-sm cursor-pointer"
               >
                 View All Accounts
               </button>
