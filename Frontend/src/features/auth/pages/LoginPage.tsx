@@ -421,8 +421,8 @@ export default function LoginPage() {
                   onClick={() => handleRoleSelect('USER')}
                   className="group relative p-5 sm:p-6 rounded-2xl border-2 border-slate-600/80 bg-[#202c3d] hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-500/25 hover:-translate-y-1 transition-all duration-300 text-left cursor-pointer"
                 >
-                  <div className="flex items-center gap-4.5">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform shadow-lg shadow-blue-500/30">
+                  <div className="flex items-start gap-5 sm:gap-6">
+                    <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl sm:text-2xl shrink-0 group-hover:scale-105 transition-transform shadow-lg shadow-blue-500/30 mt-0.5">
                       <i className="fa-solid fa-user"></i>
                     </div>
 
@@ -431,9 +431,9 @@ export default function LoginPage() {
                         <span className="font-extrabold text-white text-lg sm:text-xl group-hover:text-blue-300 transition-colors">
                           User Portal
                         </span>
-                        <i className="fa-solid fa-arrow-right text-slate-300 group-hover:text-blue-300 group-hover:translate-x-1.5 transition-all text-sm"></i>
+                        <i className="fa-solid fa-arrow-right text-slate-300 group-hover:text-blue-300 group-hover:translate-x-1.5 transition-all text-sm ml-2 shrink-0"></i>
                       </div>
-                      <p className="text-xs sm:text-sm text-slate-200 font-medium mt-1 leading-relaxed">
+                      <p className="text-xs sm:text-sm text-slate-200 font-medium mt-1.5 leading-relaxed">
                         Customer dashboard, instant money transfer, payee management & history.
                       </p>
                     </div>
@@ -446,8 +446,8 @@ export default function LoginPage() {
                   onClick={() => handleRoleSelect('ADMIN')}
                   className="group relative p-5 sm:p-6 rounded-2xl border-2 border-slate-600/80 bg-[#202c3d] hover:border-purple-400 hover:shadow-2xl hover:shadow-purple-500/25 hover:-translate-y-1 transition-all duration-300 text-left cursor-pointer"
                 >
-                  <div className="flex items-center gap-4.5">
-                    <div className="w-14 h-14 rounded-2xl bg-purple-600 text-white flex items-center justify-center text-2xl shrink-0 group-hover:scale-105 transition-transform shadow-lg shadow-purple-500/30">
+                  <div className="flex items-start gap-5 sm:gap-6">
+                    <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-purple-600 text-white flex items-center justify-center text-xl sm:text-2xl shrink-0 group-hover:scale-105 transition-transform shadow-lg shadow-purple-500/30 mt-0.5">
                       <i className="fa-solid fa-eye"></i>
                     </div>
 
@@ -456,9 +456,9 @@ export default function LoginPage() {
                         <span className="font-extrabold text-white text-lg sm:text-xl group-hover:text-purple-300 transition-colors">
                           Admin Portal
                         </span>
-                        <i className="fa-solid fa-arrow-right text-slate-300 group-hover:text-purple-300 group-hover:translate-x-1.5 transition-all text-sm"></i>
+                        <i className="fa-solid fa-arrow-right text-slate-300 group-hover:text-purple-300 group-hover:translate-x-1.5 transition-all text-sm ml-2 shrink-0"></i>
                       </div>
-                      <p className="text-xs sm:text-sm text-slate-200 font-medium mt-1 leading-relaxed">
+                      <p className="text-xs sm:text-sm text-slate-200 font-medium mt-1.5 leading-relaxed">
                         Rules engine configuration, real-time alert triage, metrics & system setup.
                       </p>
                     </div>
