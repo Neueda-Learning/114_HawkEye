@@ -31,6 +31,10 @@ def resolvedChangeTarget() {
   normalizeBranchName(env.CHANGE_TARGET ?: '')
 }
 
+def isDeployBranch() {
+  resolvedBranchName() == 'dev'
+}
+
 pipeline {
   agent any
 
@@ -83,10 +87,10 @@ pipeline {
           script {
             if (isUnix()) {
               sh 'npm ci'
-              sh 'npm run build'
+              sh 'VITE_API_BASE_URL=/api npm run build'
             } else {
               bat 'npm ci'
-              bat 'npm run build'
+              bat 'set "VITE_API_BASE_URL=/api" && npm run build'
             }
           }
         }
@@ -94,6 +98,22 @@ pipeline {
       post {
         success {
           archiveArtifacts allowEmptyArchive: true, artifacts: 'Frontend/dist/**'
+        }
+      }
+    }
+
+    stage('Deploy') {
+      when {
+        expression {
+          isUnix() && isDeployBranch()
+        }
+      }
+      steps {
+        script {
+          sh 'chmod +x deploy/*.sh'
+          sh 'mkdir -p /var/lib/jenkins/apps/hawkeye'
+          sh 'deploy/deploy_backend.sh Backend/TransactionMonitoring/target /var/lib/jenkins/apps/hawkeye/backend'
+          sh 'deploy/deploy_frontend.sh Frontend/dist /var/lib/jenkins/apps/hawkeye/frontend http://127.0.0.1:8080 4173'
         }
       }
     }
