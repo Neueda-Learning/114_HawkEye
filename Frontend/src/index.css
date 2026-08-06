@@ -663,39 +663,31 @@
 
 .hw-left-footer i { margin-right: 0.3rem; }
 
-/* Header CyberEye Scale Helper (Neat & Smaller with Proper Gap) */
-.hw-eye-header-scale {
-  width: 95px !important;
-  height: 65px !important;
-  margin-right: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Header CyberEye Scale Helper (Crisp & Perfectly Proportioned Logo) */
+.hw-eye-container.hw-eye-header-scale {
+  width: 70px !important;
+  height: 48px !important;
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 4px 0 0 !important;
+  flex-shrink: 0 !important;
 }
 
-.hw-eye-header-scale .hw-eye-container {
-  width: 95px !important;
-  height: 65px !important;
-  transform: scale(0.58) !important;
-  transform-origin: center center !important;
-  margin: 0 !important;
+.hw-eye-container.hw-eye-header-scale .hw-eye-svg {
+  width: 70px !important;
+  height: 48px !important;
 }
 
-.hw-eye-header-scale .hw-eye-ball {
-  width: 76px !important;
-  height: 52px !important;
+.hw-eye-container.hw-eye-header-scale .hw-eye-ring-outer {
+  width: 84px !important;
+  height: 56px !important;
 }
-.hw-eye-header-scale .hw-eye-pupil {
-  width: 38px !important;
-  height: 26px !important;
-}
-.hw-eye-header-scale .hw-eye-ring-outer {
-  width: 110px !important;
-  height: 80px !important;
-}
-.hw-eye-header-scale .hw-eye-ring-inner {
-  width: 90px !important;
-  height: 64px !important;
+
+.hw-eye-container.hw-eye-header-scale .hw-eye-ring-inner {
+  width: 74px !important;
+  height: 50px !important;
 }
 
 /* ── RIGHT LOGIN PANEL (45% width — Slightly Lighter Slate Navy for Smooth Low Contrast) ── */

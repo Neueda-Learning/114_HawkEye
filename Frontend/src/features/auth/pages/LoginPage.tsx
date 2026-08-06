@@ -398,45 +398,45 @@ export default function LoginPage() {
           
           {/* STEP 1: ROLE SELECTION CARDS (User: customer@hawkeye.com | Admin: admin@hawkeye.com) */}
           {selectedRole === null && (
-            <div className="animate-fade-in space-y-6">
-              <div className="hw-card-header">
-                <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center mx-auto mb-3 text-2xl shadow-sm">
-                  <i className="fa-solid fa-eye"></i>
+            <div className="animate-fade-in space-y-5">
+              <div className="hw-card-header text-center">
+                <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center mx-auto mb-2.5 text-xl shadow-sm">
+                  <i className="fa-solid fa-shield-halved"></i>
                 </div>
-                <h2 className="hw-card-title">Welcome to HawkEye</h2>
-                <p className="hw-card-subtitle">Transaction Monitoring & Alert System</p>
+                <h2 className="hw-card-title text-xl font-extrabold text-slate-900">Welcome to HawkEye</h2>
+                <p className="hw-card-subtitle text-xs text-slate-500 font-medium">Transaction Monitoring & Alert System</p>
               </div>
 
-              <div className="flex items-center justify-center gap-3 my-3">
+              <div className="flex items-center justify-center gap-3 my-2">
                 <div className="h-[1px] bg-slate-200 flex-1"></div>
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Select Portal</span>
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Select Portal</span>
                 <div className="h-[1px] bg-slate-200 flex-1"></div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-3.5">
                 
                 {/* User Portal Option Card (customer@hawkeye.com) */}
                 <button
                   type="button"
                   onClick={() => handleRoleSelect('USER')}
-                  className="group relative p-6 rounded-2xl border-2 border-slate-200 bg-white hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/10 hover:-translate-y-1 transition-all duration-300 text-left cursor-pointer"
+                  className="group relative p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/10 hover:-translate-y-0.5 transition-all duration-300 text-left cursor-pointer"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-500 text-white flex items-center justify-center text-2xl shrink-0 group-hover:scale-110 transition-transform shadow-md shadow-blue-500/20">
+                  <div className="flex items-start gap-3.5">
+                    <div className="w-11 h-11 rounded-xl bg-blue-500 text-white flex items-center justify-center text-lg shrink-0 group-hover:scale-105 transition-transform shadow-md shadow-blue-500/20">
                       <i className="fa-solid fa-user"></i>
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="font-extrabold text-slate-900 text-lg group-hover:text-blue-600 transition-colors">
+                        <span className="font-extrabold text-slate-900 text-base group-hover:text-blue-600 transition-colors">
                           User Portal
                         </span>
-                        <i className="fa-solid fa-arrow-right text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1.5 transition-all text-sm"></i>
+                        <i className="fa-solid fa-arrow-right text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all text-xs"></i>
                       </div>
-                      <p className="text-xs text-slate-600 font-medium mt-1 leading-relaxed">
+                      <p className="text-xs text-slate-600 font-medium mt-0.5 leading-snug">
                         Customer dashboard, instant money transfer, payee management & history.
                       </p>
-                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 border border-blue-200 text-[11px] font-mono text-blue-700 font-bold">
+                      <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-[11px] font-mono text-blue-700 font-bold">
                         <i className="fa-solid fa-envelope text-[10px]"></i>
                         <span>customer@hawkeye.com</span>
                       </div>
@@ -448,24 +448,24 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => handleRoleSelect('ADMIN')}
-                  className="group relative p-6 rounded-2xl border-2 border-slate-200 bg-white hover:border-purple-600 hover:shadow-xl hover:shadow-purple-600/10 hover:-translate-y-1 transition-all duration-300 text-left cursor-pointer"
+                  className="group relative p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-purple-600 hover:shadow-lg hover:shadow-purple-600/10 hover:-translate-y-0.5 transition-all duration-300 text-left cursor-pointer"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-purple-600 text-white flex items-center justify-center text-2xl shrink-0 group-hover:scale-110 transition-transform shadow-md shadow-purple-600/20">
+                  <div className="flex items-start gap-3.5">
+                    <div className="w-11 h-11 rounded-xl bg-purple-600 text-white flex items-center justify-center text-lg shrink-0 group-hover:scale-105 transition-transform shadow-md shadow-purple-600/20">
                       <i className="fa-solid fa-shield-halved"></i>
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="font-extrabold text-slate-900 text-lg group-hover:text-purple-600 transition-colors">
+                        <span className="font-extrabold text-slate-900 text-base group-hover:text-purple-600 transition-colors">
                           Admin Portal
                         </span>
-                        <i className="fa-solid fa-arrow-right text-slate-400 group-hover:text-purple-600 group-hover:translate-x-1.5 transition-all text-sm"></i>
+                        <i className="fa-solid fa-arrow-right text-slate-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all text-xs"></i>
                       </div>
-                      <p className="text-xs text-slate-600 font-medium mt-1 leading-relaxed">
+                      <p className="text-xs text-slate-600 font-medium mt-0.5 leading-snug">
                         Rules engine configuration, real-time alert triage, metrics & system setup.
                       </p>
-                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-50 border border-purple-200 text-[11px] font-mono text-purple-700 font-bold">
+                      <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-purple-50 border border-purple-200 text-[11px] font-mono text-purple-700 font-bold">
                         <i className="fa-solid fa-envelope text-[10px]"></i>
                         <span>admin@hawkeye.com</span>
                       </div>
