@@ -572,7 +572,7 @@ export default function CustomerDashboard() {
             {/* Card 3: Manage Alerts */}
             <button
               type="button"
-              onClick={() => navigate('/alerts')}
+              onClick={() => navigate('/customer/alerts')}
               className="p-4 rounded-2xl border border-slate-100 bg-[#f8fafc] hover:bg-purple-50/50 hover:border-purple-300 hover:shadow-md transition text-left group cursor-pointer"
             >
               <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center group-hover:scale-105 transition">

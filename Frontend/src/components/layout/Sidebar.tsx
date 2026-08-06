@@ -168,7 +168,6 @@ export function CustomerSidebarNav() {
     { to: '/customer/transactions', label: 'My Transactions',  icon: <ArrowRightLeft className="h-4.5 w-4.5" /> },
     { to: '/customer/send-money',   label: 'Send Money',       icon: <Send className="h-4.5 w-4.5" /> },
     { to: '/customer/alerts',       label: 'Alerts',           icon: <Bell className="h-4.5 w-4.5" />, badge: alertsCount },
-    { to: '/customer/reports',      label: 'Reports',          icon: <BarChart2 className="h-4.5 w-4.5" /> },
     { to: '/customer/profile',      label: 'My Profile',       icon: <User className="h-4.5 w-4.5" /> },
     { to: '/customer/settings',     label: 'Settings',         icon: <Settings className="h-4.5 w-4.5" /> },
   ];

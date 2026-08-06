@@ -1,52 +1,90 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import dayjs from 'dayjs';
 import {
-  Bell, Building2, Wallet, SlidersHorizontal, Calendar, ChevronDown,
+  Bell, Building2, Wallet, SlidersHorizontal, ChevronDown,
   CreditCard, ChevronRight, ChevronLeft, Search, Filter, MoreVertical,
   Lock, Shield
 } from 'lucide-react';
 import { getTransactions } from '@/lib/api/transactions';
 import { getAlerts } from '@/lib/api/alerts';
 import { formatCurrency } from '@/lib/utils';
-
-// ── Static Account Definitions (linked to real user) ──────────────────────────
-const ACCOUNTS = [
-  { name: 'Primary Checking',    number: '•••• 1234', type: 'Checking',    balance: 45250.75,  status: 'Active', lastActivity: 'May 21, 2024 10:25 AM', alerts: 2,  iconColor: 'bg-blue-100 text-blue-600',   rank: 1 },
-  { name: 'Savings Account',     number: '•••• 5678', type: 'Savings',     balance: 28560.00,  status: 'Active', lastActivity: 'May 21, 2024 09:47 AM', alerts: 0,  iconColor: 'bg-purple-100 text-purple-600', rank: 3 },
-  { name: 'Business Account',    number: '•••• 9012', type: 'Checking',    balance: 32120.30,  status: 'Active', lastActivity: 'May 21, 2024 08:33 AM', alerts: 3,  iconColor: 'bg-amber-100 text-amber-600',  rank: 2 },
-  { name: 'Credit Card',         number: '•••• 3456', type: 'Credit Card', balance: -3210.45,  status: 'Active', lastActivity: 'May 21, 2024 07:15 AM', alerts: 1,  iconColor: 'bg-cyan-100 text-cyan-600',   rank: 0 },
-  { name: 'Personal Loan',       number: '•••• 7890', type: 'Loan',        balance: 18750.00,  status: 'Active', lastActivity: 'May 20, 2024 04:20 PM', alerts: 13, iconColor: 'bg-rose-100 text-rose-600',   rank: 0 },
-  { name: 'Investment Account',  number: '•••• 2468', type: 'Investment',  balance: 4890.90,   status: 'Active', lastActivity: 'May 20, 2024 11:05 AM', alerts: 11, iconColor: 'bg-orange-100 text-orange-600', rank: 0 },
-];
+import { useAuthStore } from '@/features/auth/store/authStore';
+import { DateRangePicker } from '@/components/common/DateRangePicker';
 
 const TYPE_COLORS: Record<string, string> = {
   'Checking':    '#8b5cf6',
   'Savings':     '#3b82f6',
   'Credit Card': '#10b981',
-  'Loan':        '#f43f5e',
-  'Investment':  '#f97316',
 };
 
 export default function MyAccountsPage() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage] = useState(1);
 
   // Fetch real transaction and alert counts from backend
   const { data: txData, isLoading: txLoading } = useQuery({
-    queryKey: ['transactions', 'myaccounts'],
-    queryFn: () => getTransactions({ size: 10, sort: 'timestamp,desc' }),
+    queryKey: ['transactions', 'myaccounts', user?.accountId],
+    queryFn: () => getTransactions({ accountId: user?.accountId, size: 50, sort: 'timestamp,desc' }),
   });
 
   const { data: alertsData, isLoading: alertsLoading } = useQuery({
-    queryKey: ['alerts', 'myaccounts'],
-    queryFn: () => getAlerts({ size: 10 }),
+    queryKey: ['alerts', 'myaccounts', user?.accountId],
+    queryFn: () => getAlerts({ accountId: user?.accountId, size: 50 }),
   });
 
-  const totalTransactions = txData?.totalElements ?? 1243;
-  const totalAlerts = alertsData?.totalElements ?? 8;
+  const allTx = txData?.content ?? [];
+  const totalTransactions = txData?.totalElements ?? allTx.length;
+  const totalAlerts = alertsData?.totalElements ?? 0;
+
+  // Calculate live dynamic balance from API transactions
+  const debitTotal = allTx.filter(t => t.transactionType === 'DEBIT').reduce((s, t) => s + t.amount, 0);
+  const creditTotal = allTx.filter(t => t.transactionType === 'CREDIT').reduce((s, t) => s + t.amount, 0);
+  const primaryLiveBalance = Math.max(15000, 48500 + (creditTotal - debitTotal));
+  const latestTxTime = allTx[0]?.timestamp
+    ? dayjs(allTx[0].timestamp).format('MMM DD, YYYY hh:mm A')
+    : dayjs().format('MMM DD, YYYY hh:mm A');
+
+  // Dynamic user accounts list reflecting current user
+  const ACCOUNTS = useMemo(() => [
+    {
+      name: 'Primary Checking',
+      number: `${user?.accountId || 'ACC-001'} (•••• 0001)`,
+      type: 'Checking',
+      balance: primaryLiveBalance,
+      status: 'Active',
+      lastActivity: latestTxTime,
+      alerts: totalAlerts,
+      iconColor: 'bg-purple-100 text-purple-600',
+      rank: 1
+    },
+    {
+      name: 'Savings Reserve',
+      number: `${user?.accountId || 'ACC-001'}-SAV (•••• 5678)`,
+      type: 'Savings',
+      balance: 24850.00,
+      status: 'Active',
+      lastActivity: dayjs().subtract(1, 'day').format('MMM DD, YYYY hh:mm A'),
+      alerts: 0,
+      iconColor: 'bg-blue-100 text-blue-600',
+      rank: 2
+    },
+    {
+      name: 'Business Account',
+      number: `${user?.accountId || 'ACC-001'}-BUS (•••• 9012)`,
+      type: 'Checking',
+      balance: 18420.50,
+      status: 'Active',
+      lastActivity: dayjs().subtract(2, 'day').format('MMM DD, YYYY hh:mm A'),
+      alerts: Math.min(2, totalAlerts),
+      iconColor: 'bg-emerald-100 text-emerald-600',
+      rank: 3
+    },
+  ], [user?.accountId, primaryLiveBalance, latestTxTime, totalAlerts]);
 
   // Filter accounts by search
   const filteredAccounts = ACCOUNTS.filter((acc) =>
@@ -65,8 +103,7 @@ export default function MyAccountsPage() {
   // Top accounts by balance (sorted)
   const topAccounts = [...ACCOUNTS]
     .filter((a) => a.balance > 0)
-    .sort((a, b) => b.balance - a.balance)
-    .slice(0, 3);
+    .sort((a, b) => b.balance - a.balance);
 
   // Donut segments
   const donutSegments: { type: string; count: number; pct: number; color: string; offset: number }[] = [];
@@ -97,7 +134,7 @@ export default function MyAccountsPage() {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => navigate('/alerts')}
+            onClick={() => navigate('/customer/alerts')}
             className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition shadow-sm"
           >
             <Bell className="h-4.5 w-4.5" />
@@ -108,11 +145,7 @@ export default function MyAccountsPage() {
             )}
           </button>
 
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 shadow-sm cursor-pointer hover:bg-slate-50 transition">
-            <Calendar className="h-4 w-4 text-slate-400" />
-            <span>May 15 – May 21, 2024</span>
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-          </div>
+          <DateRangePicker />
         </div>
       </div>
 

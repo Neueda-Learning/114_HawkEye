@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Calendar, ChevronDown, Check } from 'lucide-react';
+import dayjs from 'dayjs';
 import { toast } from '@/components/common/Toast';
 
 interface DateRangePickerProps {
@@ -7,13 +8,21 @@ interface DateRangePickerProps {
   onRangeChange?: (label: string, startDate?: string, endDate?: string) => void;
 }
 
-export function DateRangePicker({ initialLabel = 'May 15 – May 21, 2024', onRangeChange }: DateRangePickerProps) {
+export function DateRangePicker({ initialLabel, onRangeChange }: DateRangePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRange, setSelectedRange] = useState('Last 7 Days');
-  const [customLabel, setCustomLabel] = useState(initialLabel);
-  const [startDate, setStartDate] = useState('2024-05-15');
-  const [endDate, setEndDate] = useState('2024-05-21');
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Dynamic Date calculations
+  const defaultLast7 = useMemo(() => {
+    const start = dayjs().subtract(6, 'day').format('MMM DD');
+    const end = dayjs().format('MMM DD, YYYY');
+    return `${start} – ${end}`;
+  }, []);
+
+  const [customLabel, setCustomLabel] = useState(initialLabel || defaultLast7);
+  const [startDate, setStartDate] = useState(dayjs().subtract(6, 'day').format('YYYY-MM-DD'));
+  const [endDate, setEndDate] = useState(dayjs().format('YYYY-MM-DD'));
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -25,14 +34,22 @@ export function DateRangePicker({ initialLabel = 'May 15 – May 21, 2024', onRa
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const presets = [
-    { label: 'Today', dateText: 'May 21, 2024' },
-    { label: 'Yesterday', dateText: 'May 20, 2024' },
-    { label: 'Last 7 Days', dateText: 'May 15 – May 21, 2024' },
-    { label: 'Last 30 Days', dateText: 'Apr 22 – May 21, 2024' },
-    { label: 'This Month', dateText: 'May 1 – May 31, 2024' },
-    { label: 'Custom Range', dateText: 'Custom' },
-  ];
+  const presets = useMemo(() => {
+    const today = dayjs().format('MMM DD, YYYY');
+    const yesterday = dayjs().subtract(1, 'day').format('MMM DD, YYYY');
+    const last7 = `${dayjs().subtract(6, 'day').format('MMM DD')} – ${dayjs().format('MMM DD, YYYY')}`;
+    const last30 = `${dayjs().subtract(29, 'day').format('MMM DD')} – ${dayjs().format('MMM DD, YYYY')}`;
+    const thisMonth = `${dayjs().startOf('month').format('MMM DD')} – ${dayjs().endOf('month').format('MMM DD, YYYY')}`;
+
+    return [
+      { label: 'Today', dateText: today },
+      { label: 'Yesterday', dateText: yesterday },
+      { label: 'Last 7 Days', dateText: last7 },
+      { label: 'Last 30 Days', dateText: last30 },
+      { label: 'This Month', dateText: thisMonth },
+      { label: 'Custom Range', dateText: 'Custom' },
+    ];
+  }, []);
 
   const handleSelectPreset = (preset: { label: string; dateText: string }) => {
     setSelectedRange(preset.label);
@@ -46,7 +63,7 @@ export function DateRangePicker({ initialLabel = 'May 15 – May 21, 2024', onRa
 
   const handleApplyCustom = () => {
     if (!startDate || !endDate) return;
-    const formatted = `${startDate} – ${endDate}`;
+    const formatted = `${dayjs(startDate).format('MMM DD, YYYY')} – ${dayjs(endDate).format('MMM DD, YYYY')}`;
     setCustomLabel(formatted);
     setIsOpen(false);
     toast.success(`Custom date range applied: ${formatted}`);
