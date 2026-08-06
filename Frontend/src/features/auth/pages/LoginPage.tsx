@@ -152,37 +152,37 @@ export default function LoginPage() {
           <div className="flex items-center gap-4">
             <CyberEye initialStage="zoomed-out" variant="header" />
             <div>
-              <div className="text-2xl font-extrabold tracking-[6px] text-white uppercase">
+              <div className="text-3xl font-black tracking-[7px] text-white uppercase">
                 HAWKEYE
               </div>
-              <div className="text-[10px] font-bold text-[#00d2ff] uppercase tracking-[0.2em] -mt-0.5">
+              <div className="text-xs font-bold text-[#00d2ff] uppercase tracking-[0.25em] -mt-0.5">
                 Transaction Monitoring Platform
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#00d2ff]/15 border border-[#00d2ff]/40 text-xs font-bold text-[#00d2ff] uppercase tracking-wider shadow-lg shadow-[#00d2ff]/10">
+          <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#00d2ff]/15 border border-[#00d2ff]/40 text-xs font-extrabold text-[#00d2ff] uppercase tracking-wider shadow-lg shadow-[#00d2ff]/10">
             <span className="w-2.5 h-2.5 rounded-full bg-[#00ff88] animate-ping"></span>
             <span>Platform Active</span>
           </div>
         </div>
 
         {/* Hero Tagline & Interactive Auto-Cycling Showcase */}
-        <div className="my-auto py-6 z-10 space-y-6">
+        <div className="my-auto py-6 z-10 space-y-7">
           
           <div>
-            <h1 className="text-4xl font-extrabold tracking-tight text-white leading-tight">
+            <h1 className="text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.1]">
               Monitor. Detect.<br />
               <span className="hw-tagline-accent">Protect.</span>
             </h1>
-            <p className="text-sm font-semibold text-slate-200 mt-3 leading-relaxed max-w-lg">
+            <p className="text-base font-semibold text-slate-200 mt-4 leading-relaxed max-w-xl">
               Comprehensive transaction surveillance engine featuring automated rules evaluation,
               real-time alert triage, and customer self-service banking.
             </p>
           </div>
 
-          {/* Feature Showcase Tabs (Auto-Cycling hands-free) */}
-          <div className="flex items-center gap-2 p-1.5 rounded-xl bg-slate-900/90 border border-slate-700/80 backdrop-blur-md max-w-lg shadow-xl">
+          {/* Feature Showcase Tabs (Auto-Cycling hands-free — Expanded Width) */}
+          <div className="flex items-center gap-2.5 p-2 rounded-2xl bg-slate-900/90 border border-slate-700/80 backdrop-blur-md w-full max-w-2xl shadow-xl">
             {[
               { id: 'alerts', label: 'Alert Triage', icon: 'fa-triangle-exclamation' },
               { id: 'rules', label: 'Rules Engine', icon: 'fa-sliders' },
@@ -195,157 +195,157 @@ export default function LoginPage() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex-1 relative flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                  className={`flex-1 relative flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-extrabold transition-all cursor-pointer ${
                     isActive
                       ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/40 ring-1 ring-blue-400'
                       : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                   }`}
                 >
-                  <i className={`fa-solid ${tab.icon} ${isActive ? 'text-cyan-300' : 'text-slate-400'}`}></i>
+                  <i className={`fa-solid ${tab.icon} ${isActive ? 'text-cyan-300 text-base' : 'text-slate-400'}`}></i>
                   <span>{tab.label}</span>
 
                   {/* Active tab progress bar */}
                   {isActive && (
-                    <span className="absolute bottom-0 left-2 right-2 h-[2px] bg-cyan-300 rounded-full animate-pulse"></span>
+                    <span className="absolute bottom-0 left-3 right-3 h-[2.5px] bg-cyan-300 rounded-full animate-pulse"></span>
                   )}
                 </button>
               );
             })}
           </div>
 
-          {/* Showcase Display Card */}
-          <div className="p-6 rounded-2xl bg-slate-900/95 border border-slate-700/90 backdrop-blur-xl shadow-2xl space-y-4 max-w-lg min-h-[220px]">
+          {/* Showcase Display Card (Expanded Width & Height) */}
+          <div className="p-7 rounded-3xl bg-slate-900/95 border border-slate-700/90 backdrop-blur-xl shadow-2xl space-y-5 w-full max-w-2xl min-h-[250px]">
             
             {activeTab === 'alerts' && (
-              <div className="space-y-3.5 animate-fade-in">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+              <div className="space-y-4 animate-fade-in">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                   <span className="text-xs font-extrabold text-red-400 uppercase tracking-wider flex items-center gap-2">
-                    <i className="fa-solid fa-bell text-red-400 animate-bounce"></i>
+                    <i className="fa-solid fa-bell text-red-400 text-sm animate-bounce"></i>
                     Real-time Alert Triage Stream
                   </span>
-                  <span className="text-[11px] text-cyan-300 font-mono font-bold">Live Feed</span>
+                  <span className="text-xs text-cyan-300 font-mono font-bold">Live Feed</span>
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between shadow-inner">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-10 h-10 rounded-xl bg-red-500/20 text-red-300 border border-red-500/40 flex items-center justify-center text-sm font-bold">
+                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between shadow-inner">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-red-500/20 text-red-300 border border-red-500/40 flex items-center justify-center text-lg font-bold">
                       <i className="fa-solid fa-triangle-exclamation"></i>
                     </div>
 
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm font-extrabold text-white">{currentAlert.id}</span>
-                        <span className="font-mono text-xs font-bold text-cyan-300">{currentAlert.amount}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-base font-extrabold text-white">{currentAlert.id}</span>
+                        <span className="font-mono text-sm font-bold text-cyan-300">{currentAlert.amount}</span>
                       </div>
-                      <p className="text-xs text-slate-200 mt-0.5 font-semibold">{currentAlert.rule}</p>
+                      <p className="text-sm text-slate-200 mt-0.5 font-semibold">{currentAlert.rule}</p>
                     </div>
                   </div>
 
                   <div className="text-right">
-                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                    <span className={`px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider ${
                       currentAlert.severity === 'CRITICAL' ? 'bg-red-500/30 text-red-300 border border-red-500/40' : 'bg-amber-500/30 text-amber-300'
                     }`}>
                       {currentAlert.severity}
                     </span>
-                    <div className="text-[10px] text-slate-400 font-mono mt-1">{currentAlert.user}</div>
+                    <div className="text-xs text-slate-400 font-mono mt-1.5">{currentAlert.user}</div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-1 text-center text-xs">
-                  <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Open Alerts</span>
-                    <span className="font-mono font-extrabold text-red-400 text-sm">18 Critical</span>
+                <div className="grid grid-cols-3 gap-3 pt-1 text-center text-xs">
+                  <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+                    <span className="text-[11px] text-slate-400 uppercase font-bold block">Open Alerts</span>
+                    <span className="font-mono font-extrabold text-red-400 text-base">18 Critical</span>
                   </div>
-                  <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Investigating</span>
-                    <span className="font-mono font-extrabold text-amber-300 text-sm">7 Active</span>
+                  <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+                    <span className="text-[11px] text-slate-400 uppercase font-bold block">Investigating</span>
+                    <span className="font-mono font-extrabold text-amber-300 text-base">7 Active</span>
                   </div>
-                  <div className="p-2 rounded-lg bg-slate-950/80 border border-slate-800">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold block">Resolved Today</span>
-                    <span className="font-mono font-extrabold text-emerald-400 text-sm">142 Closed</span>
+                  <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+                    <span className="text-[11px] text-slate-400 uppercase font-bold block">Resolved Today</span>
+                    <span className="font-mono font-extrabold text-emerald-400 text-base">142 Closed</span>
                   </div>
                 </div>
               </div>
             )}
 
             {activeTab === 'rules' && (
-              <div className="space-y-3.5 animate-fade-in">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+              <div className="space-y-4 animate-fade-in">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                   <span className="text-xs font-extrabold text-purple-400 uppercase tracking-wider flex items-center gap-2">
-                    <i className="fa-solid fa-sliders text-purple-400"></i>
+                    <i className="fa-solid fa-sliders text-purple-400 text-sm"></i>
                     HawkEye Rules Engine Studio
                   </span>
                   <span className="text-xs text-purple-300 font-bold">Active Engine</span>
                 </div>
 
-                <div className="space-y-2 text-xs">
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800">
-                    <div className="flex items-center gap-2.5">
-                      <i className="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
-                      <span className="text-white font-bold">Velocity Rule (&gt;5 Transactions / 60s)</span>
+                <div className="space-y-2.5 text-xs">
+                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
+                    <div className="flex items-center gap-3">
+                      <i className="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+                      <span className="text-white text-sm font-bold">Velocity Rule (&gt;5 Transactions / 60s)</span>
                     </div>
-                    <span className="px-2.5 py-1 rounded-md bg-red-500/25 text-red-300 font-mono text-[10px] font-bold border border-red-500/40">CRITICAL</span>
+                    <span className="px-3 py-1 rounded-lg bg-red-500/25 text-red-300 font-mono text-xs font-bold border border-red-500/40">CRITICAL</span>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800">
-                    <div className="flex items-center gap-2.5">
-                      <i className="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
-                      <span className="text-white font-bold">High Amount Threshold (&gt;$10,000)</span>
+                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
+                    <div className="flex items-center gap-3">
+                      <i className="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+                      <span className="text-white text-sm font-bold">High Amount Threshold (&gt;$10,000)</span>
                     </div>
-                    <span className="px-2.5 py-1 rounded-md bg-amber-500/25 text-amber-300 font-mono text-[10px] font-bold border border-amber-500/40">HIGH</span>
+                    <span className="px-3 py-1 rounded-lg bg-amber-500/25 text-amber-300 font-mono text-xs font-bold border border-amber-500/40">HIGH</span>
                   </div>
                 </div>
               </div>
             )}
 
             {activeTab === 'analytics' && (
-              <div className="space-y-3.5 animate-fade-in">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+              <div className="space-y-4 animate-fade-in">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                   <span className="text-xs font-extrabold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
-                    <i className="fa-solid fa-chart-area text-blue-400"></i>
+                    <i className="fa-solid fa-chart-area text-blue-400 text-sm"></i>
                     Analytics & Export Reports
                   </span>
                   <span className="text-xs text-emerald-400 font-bold">CSV Export Enabled</span>
                 </div>
 
-                <div className="h-20 w-full relative flex items-end pt-2">
+                <div className="h-24 w-full relative flex items-end pt-2">
                   <svg className="w-full h-full overflow-visible" viewBox="0 0 300 60">
                     <path
                       d="M0,45 Q30,10 60,35 T120,20 T180,40 T240,15 T300,30"
                       fill="none"
                       stroke="#00d2ff"
-                      strokeWidth="3.5"
+                      strokeWidth="4"
                     />
-                    <circle cx="240" cy="15" r="5" fill="#00ff88" className="animate-ping" />
-                    <circle cx="240" cy="15" r="5" fill="#00ff88" />
+                    <circle cx="240" cy="15" r="6" fill="#00ff88" className="animate-ping" />
+                    <circle cx="240" cy="15" r="6" fill="#00ff88" />
                   </svg>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-slate-200 font-medium">
-                  <span>Transaction Volume: <strong className="text-cyan-300">148k / day</strong></span>
-                  <span>System Latency: <strong className="text-emerald-400">8.4 ms</strong></span>
+                <div className="flex items-center justify-between text-sm text-slate-200 font-semibold">
+                  <span>Transaction Volume: <strong className="text-cyan-300 font-mono">148k / day</strong></span>
+                  <span>System Latency: <strong className="text-emerald-400 font-mono">8.4 ms</strong></span>
                 </div>
               </div>
             )}
 
             {activeTab === 'customer' && (
-              <div className="space-y-3.5 animate-fade-in">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+              <div className="space-y-4 animate-fade-in">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                   <span className="text-xs font-extrabold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
-                    <i className="fa-solid fa-paper-plane text-emerald-400"></i>
+                    <i className="fa-solid fa-paper-plane text-emerald-400 text-sm"></i>
                     Customer Send Money & Payee Portal
                   </span>
                   <span className="text-xs text-emerald-400 font-bold">Instant ACH</span>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2.5 text-xs">
                   <div className="flex items-center justify-between text-slate-300">
-                    <span>Available Balance:</span>
-                    <strong className="text-emerald-400 font-mono text-sm">$24,850.00</strong>
+                    <span className="text-sm font-semibold">Available Balance:</span>
+                    <strong className="text-emerald-400 font-mono text-base">$24,850.00</strong>
                   </div>
-                  <div className="flex items-center justify-between text-slate-400 text-[11px]">
+                  <div className="flex items-center justify-between text-slate-400 text-xs">
                     <span>Saved Payees: 8 Active</span>
-                    <span className="text-cyan-300">Real-Time Risk Verification</span>
+                    <span className="text-cyan-300 font-bold">Real-Time Risk Verification</span>
                   </div>
                 </div>
               </div>
@@ -353,8 +353,8 @@ export default function LoginPage() {
 
           </div>
 
-          {/* 4 Feature Badges Row */}
-          <div className="hw-features pt-2">
+          {/* 4 Feature Badges Row (Expanded Spacing) */}
+          <div className="hw-features pt-3">
             <div className="hw-feature-item">
               <div className="hw-feature-icon"><i className="fa-solid fa-shield-halved"></i></div>
               <span>Real-time<br/>Monitoring</span>
@@ -375,19 +375,19 @@ export default function LoginPage() {
 
         </div>
 
-        {/* Left Footer */}
-        <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 z-10">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-white font-bold">
+        {/* Left Footer (Scaled Up) */}
+        <div className="pt-5 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 z-10">
+          <div className="flex items-center gap-3.5">
+            <span className="flex items-center gap-2 text-white font-bold text-sm">
               <i className="fa-solid fa-eye text-[#00d2ff]"></i> HAWKEYE PLATFORM
             </span>
             <span className="text-slate-600">|</span>
-            <span className="text-emerald-400 font-semibold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span className="text-emerald-400 font-semibold flex items-center gap-1.5 text-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
               All Systems Operational
             </span>
           </div>
-          <span>© 2026 HawkEye Platform Inc.</span>
+          <span className="text-xs text-slate-400 font-medium">© 2026 HawkEye Platform Inc.</span>
         </div>
 
       </div>
