@@ -17,34 +17,11 @@ pipeline {
             }
         }
 
-
-        stage('Backend Build') {
-            steps {
-                sh '''
-                    cd Backend/TransactionMonitoring
-                    ./mvnw clean package -DskipTests
-                '''
-            }
-        }
-
-
-        stage('Frontend Build') {
-            steps {
-                sh '''
-                    cd Frontend
-                    npm ci
-                    npm run build
-                '''
-            }
-        }
-
-
         stage('Build Docker Images') {
             steps {
                 sh "docker compose -f ${COMPOSE_FILE} build --no-cache"
             }
         }
-
 
         stage('Stop Existing Containers') {
             steps {
@@ -52,13 +29,11 @@ pipeline {
             }
         }
 
-
         stage('Deploy') {
             steps {
                 sh "docker compose -f ${COMPOSE_FILE} up -d"
             }
         }
-
 
         stage('Verify') {
             steps {
