@@ -5,7 +5,7 @@ import {
   Bell, Building2, Wallet, SlidersHorizontal, AlertTriangle,
   ChevronRight, Send, FileText,
   PlusCircle, Settings, HelpCircle, Lock,
-  CreditCard, User
+  CreditCard
 } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { getTransactions } from '@/lib/api/transactions';
@@ -340,8 +340,8 @@ export default function CustomerDashboard() {
           <div className="mt-5 pt-3 text-center border-t border-slate-100">
             <button
               type="button"
-              onClick={() => navigate('/customer/dashboard')}
-              className="rounded-xl border border-slate-200 bg-white px-5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-sm"
+              onClick={() => navigate('/customer/accounts')}
+              className="rounded-xl border border-slate-200 bg-white px-5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-sm cursor-pointer"
             >
               Manage Accounts
             </button>
@@ -378,7 +378,7 @@ export default function CustomerDashboard() {
 
                 {/* Donut Center Content */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <span className="text-3xl font-black text-slate-900 leading-none">8</span>
+                  <span className="text-3xl font-black text-slate-900 leading-none">{totalAlertsCount}</span>
                   <span className="text-[10px] font-extrabold text-slate-500 uppercase mt-1">Total Alerts</span>
                 </div>
               </div>
@@ -425,14 +425,14 @@ export default function CustomerDashboard() {
             </div>
             <div>
               <h4 className="text-xs font-black text-rose-900">
-                2 high risk alerts need your attention.
+                {highRiskCount > 0 ? `${highRiskCount} high risk alerts need your attention.` : 'All alerts are currently under review.'}
               </h4>
               <p className="text-[11px] text-slate-600 font-medium mt-1 leading-relaxed">
                 Review them now to keep your accounts secure.
               </p>
               <button
                 type="button"
-                onClick={() => navigate('/alerts')}
+                onClick={() => navigate('/customer/alerts')}
                 className="mt-2 text-xs font-extrabold text-blue-600 hover:text-blue-700 transition flex items-center gap-1 cursor-pointer"
               >
                 <span>View Alerts</span>
@@ -461,97 +461,35 @@ export default function CustomerDashboard() {
           </div>
 
           <div className="space-y-4 mt-5">
-            
-            {/* Activity Item 1 */}
-            <div className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100">
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
-                  <Bell className="h-5 w-5" />
+            {transactions.slice(0, 5).map((tx, idx) => (
+              <div
+                key={tx.transactionId || idx}
+                onClick={() => navigate(`/customer/transactions/${tx.transactionId}`)}
+                className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100 cursor-pointer"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className={`w-10 h-10 rounded-xl ${tx.transactionType === 'DEBIT' ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'} flex items-center justify-center shrink-0`}>
+                    <SlidersHorizontal className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-extrabold text-slate-900">
+                      {tx.payeeName ? `Transfer to ${tx.payeeName}` : `Transaction #${tx.transactionId}`}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                      {tx.accountId} • {formatCurrency(tx.amount)} • {formatDate(tx.timestamp)}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="text-xs font-extrabold text-slate-900">High risk transaction detected</h4>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    Business Account • $1,250.00 • May 21, 2024 10:25 AM
-                  </p>
-                </div>
+                <span className={`px-2.5 py-1 rounded-md font-extrabold text-[11px] ${tx.status === 'COMPLETED' ? 'bg-emerald-100/80 text-emerald-700' : 'bg-amber-100/80 text-amber-700'}`}>
+                  {tx.status}
+                </span>
               </div>
-              <span className="px-2.5 py-1 rounded-md bg-rose-100/80 text-rose-700 font-extrabold text-[11px]">
-                High Risk
-              </span>
-            </div>
-
-            {/* Activity Item 2 */}
-            <div className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100">
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-                  <User className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-extrabold text-slate-900">New login detected</h4>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    Chrome on Windows • May 21, 2024 09:47 AM
-                  </p>
-                </div>
+            ))}
+            {transactions.length === 0 && (
+              <div className="p-6 text-center text-xs font-semibold text-slate-400">
+                No recent activity recorded yet.
               </div>
-              <span className="px-2.5 py-1 rounded-md bg-blue-100/80 text-blue-700 font-extrabold text-[11px]">
-                Info
-              </span>
-            </div>
-
-            {/* Activity Item 3 */}
-            <div className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100">
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                  <SlidersHorizontal className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-extrabold text-slate-900">Transaction completed</h4>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    Primary Checking • $320.00 • May 20, 2024 04:30 PM
-                  </p>
-                </div>
-              </div>
-              <span className="px-2.5 py-1 rounded-md bg-emerald-100/80 text-emerald-700 font-extrabold text-[11px]">
-                Low Risk
-              </span>
-            </div>
-
-            {/* Activity Item 4 */}
-            <div className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100">
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
-                  <Bell className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-extrabold text-slate-900">Unusual activity detected</h4>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    Savings Account • May 20, 2024 11:15 AM
-                  </p>
-                </div>
-              </div>
-              <span className="px-2.5 py-1 rounded-md bg-orange-100/80 text-orange-700 font-extrabold text-[11px]">
-                Medium Risk
-              </span>
-            </div>
-
-            {/* Activity Item 5 */}
-            <div className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100">
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-                  <FileText className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-extrabold text-slate-900">Monthly statement generated</h4>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    Credit Card • May 19, 2024 08:00 AM
-                  </p>
-                </div>
-              </div>
-              <span className="px-2.5 py-1 rounded-md bg-blue-100/80 text-blue-700 font-extrabold text-[11px]">
-                Info
-              </span>
-            </div>
-
+            )}
           </div>
         </div>
 
