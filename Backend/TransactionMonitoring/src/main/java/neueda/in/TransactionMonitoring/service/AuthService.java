@@ -34,7 +34,7 @@ public class AuthService {
                 AuthUserDTO.builder()
                         .id("U001")
                         .email("customer@hawkeye.com")
-                        .name("John Smith")
+                        .name("fourgrads")
                         .role("CUSTOMER")
                         .accountId("ACC-001")
                         .build()

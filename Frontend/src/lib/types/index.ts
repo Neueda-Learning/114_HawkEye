@@ -195,6 +195,7 @@ export interface AlertStats {
   total: number;
   // Severity breakdown map e.g. { LOW: 2, MEDIUM: 5, HIGH: 1, CRITICAL: 0 }
   bySeverity: Record<string, number>;
+  byStatus?: Record<string, number>;
 }
 
 // ─── Rule ─────────────────────────────────────────────────────────────────────

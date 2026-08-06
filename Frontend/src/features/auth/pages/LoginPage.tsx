@@ -13,7 +13,7 @@ const ROLE_HOME: Record<UserRole, string> = {
 
 // Features implemented in HawkEye codebase
 const HAWKEYE_LIVE_ALERTS = [
-  { id: 'ALT-1082', user: 'John Doe', amount: '$45,000.00', rule: 'High Velocity Transfer (>5/60s)', severity: 'CRITICAL', status: 'OPEN' },
+  { id: 'ALT-1082', user: 'fourgrads', amount: '$45,000.00', rule: 'High Velocity Transfer (>5/60s)', severity: 'CRITICAL', status: 'OPEN' },
   { id: 'ALT-1083', user: 'Alice Smith', amount: '$12,500.00', rule: 'High Amount Threshold (>$10k)', severity: 'HIGH', status: 'INVESTIGATING' },
   { id: 'ALT-1084', user: 'Robert Chen', amount: '$85,000.00', rule: 'Cross-Border Anomaly', severity: 'CRITICAL', status: 'OPEN' },
   { id: 'ALT-1085', user: 'Maria Garcia', amount: '$3,200.00', rule: 'New Device Login', severity: 'MEDIUM', status: 'RESOLVED' },

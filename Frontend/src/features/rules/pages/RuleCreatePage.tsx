@@ -28,6 +28,11 @@ export default function RuleCreatePage() {
       }),
     onSuccess: (rule) => {
       toast.success(`Rule "${rule?.ruleName || 'New Rule'}" created and saved in backend DB!`);
+      toast.email(
+        'Email Notification Sent: Rule Created',
+        `An automated configuration notification email has been sent to system administrators and risk analysts detailing the new rule "${rule?.ruleName || 'New Rule'}".`,
+        'admin@hawkeye.com, analyst@hawkeye.com'
+      );
       void queryClient.invalidateQueries({ queryKey: ['rules'] });
       navigate('/admin/rules');
     },
@@ -51,6 +56,11 @@ export default function RuleCreatePage() {
       }),
     onSuccess: (rule) => {
       toast.success(`Rule #${rule?.ruleId || ''} updated successfully in backend DB!`);
+      toast.email(
+        'Email Notification Sent: Rule Updated',
+        `An automated configuration update email has been sent to system administrators detailing changes to rule #${rule?.ruleId || ''} ("${rule?.ruleName || ''}").`,
+        'admin@hawkeye.com, analyst@hawkeye.com'
+      );
       void queryClient.invalidateQueries({ queryKey: ['rules'] });
       navigate('/admin/rules');
     },

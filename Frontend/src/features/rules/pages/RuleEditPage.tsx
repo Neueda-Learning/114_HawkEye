@@ -32,6 +32,11 @@ export default function RuleEditPage() {
       }),
     onSuccess: () => {
       toast.success('Rule updated successfully');
+      toast.email(
+        'Email Notification Sent: Rule Modified',
+        `An automated configuration notification email has been sent to system administrators detailing updates to Rule #${id}.`,
+        'admin@hawkeye.com, analyst@hawkeye.com'
+      );
       void queryClient.invalidateQueries({ queryKey: ['rule', id] });
       void queryClient.invalidateQueries({ queryKey: ['rules'] });
       navigate(`/admin/rules/${id}`);

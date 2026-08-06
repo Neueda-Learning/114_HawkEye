@@ -13,15 +13,27 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+import { useSettingsStore } from '../store/settingsStore';
+
 // ─── Date helpers ────────────────────────────────────────────────────────────
-export const formatDate = (iso: string) => dayjs(iso).format('DD MMM YYYY, HH:mm');
+export const formatDate = (iso: string) => {
+  if (!iso) return '';
+  const fmt = useSettingsStore.getState().general.dateFormat;
+  if (fmt === 'MM/DD/YYYY') return dayjs(iso).format('MM/DD/YYYY, HH:mm');
+  if (fmt === 'YYYY-MM-DD') return dayjs(iso).format('YYYY-MM-DD, HH:mm');
+  return dayjs(iso).format('DD MMM YYYY, HH:mm');
+};
 export const formatDateShort = (iso: string) => dayjs(iso).format('DD MMM YYYY');
 export const formatTime = (iso: string) => dayjs(iso).format('HH:mm:ss');
 export const fromNow = (iso: string) => dayjs(iso).fromNow();
 
 // ─── Currency ────────────────────────────────────────────────────────────────
-export const formatCurrency = (amount: number, currency = 'USD') =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
+export const formatCurrency = (amount: number, currency?: string) => {
+  const store = useSettingsStore.getState();
+  const code = currency || store.getCurrencyCode();
+  const locale = code === 'INR' ? 'en-IN' : code === 'EUR' ? 'de-DE' : code === 'GBP' ? 'en-GB' : 'en-US';
+  return new Intl.NumberFormat(locale, { style: 'currency', currency: code }).format(amount);
+};
 
 // ─── Status colours ──────────────────────────────────────────────────────────
 export const alertStatusColor: Record<AlertStatus, string> = {

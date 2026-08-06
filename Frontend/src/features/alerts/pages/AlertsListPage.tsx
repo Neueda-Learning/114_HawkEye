@@ -430,7 +430,7 @@ export default function AlertsListPage() {
             >
               <option value="">All</option>
               <option value="Unassigned">Unassigned</option>
-              <option value="John Doe">John Doe</option>
+              <option value="fourgrads">fourgrads</option>
               <option value="Sarah Lee">Sarah Lee</option>
               <option value="Mike Johnson">Mike Johnson</option>
               <option value="Jane Smith">Jane Smith</option>
