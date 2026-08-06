@@ -518,18 +518,16 @@
 }
 
 /* ═════════════════════════════════════════════════════════
-   SPLIT-LAYOUT LOGIN PAGE (after eye intro)
+   SPLIT-LAYOUT LOGIN PAGE
    ═════════════════════════════════════════════════════════ */
 
 .hw-login-page {
   display: flex;
-  height: 100%;
   flex: 1;
   min-height: 0;
   width: 100%;
   font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif;
   animation: hwPageFadeIn 0.8s ease-out;
-  overflow: hidden;
 }
 
 @keyframes hwPageFadeIn {
@@ -541,15 +539,15 @@
 .hw-login-left {
   flex: 55;
   width: 55%;
-  height: 100%;
   background: linear-gradient(135deg, #0b1329 0%, #111c38 50%, #0d162d 100%);
   color: #e2f1ff;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 1.75rem 2.5rem;
+  padding: 2rem 2.5rem;
   position: relative;
   overflow: hidden;
+  gap: 1rem;
 }
 
 /* Subtle grid behind left panel */
@@ -573,30 +571,30 @@
 }
 
 .hw-brand-icon {
-  font-size: 2.2rem;
+  font-size: 2rem;
   color: #6c8aff;
   background: rgba(108,138,255,0.12);
-  padding: 0.6rem;
+  padding: 0.55rem;
   border-radius: 12px;
 }
 
 .hw-brand-name {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 900;
   letter-spacing: 4px;
   color: #ffffff;
 }
 
 .hw-brand-sub {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: #7d9cc7;
   margin-top: 1px;
 }
 
 .hw-tagline {
-  font-size: 3.1rem;
+  font-size: 2.8rem;
   font-weight: 900;
-  line-height: 1.12;
+  line-height: 1.15;
   color: #ffffff;
   position: relative;
   z-index: 1;
@@ -610,10 +608,10 @@
 }
 
 .hw-tagline-desc {
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   color: #94a3b8;
-  line-height: 1.55;
-  max-width: 500px;
+  line-height: 1.5;
+  max-width: 480px;
   position: relative;
   z-index: 1;
 }
@@ -621,7 +619,7 @@
 /* Feature pills row */
 .hw-features {
   display: flex;
-  gap: 1.5rem;
+  gap: 1.25rem;
   flex-wrap: wrap;
   position: relative;
   z-index: 1;
@@ -631,33 +629,33 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.75rem;
+  gap: 0.35rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: #94a3b8;
   text-align: center;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
 .hw-feature-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
   background: rgba(108,138,255,0.12);
   border: 1.5px solid rgba(108,138,255,0.25);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   color: #00d2ff;
-  box-shadow: 0 6px 16px rgba(0, 210, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 210, 255, 0.1);
 }
 
 .hw-left-footer {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  font-size: 0.75rem;
+  gap: 1.25rem;
+  font-size: 0.72rem;
   color: #64748b;
   position: relative;
   z-index: 1;
@@ -667,50 +665,49 @@
 
 /* Header CyberEye Scale Helper (Neat & Smaller with Proper Gap) */
 .hw-eye-header-scale {
-  width: 100px !important;
-  height: 70px !important;
-  margin-right: 6px;
+  width: 95px !important;
+  height: 65px !important;
+  margin-right: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .hw-eye-header-scale .hw-eye-container {
-  width: 100px !important;
-  height: 70px !important;
-  transform: scale(0.62) !important;
+  width: 95px !important;
+  height: 65px !important;
+  transform: scale(0.58) !important;
   transform-origin: center center !important;
   margin: 0 !important;
 }
 
 .hw-eye-header-scale .hw-eye-ball {
-  width: 80px !important;
-  height: 56px !important;
+  width: 76px !important;
+  height: 52px !important;
 }
 .hw-eye-header-scale .hw-eye-pupil {
-  width: 40px !important;
-  height: 28px !important;
+  width: 38px !important;
+  height: 26px !important;
 }
 .hw-eye-header-scale .hw-eye-ring-outer {
-  width: 120px !important;
-  height: 85px !important;
+  width: 110px !important;
+  height: 80px !important;
 }
 .hw-eye-header-scale .hw-eye-ring-inner {
-  width: 95px !important;
-  height: 68px !important;
+  width: 90px !important;
+  height: 64px !important;
 }
 
 /* ── RIGHT LOGIN PANEL (45% width — Slightly Lighter Slate Navy for Smooth Low Contrast) ── */
 .hw-login-right {
   flex: 45;
   width: 45%;
-  height: 100%;
   background: linear-gradient(135deg, #192438 0%, #253550 50%, #1a263b 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 2rem;
+  padding: 2rem 2rem;
   position: relative;
   overflow-y: auto;
   border-left: 1px solid rgba(255, 255, 255, 0.08);
@@ -722,7 +719,7 @@
   border-radius: 24px;
   padding: 2.2rem 2.2rem;
   width: 100%;
-  max-width: 490px;
+  max-width: 480px;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(25px);
   position: relative;

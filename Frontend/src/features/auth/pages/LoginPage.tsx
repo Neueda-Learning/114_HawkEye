@@ -139,10 +139,10 @@ export default function LoginPage() {
 
   const currentAlert = HAWKEYE_LIVE_ALERTS[alertIdx];
 
-  /* ── SPLIT-LAYOUT LOGIN PAGE WITH FOOTER (FITS 100% IN VIEWPORT) ── */
+  /* ── SPLIT-LAYOUT LOGIN PAGE WITH FOOTER ── */
   return (
-    <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-[#0b1329]">
-      <div className="hw-login-page flex-1 min-h-0">
+    <div className="flex flex-col min-h-screen bg-[#0b1329]">
+      <div className="hw-login-page flex-1">
 
         {/* ── LEFT SIDE: Implemented Features Showcase (55% Width) ── */}
         <div className="hw-login-left">
