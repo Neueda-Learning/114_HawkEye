@@ -14,10 +14,10 @@ RUN npm ci
 # Copy the rest of the source code
 COPY . .
 
-# Compile TypeScript and bundle with Vite
-# VITE_API_BASE_URL=/api tells the frontend to call /api/* which
-# nginx proxies through to the backend container
-RUN VITE_API_BASE_URL=/api npm run build
+# VITE_API_BASE_URL=/ means axios baseURL is '/'.
+# API paths in the code already include /api/v1/... so baseURL must be /
+# If baseURL were /api, axios would combine to /api/api/v1/... (double /api = broken)
+RUN VITE_API_BASE_URL=/ npm run build
 
 # ============================================================
 # Stage 2 — Serve the production build with nginx
