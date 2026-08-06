@@ -171,8 +171,9 @@ export default function LoginPage() {
         <div className="my-auto py-4 z-10 space-y-6 flex flex-col items-center justify-center text-center w-full">
           
           <div className="text-center mx-auto space-y-2">
-            <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-black tracking-tight text-white leading-tight text-center mx-auto">
-              Monitor. <span className="text-slate-200">Detect.</span> <span className="hw-tagline-accent">Protect.</span>
+            <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-black tracking-tight text-white leading-[1.12] text-center mx-auto">
+              Monitor. Detect.<br />
+              <span className="hw-tagline-accent">Protect.</span>
             </h1>
             <p className="text-sm sm:text-base font-semibold text-slate-200 leading-relaxed max-w-2xl text-center mx-auto">
               Comprehensive transaction surveillance engine featuring automated rules evaluation,
