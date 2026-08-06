@@ -167,22 +167,22 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Hero Tagline & Interactive Auto-Cycling Showcase */}
-        <div className="my-auto py-4 z-10 space-y-5">
+        {/* Hero Tagline & Interactive Auto-Cycling Showcase (Centered in Middle) */}
+        <div className="my-auto py-4 z-10 space-y-6 flex flex-col items-center justify-center text-center w-full">
           
-          <div>
-            <h1 className="text-5xl lg:text-[3.5rem] font-black tracking-tight text-white leading-[1.1]">
+          <div className="text-center mx-auto">
+            <h1 className="text-5xl lg:text-[3.5rem] font-black tracking-tight text-white leading-[1.1] text-center">
               Monitor. Detect.<br />
               <span className="hw-tagline-accent">Protect.</span>
             </h1>
-            <p className="text-sm sm:text-base font-semibold text-slate-200 mt-3 leading-relaxed max-w-2xl">
+            <p className="text-sm sm:text-base font-semibold text-slate-200 mt-3 leading-relaxed max-w-2xl text-center mx-auto">
               Comprehensive transaction surveillance engine featuring automated rules evaluation,
               real-time alert triage, and customer self-service banking.
             </p>
           </div>
 
           {/* Feature Showcase Tabs (Auto-Cycling hands-free) */}
-          <div className="flex items-center gap-2.5 p-2 rounded-2xl bg-slate-900/90 border border-slate-700/80 backdrop-blur-md w-full max-w-2xl shadow-xl">
+          <div className="flex items-center gap-2.5 p-2 rounded-2xl bg-slate-900/90 border border-slate-700/80 backdrop-blur-md w-full max-w-2xl shadow-xl mx-auto">
             {[
               { id: 'alerts', label: 'Alert Triage', icon: 'fa-triangle-exclamation' },
               { id: 'rules', label: 'Rules Engine', icon: 'fa-sliders' },
@@ -214,7 +214,7 @@ export default function LoginPage() {
           </div>
 
           {/* Showcase Display Card */}
-          <div className="p-6 rounded-2xl bg-slate-900/95 border border-slate-700/90 backdrop-blur-xl shadow-2xl space-y-4 w-full max-w-2xl min-h-[230px]">
+          <div className="p-6 rounded-2xl bg-slate-900/95 border border-slate-700/90 backdrop-blur-xl shadow-2xl space-y-4 w-full max-w-2xl min-h-[230px] text-left mx-auto">
             
             {activeTab === 'alerts' && (
               <div className="space-y-3 animate-fade-in">
@@ -354,7 +354,7 @@ export default function LoginPage() {
           </div>
 
           {/* 4 Feature Badges Row */}
-          <div className="hw-features pt-1">
+          <div className="hw-features pt-1 max-w-2xl w-full mx-auto">
             <div className="hw-feature-item">
               <div className="hw-feature-icon"><i className="fa-solid fa-shield-halved"></i></div>
               <span>Real-time<br/>Monitoring</span>
