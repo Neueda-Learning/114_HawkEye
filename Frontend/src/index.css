@@ -534,12 +534,12 @@
   to   { opacity: 1; }
 }
 
-/* ── LEFT BRANDING PANEL ── */
+/* ── LEFT BRANDING PANEL (Light Theme — Crisp Silver & Slate) ── */
 .hw-login-left {
   flex: 55;
   width: 55%;
-  background: linear-gradient(135deg, #0a0f1c 0%, #101832 40%, #0d1428 100%);
-  color: #e2f1ff;
+  background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 50%, #e2e8f0 100%);
+  color: #0f172a;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -555,8 +555,8 @@
   inset: 0;
   background-size: 50px 50px;
   background-image:
-    linear-gradient(to right, rgba(0,210,255,0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0,210,255,0.04) 1px, transparent 1px);
+    linear-gradient(to right, rgba(37,99,235,0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(37,99,235,0.05) 1px, transparent 1px);
   pointer-events: none;
 }
 
@@ -570,8 +570,8 @@
 
 .hw-brand-icon {
   font-size: 2.2rem;
-  color: #6c8aff;
-  background: rgba(108,138,255,0.12);
+  color: #2563eb;
+  background: rgba(37,99,235,0.1);
   padding: 0.65rem;
   border-radius: 12px;
 }
@@ -580,12 +580,12 @@
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: 3px;
-  color: #ffffff;
+  color: #0f172a;
 }
 
 .hw-brand-sub {
   font-size: 0.72rem;
-  color: #7d9cc7;
+  color: #64748b;
   margin-top: 1px;
 }
 
@@ -593,14 +593,14 @@
   font-size: 3.2rem;
   font-weight: 800;
   line-height: 1.15;
-  color: #ffffff;
+  color: #0f172a;
   position: relative;
   z-index: 1;
   margin-top: -1rem;
 }
 
 .hw-tagline-accent {
-  background: linear-gradient(90deg, #6c8aff, #00d2ff);
+  background: linear-gradient(90deg, #2563eb, #0284c7);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -608,7 +608,7 @@
 
 .hw-tagline-desc {
   font-size: 0.95rem;
-  color: #8ba4c4;
+  color: #475569;
   line-height: 1.6;
   max-width: 420px;
   position: relative;
@@ -631,7 +631,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.72rem;
-  color: #8ba4c4;
+  color: #475569;
   text-align: center;
   line-height: 1.3;
 }
@@ -640,13 +640,13 @@
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: rgba(108,138,255,0.1);
-  border: 1px solid rgba(108,138,255,0.2);
+  background: rgba(37,99,235,0.08);
+  border: 1px solid rgba(37,99,235,0.18);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.1rem;
-  color: #6c8aff;
+  color: #2563eb;
 }
 
 .hw-left-footer {
@@ -654,7 +654,7 @@
   align-items: center;
   gap: 1.5rem;
   font-size: 0.72rem;
-  color: #506080;
+  color: #64748b;
   position: relative;
   z-index: 1;
 }
@@ -683,11 +683,11 @@
   height: 68px !important;
 }
 
-/* ── RIGHT LOGIN PANEL (45% width — Unified Seamless Palette) ── */
+/* ── RIGHT LOGIN PANEL (45% width — Crisp Light Slate Theme) ── */
 .hw-login-right {
   flex: 45;
   width: 45%;
-  background: linear-gradient(135deg, #0a0f1c 0%, #101832 40%, #0d1428 100%);
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -695,17 +695,16 @@
   padding: 2.5rem 2rem;
   position: relative;
   overflow-y: auto;
-  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 1px solid #cbd5e1;
 }
 
 .hw-login-card {
-  background: rgba(15, 23, 42, 0.92);
-  border: 1.5px solid rgba(59, 130, 246, 0.3);
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
   border-radius: 28px;
   padding: 2.8rem 2.5rem;
   width: 100%;
   max-width: 520px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 35px rgba(59, 130, 246, 0.15);
   backdrop-filter: blur(25px);
   position: relative;
   z-index: 2;
