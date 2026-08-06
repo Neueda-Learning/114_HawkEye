@@ -168,21 +168,21 @@ export default function LoginPage() {
         </div>
 
         {/* Hero Tagline & Interactive Auto-Cycling Showcase */}
-        <div className="my-auto py-3 z-10 space-y-4">
+        <div className="my-auto py-4 z-10 space-y-5">
           
           <div>
-            <h1 className="text-4xl lg:text-[2.75rem] font-black tracking-tight text-white leading-[1.12]">
+            <h1 className="text-5xl lg:text-[3.5rem] font-black tracking-tight text-white leading-[1.1]">
               Monitor. Detect.<br />
               <span className="hw-tagline-accent">Protect.</span>
             </h1>
-            <p className="text-xs sm:text-sm font-semibold text-slate-200 mt-2.5 leading-relaxed max-w-xl">
+            <p className="text-sm sm:text-base font-semibold text-slate-200 mt-3 leading-relaxed max-w-2xl">
               Comprehensive transaction surveillance engine featuring automated rules evaluation,
               real-time alert triage, and customer self-service banking.
             </p>
           </div>
 
           {/* Feature Showcase Tabs (Auto-Cycling hands-free) */}
-          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 backdrop-blur-md w-full max-w-xl shadow-xl">
+          <div className="flex items-center gap-2.5 p-2 rounded-2xl bg-slate-900/90 border border-slate-700/80 backdrop-blur-md w-full max-w-2xl shadow-xl">
             {[
               { id: 'alerts', label: 'Alert Triage', icon: 'fa-triangle-exclamation' },
               { id: 'rules', label: 'Rules Engine', icon: 'fa-sliders' },
@@ -195,13 +195,13 @@ export default function LoginPage() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex-1 relative flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                  className={`flex-1 relative flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
                     isActive
                       ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/40 ring-1 ring-blue-400'
                       : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                   }`}
                 >
-                  <i className={`fa-solid ${tab.icon} ${isActive ? 'text-cyan-300 text-sm' : 'text-slate-400'}`}></i>
+                  <i className={`fa-solid ${tab.icon} ${isActive ? 'text-cyan-300 text-base' : 'text-slate-400'}`}></i>
                   <span>{tab.label}</span>
 
                   {/* Active tab progress bar */}
@@ -214,7 +214,7 @@ export default function LoginPage() {
           </div>
 
           {/* Showcase Display Card */}
-          <div className="p-5 rounded-2xl bg-slate-900/95 border border-slate-700/90 backdrop-blur-xl shadow-2xl space-y-3.5 w-full max-w-xl min-h-[205px]">
+          <div className="p-6 rounded-2xl bg-slate-900/95 border border-slate-700/90 backdrop-blur-xl shadow-2xl space-y-4 w-full max-w-2xl min-h-[230px]">
             
             {activeTab === 'alerts' && (
               <div className="space-y-3 animate-fade-in">
@@ -532,7 +532,7 @@ export default function LoginPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       placeholder="Email Address"
-                      className="w-full rounded-xl bg-slate-50 border border-slate-300 pl-10 pr-4 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
+                      className="w-full rounded-xl bg-white border border-slate-300 pl-10 pr-4 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
                     />
                   </div>
                 </div>
@@ -550,14 +550,14 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       placeholder="Password"
-                      className="w-full rounded-xl bg-slate-50 border border-slate-300 pl-10 pr-12 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
+                      className="w-full rounded-xl bg-white border border-slate-300 pl-10 pr-10 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-800 text-sm cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1 text-sm transition-colors cursor-pointer"
                     >
-                      <i className={`fa-solid ${showPassword ? 'fa-eye' : 'fa-eye-slash'}`}></i>
+                      <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                     </button>
                   </div>
                 </div>
