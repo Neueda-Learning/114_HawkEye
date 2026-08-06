@@ -111,9 +111,8 @@ pipeline {
       steps {
         script {
           sh 'chmod +x deploy/*.sh'
-          sh 'mkdir -p /var/lib/jenkins/apps/hawkeye'
-          sh 'deploy/deploy_backend.sh Backend/TransactionMonitoring/target /var/lib/jenkins/apps/hawkeye/backend'
-          sh 'deploy/deploy_frontend.sh Frontend/dist /var/lib/jenkins/apps/hawkeye/frontend http://127.0.0.1:8080 4173'
+          sh 'deploy/deploy_backend.sh "$WORKSPACE"'
+          sh 'deploy/deploy_frontend.sh "$WORKSPACE"'
         }
       }
     }

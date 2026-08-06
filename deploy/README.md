@@ -1,43 +1,61 @@
-# HawkEye CD deployment
+# HawkEye Docker-based CD deployment
 
 This deployment flow is designed for Jenkins running on the same Linux EC2 host as the application.
 
 ## What gets deployed
-- Backend jar -> `/var/lib/jenkins/apps/hawkeye/backend/app.jar`
-- Frontend static build -> `/var/lib/jenkins/apps/hawkeye/frontend/dist`
-- Frontend app server -> Node process on port `4173`
-- Frontend `/api/*` calls are proxied to backend `http://127.0.0.1:8080`
+- Backend container -> `hawkeye-backend`
+- Frontend container -> `hawkeye-frontend`
+- Frontend served by nginx in the frontend container on port `4173`
+- Frontend `/api/*` calls are proxied to the backend container
+
+## Files used
+- `Backend/TransactionMonitoring/Dockerfile`
+- `Frontend/Dockerfile`
+- `deploy/nginx/default.conf`
+- `deploy/docker-compose.app.yml`
+- `deploy/deploy_backend.sh`
+- `deploy/deploy_frontend.sh`
 
 ## Jenkins behavior
 The root `Jenkinsfile` on branch `dev` will:
 1. build backend with Maven, skipping tests
 2. build frontend with Vite, skipping tests
-3. deploy backend
-4. deploy frontend
+3. build and deploy backend Docker container
+4. build and deploy frontend Docker container
 
 ## One-time EC2 setup
 Install required tools if missing:
 
 ```bash
-sudo yum install -y git
-curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
-sudo yum install -y nodejs
-java -version
-node -v
-npm -v
+sudo yum install -y git docker
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo usermod -aG docker jenkins
+sudo usermod -aG docker ec2-user
 ```
 
-Ensure Jenkins can write to the deploy directory:
+Install Docker Compose if `docker compose` is missing:
 
 ```bash
-sudo mkdir -p /var/lib/jenkins/apps/hawkeye
-sudo chown -R jenkins:jenkins /var/lib/jenkins/apps
+DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+mkdir -p "$DOCKER_CONFIG/cli-plugins"
+curl -SL https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64 -o "$DOCKER_CONFIG/cli-plugins/docker-compose"
+chmod +x "$DOCKER_CONFIG/cli-plugins/docker-compose"
+docker compose version
 ```
 
+Restart Jenkins after Docker group changes:
+
+```bash
+sudo systemctl restart jenkins
+```
+
+## Runtime ports
 Open these ports in the EC2 security group if you want external access:
-- `8080` for backend
 - `4173` for frontend
-- `8080` Jenkins may already be in use on your host; if so, only expose the frontend port externally
+- `8082` for backend API direct access (optional)
+
+Note: existing Jenkins may already use `8080`, so the deployed backend container is exposed on `8082`.
 
 ## Jenkins job requirements
 Use your existing Pipeline job with:
@@ -48,12 +66,10 @@ Use your existing Pipeline job with:
 On the EC2 host:
 
 ```bash
-ps -ef | grep hawkeye | grep -v grep
-ss -tulpn | grep -E '8080|4173'
-tail -n 100 /var/lib/jenkins/apps/hawkeye/backend/backend.out.log
-tail -n 100 /var/lib/jenkins/apps/hawkeye/backend/backend.err.log
-tail -n 100 /var/lib/jenkins/apps/hawkeye/frontend/frontend.out.log
-tail -n 100 /var/lib/jenkins/apps/hawkeye/frontend/frontend.err.log
+docker ps
+docker logs hawkeye-backend --tail 100
+docker logs hawkeye-frontend --tail 100
+ss -tulpn | grep -E '4173|8082'
 ```
 
 Frontend URL:
@@ -61,8 +77,8 @@ Frontend URL:
 http://<EC2-PUBLIC-IP>:4173
 ```
 
-If backend is also externally reachable:
+Backend URL:
 ```text
-http://<EC2-PUBLIC-IP>:8080
+http://<EC2-PUBLIC-IP>:8082
 ```
 
