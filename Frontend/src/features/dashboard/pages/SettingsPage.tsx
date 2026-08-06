@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   Settings, Shield, Bell, Share2, Database, Sliders, Mail,
   HardDrive, Code, Palette, Info, Calendar, Save, CheckCircle2,
-  XCircle, ChevronRight, RefreshCw, Layout, Clock, Sparkles, AlertTriangle
+  XCircle, ChevronRight, RefreshCw, Layout, Clock
 } from 'lucide-react';
 import { toast } from '@/components/common/Toast';
 

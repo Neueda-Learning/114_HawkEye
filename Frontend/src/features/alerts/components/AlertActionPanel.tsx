@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle, Search, XCircle, AlertOctagon } from 'lucide-react';
 import { acknowledgeAlert, investigateAlert, closeAlert, dismissAlert } from '@/lib/api/alerts';
 import { StatusBadge } from '@/components/common/StatusBadge';
-import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { toast } from '@/components/common/Toast';
 import { canTransition, isTerminalStatus } from '@/lib/utils';
 import { useAuthStore } from '@/features/auth/store/authStore';

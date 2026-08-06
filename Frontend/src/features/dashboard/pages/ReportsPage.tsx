@@ -6,10 +6,9 @@ import {
 } from 'recharts';
 import {
   Search, Filter, Download, Calendar, Activity, AlertTriangle,
-  CheckCircle2, Clock, TrendingUp, TrendingDown, DollarSign,
-  ShieldCheck, Eye, Globe, Zap, UserCheck
+  CheckCircle2, Clock, TrendingUp, DollarSign,
+  ShieldCheck, Globe, Zap, UserCheck
 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
 
 // Sparkline Mini Component
 function Sparkline({ data, color }: { data: number[]; color: string }) {

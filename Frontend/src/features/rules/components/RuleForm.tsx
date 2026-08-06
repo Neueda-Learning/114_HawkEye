@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { RuleParameterFields } from './RuleParameterFields';
 import { JsonViewer } from '@/components/common/JsonViewer';
-import type { Rule, RuleType, Severity } from '@/lib/types';
+import type { RuleType, Severity } from '@/lib/types';
 
 const RULE_TYPES: RuleType[] = ['AMOUNT_THRESHOLD', 'VELOCITY', 'NEW_PAYEE', 'DAILY_LIMIT'];
 const SEVERITIES: Severity[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];

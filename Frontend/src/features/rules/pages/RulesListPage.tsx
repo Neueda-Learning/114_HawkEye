@@ -5,14 +5,12 @@ import {
   PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer
 } from 'recharts';
 import {
-  Search, Filter, Download, Plus, Calendar, Pencil, Trash2,
+  Search, Download, Plus, Calendar, Pencil, Trash2,
   RotateCcw, Shield, ShieldCheck, CheckCircle2, Clock, Zap,
-  TrendingUp, TrendingDown, Eye, Sliders, AlertOctagon,
-  ArrowRight
+  Sliders, AlertOctagon
 } from 'lucide-react';
 import { getRules, deleteRule, toggleRule } from '@/lib/api/rules';
 import { getAlertStats } from '@/lib/api/alerts';
-import { SeverityBadge } from '@/components/common/SeverityBadge';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { toast } from '@/components/common/Toast';
 import { formatDate } from '@/lib/utils';
@@ -58,11 +56,10 @@ export default function RulesListPage() {
   const [ruleType, setRuleType] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [severity, setSeverity] = useState('');
-  const [category, setCategory] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Rule | null>(null);
 
   // Queries
-  const { data: pagedData, isLoading } = useQuery({
+  const { data: pagedData } = useQuery({
     queryKey: ['rules', page, activeTab, ruleType, statusFilter, severity],
     queryFn: () => getRules({
       page,
@@ -124,38 +121,40 @@ export default function RulesListPage() {
 
   const flatTrend = (value: number) => Array.from({ length: 5 }, () => value);
 
-  // Delete mutation
+  // Mutations
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => deleteRule(id, user?.email ?? 'admin', 'Deleted from rules list'),
+    mutationFn: (id: number) => deleteRule(id, user?.email ?? 'admin@hawkeye.com', 'Deleted from rules list'),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rules'] });
       toast.success('Rule deleted successfully');
       setDeleteTarget(null);
-      void queryClient.invalidateQueries({ queryKey: ['rules'] });
     },
     onError: () => toast.error('Failed to delete rule'),
   });
 
-  // Toggle mutation
   const toggleMutation = useMutation({
     mutationFn: ({ id, active }: { id: number; active: boolean }) =>
-      toggleRule(id, { active, performedBy: user?.email ?? 'admin', reason: 'Toggled status' }),
+      toggleRule(id, { active, performedBy: user?.email ?? 'admin@hawkeye.com', reason: 'Toggled status' }),
     onSuccess: (_updated, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['rules'] });
       toast.success(`Rule ${variables.active ? 'activated' : 'deactivated'}`);
-      void queryClient.invalidateQueries({ queryKey: ['rules'] });
     },
     onError: () => toast.error('Failed to update rule status'),
   });
 
-  const rulesList = (pagedData?.content || []).map(r => ({
-    ...r,
-    ruleId: r.ruleId || (r as any).id || 1,
-    ruleName: r.ruleName || (r as any).name || 'Rule',
-    ruleType: r.ruleType || 'AMOUNT_THRESHOLD',
-    category: `${(r.ruleType || 'GENERAL').split('_')[0]} Based`,
-    condition: r.ruleType === 'AMOUNT_THRESHOLD' ? `Amount > $${r.parameters?.thresholdAmount || 1000}` : r.ruleType === 'VELOCITY' ? `≥ ${r.parameters?.velocityCount || 3} txns in ${r.parameters?.velocityWindowMinutes || 60} mins` : r.ruleType === 'NEW_PAYEE' ? 'New Unregistered Payee' : `Daily Total > $${r.parameters?.dailyLimitAmount || 2000}`,
-    timeWindow: r.ruleType === 'VELOCITY' ? `${r.parameters?.velocityWindowMinutes || 60} Mins` : 'Per Transaction',
-    lastTriggered: r.updatedAt || r.createdAt || new Date().toISOString(),
-  }));
+  const rulesList = (pagedData?.content || []).map(r => {
+    const params = r.parameters as any;
+    return {
+      ...r,
+      ruleId: r.ruleId || (r as any).id || 1,
+      ruleName: r.ruleName || (r as any).name || 'Rule',
+      ruleType: r.ruleType || 'AMOUNT_THRESHOLD',
+      category: `${(r.ruleType || 'GENERAL').split('_')[0]} Based`,
+      condition: r.ruleType === 'AMOUNT_THRESHOLD' ? `Amount > $${params?.thresholdAmount || 1000}` : r.ruleType === 'VELOCITY' ? `≥ ${params?.velocityCount || 3} txns in ${params?.velocityWindowMinutes || 60} mins` : r.ruleType === 'NEW_PAYEE' ? 'New Unregistered Payee' : `Daily Total > $${params?.dailyLimitAmount || 2000}`,
+      timeWindow: r.ruleType === 'VELOCITY' ? `${params?.velocityWindowMinutes || 60} Mins` : 'Per Transaction',
+      lastTriggered: r.updatedAt || r.createdAt || new Date().toISOString(),
+    };
+  });
 
   // Filter client side with null-safe string guards
   const filteredRows = rulesList.filter(r =>
@@ -169,7 +168,6 @@ export default function RulesListPage() {
     setRuleType('');
     setStatusFilter('');
     setSeverity('');
-    setCategory('');
     setPage(0);
   };
 

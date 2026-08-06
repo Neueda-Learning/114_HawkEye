@@ -7,12 +7,11 @@ import {
 } from 'recharts';
 import {
   Search, Filter, Download, Plus, Calendar, Eye, MoreVertical,
-  RotateCcw, Bell, AlertTriangle, ShieldCheck, CheckCircle2,
-  Clock, TrendingUp, TrendingDown, UserCheck, Activity, Shield
+  RotateCcw, Bell
 } from 'lucide-react';
 import { getAlerts, getAlertStats } from '@/lib/api/alerts';
 import { formatDate } from '@/lib/utils';
-import type { Alert, AlertStatus, Severity } from '@/lib/types';
+import type { AlertStatus, Severity } from '@/lib/types';
 
 // Sparkline Mini Component
 function Sparkline({ data, color }: { data: number[]; color: string }) {
@@ -53,7 +52,7 @@ export default function AlertsListPage() {
   const [assignedTo, setAssignedTo] = useState<string>('');
 
   // API Queries
-  const { data: pagedData, isLoading } = useQuery({
+  const { data: pagedData } = useQuery({
     queryKey: ['alerts', page, activeTab, status, severity],
     queryFn: () => getAlerts({
       page,

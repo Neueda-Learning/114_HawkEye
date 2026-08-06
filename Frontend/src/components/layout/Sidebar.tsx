@@ -2,8 +2,8 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard, ArrowRightLeft, Bell, FileText, BarChart2,
-  Users, Activity, LogOut, ChevronLeft, ChevronRight,
-  ShieldCheck, Sun, Moon, Settings, User, HelpCircle
+  Activity, LogOut, ChevronLeft,
+  ShieldCheck, Sun, Moon, Settings, User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAlerts } from '@/lib/api/alerts';

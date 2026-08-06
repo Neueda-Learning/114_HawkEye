@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { SeverityBadge } from '@/components/common/SeverityBadge';
 import { canTransition, isTerminalStatus, validTransitions } from '@/lib/utils';

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { getAlertStats } from '@/lib/api/alerts';
 import { MetricCard } from '@/components/common/MetricCard';
 import { SkeletonCard } from '@/components/common/SkeletonLoader';
@@ -13,22 +13,14 @@ const STATUS_COLORS: Record<string, string> = {
   DISMISSED:     '#9ca3af',
 };
 
-const SEVERITY_COLORS: Record<string, string> = {
-  LOW:      '#64748b',
-  MEDIUM:   '#f97316',
-  HIGH:     '#ef4444',
-  CRITICAL: '#7c3aed',
-};
-
 export default function AlertStatsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['alert-stats'],
     queryFn:  getAlertStats,
   });
 
-  const statusPieData  = data ? Object.entries(data.byStatus).map(([name, value]) => ({ name, value })) : [];
-  const severityData   = data ? Object.entries(data.bySeverity).map(([name, value]) => ({ name, value })) : [];
-  const trendData      = data?.dailyTrend ?? [];
+  const statusPieData = data ? Object.entries(data.byStatus).map(([name, value]) => ({ name, value })) : [];
+  const totalCount    = data ? Object.values(data.byStatus).reduce((a, b) => a + b, 0) : 0;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -81,7 +73,7 @@ export default function AlertStatsPage() {
               <div className="mt-4 border-t border-gray-200 pt-3 dark:border-gray-700">
                 <div className="flex items-center justify-between text-sm font-semibold">
                   <span className="text-gray-700 dark:text-gray-300">Total</span>
-                  <span className="text-lg text-gray-900 dark:text-white">{data.total}</span>
+                  <span className="text-lg text-gray-900 dark:text-white">{totalCount}</span>
                 </div>
               </div>
             )}

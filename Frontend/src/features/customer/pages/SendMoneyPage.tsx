@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, AlertCircle, ArrowLeft, Send, Plus, CreditCard } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -342,7 +342,7 @@ export default function SendMoneyPage() {
             >
               <option value="">Select payee…</option>
               {mockPayees.map((p) => (
-                <option key={p.payeeId} value={p.payeeId}>{p.payeeName} ({p.payeeCategory})</option>
+                <option key={p.payeeId} value={p.payeeId}>{p.payeeName} ({p.payeeType})</option>
               ))}
             </select>
             {errors.payeeId && <p className="mt-1 text-xs text-red-600">{errors.payeeId.message}</p>}

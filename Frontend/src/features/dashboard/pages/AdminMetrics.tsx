@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line
 } from 'recharts';
 import {
-  Search, Filter, Download, Plus, Calendar, Eye, MoreVertical,
+  Search, Filter, Download, Calendar, Eye, MoreVertical,
   RotateCcw, Globe, Smartphone, Landmark, CreditCard, Zap,
-  CheckCircle2, AlertCircle, Clock, TrendingUp, TrendingDown, X
+  CheckCircle2, X
 } from 'lucide-react';
 import { getTransactions, createTransaction } from '@/lib/api/transactions';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import type { TransactionResponse, TransactionType, TransactionStatus } from '@/lib/types';
+import type { TransactionType, TransactionStatus } from '@/lib/types';
 
 // Merchant Icon helper
 function MerchantIcon({ name }: { name: string }) {
@@ -71,7 +70,6 @@ function RingProgress({ value, total, color }: { value: number; total: number; c
 }
 
 export default function AdminMetrics() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pageSize = 15;
 
@@ -90,11 +88,11 @@ export default function AdminMetrics() {
   const [newPayeeName, setNewPayeeName] = useState('');
   const [newPayeeAccNo, setNewPayeeAccNo] = useState('ACC-908123');
   const [newAmount, setNewAmount] = useState('');
-  const [newTxType, setNewTxType] = useState<TransactionType>('DEBIT');
+  const [newTxType] = useState<TransactionType>('DEBIT');
   const [newDesc, setNewDesc] = useState('');
 
   // API Query
-  const { data: pagedData, isLoading } = useQuery({
+  const { data: pagedData } = useQuery({
     queryKey: ['transactions', page, status, transactionType],
     queryFn: () => getTransactions({
       page,

@@ -6,12 +6,12 @@
  *  Row 3 – Recent High Severity Alerts | Top Triggered Rules | System Health
  *  Row 4 – Transaction Volume Overview (area) | Monthly Fraud Trend (bar+line) | Real-time Activity Feed
  */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   LineChart, Line, AreaChart, Area,
-  BarChart, Bar, ComposedChart,
+  Bar, ComposedChart,
   XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
@@ -144,7 +144,7 @@ export default function AdminDashboard() {
   const [trendPeriod, setTrendPeriod]     = useState<'Daily' | 'Weekly'>('Daily');
   const [volPeriod,   setVolPeriod]       = useState<'Weekly' | 'Monthly'>('Weekly');
   const [fraudPeriod, setFraudPeriod]     = useState<'Monthly' | 'Yearly'>('Monthly');
-  const [now, setNow] = useState(dayjs());
+  const [, setNow] = useState(dayjs());
 
   // Tick clock every 30 s so feed timestamps refresh
   useEffect(() => {
@@ -154,7 +154,6 @@ export default function AdminDashboard() {
 
   /* ── API queries ─────────────────────────────────────────────────────── */
   const { data: allAlerts }    = useQuery({ queryKey: ['alerts','all-db'],     queryFn: () => getAlerts({ size: 1 }), refetchInterval: 10000 });
-  const { data: openAlerts }   = useQuery({ queryKey: ['alerts','open-db'],    queryFn: () => getAlerts({ alertStatus: 'OPEN', size: 1 }), refetchInterval: 10000 });
   const { data: highAlerts }   = useQuery({ queryKey: ['alerts','high-db'],    queryFn: () => getAlerts({ severity: 'HIGH', size: 1 }), refetchInterval: 10000 });
   const { data: closedAlerts } = useQuery({ queryKey: ['alerts','closed-db'],  queryFn: () => getAlerts({ alertStatus: 'CLOSED', size: 1 }), refetchInterval: 10000 });
   const { data: investAlerts } = useQuery({ queryKey: ['alerts','invest-db'],  queryFn: () => getAlerts({ alertStatus: 'INVESTIGATING', size: 1 }), refetchInterval: 10000 });
@@ -169,7 +168,6 @@ export default function AdminDashboard() {
   const totalAlrts = allAlerts?.totalElements    ?? 0;
   const totalHigh  = highAlerts?.totalElements   ?? 0;
   const totalClosed= closedAlerts?.totalElements ?? 0;
-  const totalOpen  = openAlerts?.totalElements   ?? 0;
   const totalInvest= investAlerts?.totalElements ?? 0;
   const actRules   = activeRules?.totalElements  ?? 0;
   const inactRulesC= inactRules?.totalElements   ?? 0;
