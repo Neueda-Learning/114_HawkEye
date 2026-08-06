@@ -12,17 +12,35 @@ import { formatCurrency } from '@/lib/utils';
 import { toast } from '@/components/common/Toast';
 
 export default function CustomerProfilePage() {
-  const { user } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const navigate = useNavigate();
 
-  // Dynamic Profile Form State
-  const [profileData, setProfileData] = useState({
-    name: user?.name || 'fourgrads',
-    email: user?.email || 'fourgrads@email.com',
-    phone: '+91 98765 43210',
-    dob: '1990-03-15',
-    address: 'Pune, Maharashtra, India 411001',
-    avatarColor: 'bg-purple-100 text-purple-600',
+  // Dynamic Profile Form State loaded persistently from localStorage & authStore
+  const [profileData, setProfileData] = useState(() => {
+    const saved = localStorage.getItem('hawkeye-user-profile-details');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return {
+          name: user?.name || parsed.name || 'fourgrads',
+          email: user?.email || parsed.email || 'fourgrads@email.com',
+          phone: parsed.phone || '+91 98765 43210',
+          dob: parsed.dob || '1990-03-15',
+          address: parsed.address || 'Pune, Maharashtra, India 411001',
+          avatarColor: parsed.avatarColor || 'bg-purple-100 text-purple-600',
+        };
+      } catch (e) {
+        // ignore parse error
+      }
+    }
+    return {
+      name: user?.name || 'fourgrads',
+      email: user?.email || 'fourgrads@email.com',
+      phone: '+91 98765 43210',
+      dob: '1990-03-15',
+      address: 'Pune, Maharashtra, India 411001',
+      avatarColor: 'bg-purple-100 text-purple-600',
+    };
   });
 
   // Security & 2FA State
@@ -64,6 +82,8 @@ export default function CustomerProfilePage() {
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     setProfileData({ ...editForm });
+    localStorage.setItem('hawkeye-user-profile-details', JSON.stringify(editForm));
+    updateUser({ name: editForm.name, email: editForm.email });
     setIsEditProfileOpen(false);
     toast.success('Profile information updated successfully!');
     toast.email(
@@ -748,7 +768,9 @@ export default function CustomerProfilePage() {
                   key={i}
                   type="button"
                   onClick={() => {
-                    setProfileData({ ...profileData, avatarColor: theme.color });
+                    const updated = { ...profileData, avatarColor: theme.color };
+                    setProfileData(updated);
+                    localStorage.setItem('hawkeye-user-profile-details', JSON.stringify(updated));
                     setIsPhotoModalOpen(false);
                     toast.success(`Profile theme avatar updated to ${theme.label}!`);
                   }}

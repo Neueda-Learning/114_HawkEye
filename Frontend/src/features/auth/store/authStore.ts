@@ -4,13 +4,17 @@ import type { AuthUser, UserRole } from '@/lib/types';
 
 // ─── Mock users for demo (MSW will handle real login) ─────────────────────────
 export const MOCK_USERS: Record<string, { password: string; user: AuthUser }> = {
+  'fourgrads@email.com': {
+    password: 'password123',
+    user: { id: 'U001', email: 'fourgrads@email.com', name: 'fourgrads', role: 'CUSTOMER', accountId: 'ACC-001' },
+  },
   'customer@hawkeye.com': {
     password: 'password123',
-    user: { id: 'U001', email: 'customer@hawkeye.com', name: 'fourgrads', role: 'CUSTOMER', accountId: 'ACC-001' },
+    user: { id: 'U001', email: 'fourgrads@email.com', name: 'fourgrads', role: 'CUSTOMER', accountId: 'ACC-001' },
   },
   'user@hawkeye.com': {
     password: 'password123',
-    user: { id: 'U001', email: 'user@hawkeye.com', name: 'fourgrads', role: 'CUSTOMER', accountId: 'ACC-001' },
+    user: { id: 'U001', email: 'fourgrads@email.com', name: 'fourgrads', role: 'CUSTOMER', accountId: 'ACC-001' },
   },
   'analyst@hawkeye.com': {
     password: 'password123',
@@ -28,6 +32,7 @@ interface AuthStore {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  updateUser: (updatedFields: Partial<AuthUser>) => void;
   hasRole: (role: UserRole | UserRole[]) => boolean;
 }
 
@@ -65,6 +70,13 @@ export const useAuthStore = create<AuthStore>()(
       logout: () => {
         sessionStorage.removeItem('hawkeye_token');
         set({ user: null, accessToken: null, isAuthenticated: false });
+      },
+
+      updateUser: (updatedFields: Partial<AuthUser>) => {
+        set((state) => {
+          const newUser = state.user ? { ...state.user, ...updatedFields } : null;
+          return { user: newUser };
+        });
       },
 
       hasRole: (role: UserRole | UserRole[]) => {
