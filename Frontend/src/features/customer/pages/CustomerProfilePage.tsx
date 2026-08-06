@@ -147,7 +147,7 @@ export default function CustomerProfilePage() {
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{profileData.name}</h1>
               <span className="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-extrabold">
-                Customer ID: HWK102938
+                User ID: HWK102938
               </span>
             </div>
 
