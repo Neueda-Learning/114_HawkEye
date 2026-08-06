@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
-  Search, Bell, ShieldCheck, CreditCard, TrendingUp, AlertTriangle,
-  Download, User, Shield, Info, CheckCircle2, ChevronRight, AlertCircle
+  Bell, Building2, Wallet, SlidersHorizontal, AlertTriangle,
+  ChevronRight, Calendar, ChevronDown, Send, FileText,
+  PlusCircle, Settings, HelpCircle, Lock,
+  CreditCard, User
 } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { getTransactions } from '@/lib/api/transactions';
@@ -14,7 +16,6 @@ export default function CustomerDashboard() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
 
-  const [searchQuery, setSearchQuery] = useState('');
   const [statementSuccess, setStatementSuccess] = useState(false);
 
   // 1. Fetch Real Transactions API data
@@ -26,20 +27,21 @@ export default function CustomerDashboard() {
   // 2. Fetch Real Alerts API data
   const { data: alertsData, isLoading: alertsLoading } = useQuery({
     queryKey: ['alerts', 'customer'],
-    queryFn: () => getAlerts({ size: 5 }),
+    queryFn: () => getAlerts({ size: 10 }),
   });
 
   const transactions = txData?.content ?? [];
   const alerts = alertsData?.content ?? [];
 
-  // Calculate real metrics from real API transactions
-  const totalCount = txData?.totalElements ?? transactions.length;
-  const totalMonitoredAmount = transactions.reduce((acc, t) => acc + (t.amount || 0), 0);
-  const activeAlertsCount = alerts.filter((a) => a.alertStatus === 'OPEN' || a.alertStatus === 'INVESTIGATING').length;
-  
-  const totalSpent = transactions
-    .filter((t) => t.transactionType === 'DEBIT' || (t.amount && t.amount > 0))
-    .reduce((acc, t) => acc + (t.amount || 0), 0);
+  // Metrics calculation
+  const totalTransactionsCount = txData?.totalElements ?? (transactions.length > 0 ? transactions.length : 1243);
+  const totalAlertsCount = alertsData?.totalElements ?? (alerts.length > 0 ? alerts.length : 8);
+
+  // Breakdown counts for Donut Chart
+  const highRiskCount = alerts.filter((a) => a.severity === 'HIGH' || a.severity === 'CRITICAL').length || 2;
+  const mediumRiskCount = alerts.filter((a) => a.severity === 'MEDIUM').length || 4;
+  const lowRiskCount = alerts.filter((a) => a.severity === 'LOW').length || 1;
+  const infoRiskCount = alerts.filter((a) => (a.severity as string) === 'INFO' || !a.severity).length || 1;
 
   // Download Statement action
   const handleDownloadStatement = () => {
@@ -62,592 +64,594 @@ export default function CustomerDashboard() {
     setTimeout(() => setStatementSuccess(false), 3000);
   };
 
+  // Mock Accounts Data linked to user
+  const accountsList = [
+    { name: 'Primary Checking', number: '•••• 1234', type: 'Checking', balance: 45250.75, status: 'Active', alerts: 2, iconColor: 'bg-blue-100 text-blue-600' },
+    { name: 'Savings Account', number: '•••• 5678', type: 'Savings', balance: 28560.00, status: 'Active', alerts: 0, iconColor: 'bg-purple-100 text-purple-600' },
+    { name: 'Business Account', number: '•••• 9012', type: 'Checking', balance: 32120.30, status: 'Active', alerts: 3, iconColor: 'bg-amber-100 text-amber-600' },
+    { name: 'Credit Card', number: '•••• 3456', type: 'Credit Card', balance: -3210.45, status: 'Active', alerts: 1, iconColor: 'bg-cyan-100 text-cyan-600' },
+    { name: 'Personal Loan', number: '•••• 7890', type: 'Loan', balance: 18750.00, status: 'Active', alerts: 1, iconColor: 'bg-rose-100 text-rose-600' },
+    { name: 'Investment Account', number: '•••• 2468', type: 'Investment', balance: 4890.90, status: 'Active', alerts: 1, iconColor: 'bg-orange-100 text-orange-600' },
+  ];
+
   return (
-    <div className="space-y-6 pb-10 animate-fade-in font-sans text-slate-800">
+    <div className="space-y-6 pb-12 animate-fade-in font-sans text-slate-800 bg-[#f8fafc] p-6 -m-6 rounded-none min-h-screen">
       
-      {/* ── TOP HEADER BANNER ── */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-5">
+      {/* ── TOP HEADER BAR ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
             Welcome back, {user?.name?.split(' ')[0] || 'John'}! 👋
           </h1>
-          <p className="mt-1 text-xs font-medium text-slate-500">
-            Here's an overview of your account and recent activity.
+          <p className="text-xs sm:text-sm font-semibold text-slate-500 mt-1">
+            Here's what's happening across your accounts.
           </p>
         </div>
 
-        {/* Right Header Search & Actions */}
+        {/* Right Header Controls */}
         <div className="flex items-center gap-3">
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search anything..."
-              className="w-full rounded-xl bg-slate-100 border border-slate-200 pl-9 pr-8 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition"
-            />
-            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded bg-slate-200 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 font-mono">
-              ⌘K
-            </span>
-          </div>
-
           <button
             type="button"
             onClick={() => navigate('/alerts')}
-            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition shadow-sm"
+            className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition shadow-sm cursor-pointer"
+            title="View Alerts"
           >
-            <Bell className="h-4 w-4" />
-            {activeAlertsCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm animate-pulse">
-                {activeAlertsCount}
+            <Bell className="h-4.5 w-4.5" />
+            {totalAlertsCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-purple-600 text-[10px] font-extrabold text-white shadow-sm">
+                {totalAlertsCount}
               </span>
             )}
           </button>
 
-          <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs shadow-md">
-              {user?.name?.charAt(0) || 'J'}
-            </div>
-            <div className="hidden md:block text-left">
-              <div className="text-xs font-bold text-slate-900 leading-tight">{user?.name || 'John Doe'}</div>
-              <div className="text-[10px] text-slate-500 font-medium">Customer Account</div>
-            </div>
+          <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 shadow-sm cursor-pointer hover:bg-slate-50 transition">
+            <Calendar className="h-4 w-4 text-slate-400" />
+            <span>May 15 – May 21, 2024</span>
+            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
           </div>
         </div>
       </div>
 
-      {/* ── TOP 4 METRIC CARDS WITH AREA SPARKLINE CHARTS ── */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* ── TOP 4 SUMMARY METRIC CARDS ── */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         
-        {/* Card 1: Total Transactions */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition">
-          <div className="flex items-center justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-              <CreditCard className="h-5 w-5" />
+        {/* Card 1: Total Accounts */}
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Accounts</span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
+                <Building2 className="h-5 w-5" />
+              </div>
             </div>
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-              <TrendingUp className="h-3 w-3" /> ↑ 16.4%
-            </span>
+            <div className="mt-2">
+              <h3 className="text-2xl sm:text-3xl font-black text-slate-900">6</h3>
+              <p className="text-xs font-semibold text-slate-500 mt-1">Active Accounts</p>
+            </div>
           </div>
-
-          <div className="mt-3">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Transactions</p>
-            <h3 className="text-2xl font-black text-slate-900 mt-0.5">
-              {txLoading ? '...' : totalCount || 128}
-            </h3>
-            <p className="text-[10px] font-medium text-slate-400 mt-0.5">from last 7 days</p>
-          </div>
-
           {/* Mini Sparkline Chart */}
-          <div className="mt-3 h-8 w-full">
+          <div className="mt-4 h-8 w-full">
             <svg className="h-full w-full overflow-visible" viewBox="0 0 100 30">
               <defs>
-                <linearGradient id="blueSparkGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
+                <linearGradient id="purpGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.25" />
+                  <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
+              <path d="M0,25 Q15,22 30,24 T60,18 T100,10 L100,30 L0,30 Z" fill="url(#purpGrad)" />
+              <path d="M0,25 Q15,22 30,24 T60,18 T100,10" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Card 2: Total Balance */}
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Balance</span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                <Wallet className="h-5 w-5" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <h3 className="text-2xl sm:text-3xl font-black text-slate-900">$126,560.50</h3>
+              <p className="text-xs font-semibold text-slate-500 mt-1">Across all accounts</p>
+            </div>
+          </div>
+          {/* Mini Sparkline Chart */}
+          <div className="mt-4 h-8 w-full">
+            <svg className="h-full w-full overflow-visible" viewBox="0 0 100 30">
+              <defs>
+                <linearGradient id="bluGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.25" />
                   <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
-              <path d="M0,25 Q15,10 30,20 T60,8 T100,18 L100,30 L0,30 Z" fill="url(#blueSparkGrad)" />
-              <path d="M0,25 Q15,10 30,20 T60,8 T100,18" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" />
+              <path d="M0,20 Q20,25 40,15 T80,20 T100,12 L100,30 L0,30 Z" fill="url(#bluGrad)" />
+              <path d="M0,20 Q20,25 40,15 T80,20 T100,12" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
           </div>
         </div>
 
-        {/* Card 2: Monitored Amount */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition">
-          <div className="flex items-center justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-              <ShieldCheck className="h-5 w-5" />
+        {/* Card 3: Total Transactions */}
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Transactions</span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                <SlidersHorizontal className="h-5 w-5" />
+              </div>
             </div>
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-              <TrendingUp className="h-3 w-3" /> ↑ 12.7%
-            </span>
+            <div className="mt-2">
+              <h3 className="text-2xl sm:text-3xl font-black text-slate-900">
+                {txLoading ? '...' : totalTransactionsCount.toLocaleString()}
+              </h3>
+              <p className="text-xs font-semibold text-slate-500 mt-1">This week</p>
+            </div>
           </div>
-
-          <div className="mt-3">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Monitored Amount</p>
-            <h3 className="text-2xl font-black text-slate-900 mt-0.5">
-              {txLoading ? '...' : formatCurrency(totalMonitoredAmount > 0 ? totalMonitoredAmount : 24560)}
-            </h3>
-            <p className="text-[10px] font-medium text-slate-400 mt-0.5">from last 7 days</p>
-          </div>
-
           {/* Mini Sparkline Chart */}
-          <div className="mt-3 h-8 w-full">
+          <div className="mt-4 h-8 w-full">
             <svg className="h-full w-full overflow-visible" viewBox="0 0 100 30">
               <defs>
-                <linearGradient id="greenSparkGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
+                <linearGradient id="grnGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
                   <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
-              <path d="M0,22 Q20,28 40,12 T80,18 T100,5 L100,30 L0,30 Z" fill="url(#greenSparkGrad)" />
-              <path d="M0,22 Q20,28 40,12 T80,18 T100,5" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
+              <path d="M0,24 Q25,28 50,16 T75,20 T100,8 L100,30 L0,30 Z" fill="url(#grnGrad)" />
+              <path d="M0,24 Q25,28 50,16 T75,20 T100,8" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
           </div>
         </div>
 
-        {/* Card 3: Active Alerts */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition">
-          <div className="flex items-center justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-              <Bell className="h-5 w-5" />
+        {/* Card 4: Total Alerts */}
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Alerts</span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
+                <Bell className="h-5 w-5" />
+              </div>
             </div>
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-              ↓ 25%
-            </span>
+            <div className="mt-2">
+              <h3 className="text-2xl sm:text-3xl font-black text-slate-900">
+                {alertsLoading ? '...' : totalAlertsCount}
+              </h3>
+              <p className="text-xs font-semibold text-slate-500 mt-1">Requires attention</p>
+            </div>
           </div>
-
-          <div className="mt-3">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Alerts</p>
-            <h3 className="text-2xl font-black text-slate-900 mt-0.5">
-              {alertsLoading ? '...' : activeAlertsCount || 3}
-            </h3>
-            <p className="text-[10px] font-medium text-slate-400 mt-0.5">from last 7 days</p>
-          </div>
-
           {/* Mini Sparkline Chart */}
-          <div className="mt-3 h-8 w-full">
+          <div className="mt-4 h-8 w-full">
             <svg className="h-full w-full overflow-visible" viewBox="0 0 100 30">
               <defs>
-                <linearGradient id="amberSparkGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.0" />
+                <linearGradient id="redGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.25" />
+                  <stop offset="100%" stopColor="#f43f5e" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
-              <path d="M0,10 Q25,25 50,15 T75,22 T100,28 L100,30 L0,30 Z" fill="url(#amberSparkGrad)" />
-              <path d="M0,10 Q25,25 50,15 T75,22 T100,28" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
+              <path d="M0,18 Q20,25 40,10 T70,22 T100,14 L100,30 L0,30 Z" fill="url(#redGrad)" />
+              <path d="M0,18 Q20,25 40,10 T70,22 T100,14" fill="none" stroke="#f43f5e" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
-          </div>
-        </div>
-
-        {/* Card 4: Account Status */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition">
-          <div className="flex items-center justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
-              <Shield className="h-5 w-5" />
-            </div>
-            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-200">
-              Active
-            </span>
-          </div>
-
-          <div className="mt-3">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Account Status</p>
-            <h3 className="text-2xl font-black text-slate-900 mt-0.5">Secure</h3>
-            <p className="text-[10px] font-medium text-slate-400 mt-0.5">Last login: Today, 09:41 AM</p>
-          </div>
-
-          <div className="mt-4 flex items-center gap-1.5 text-[11px] font-bold text-purple-700">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-            <span>256-Bit Encrypted</span>
           </div>
         </div>
 
       </div>
 
-      {/* ── MIDDLE ROW: RECENT TRANSACTIONS & MY ALERTS (60% / 40%) ── */}
+      {/* ── MIDDLE ROW: ACCOUNTS OVERVIEW & ALERTS SUMMARY (65% / 35%) ── */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         
-        {/* Left Column: Recent Transactions Table */}
-        <div className="lg:col-span-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <h2 className="text-base font-extrabold text-slate-900">Recent Transactions</h2>
-            <button
-              type="button"
-              onClick={() => navigate('/customer/transactions')}
-              className="text-xs font-bold text-blue-600 hover:text-blue-700 transition"
-            >
-              View All
-            </button>
-          </div>
-
-          <div className="overflow-x-auto mt-4">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                  <th className="pb-3">Transaction ID</th>
-                  <th className="pb-3">Merchant / Receiver</th>
-                  <th className="pb-3">Amount</th>
-                  <th className="pb-3">Date & Time</th>
-                  <th className="pb-3 text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {txLoading ? (
-                  Array.from({ length: 4 }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      <td className="py-3.5"><div className="h-3 w-20 bg-slate-200 rounded"></div></td>
-                      <td className="py-3.5"><div className="h-3 w-32 bg-slate-200 rounded"></div></td>
-                      <td className="py-3.5"><div className="h-3 w-16 bg-slate-200 rounded"></div></td>
-                      <td className="py-3.5"><div className="h-3 w-24 bg-slate-200 rounded"></div></td>
-                      <td className="py-3.5 text-right"><div className="h-3 w-16 bg-slate-200 rounded ml-auto"></div></td>
-                    </tr>
-                  ))
-                ) : transactions.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-8 text-center text-slate-400 font-medium">
-                      No transactions recorded yet. Click <button onClick={() => navigate('/customer/send-money')} className="text-blue-600 underline font-bold">Send Money</button> to test.
-                    </td>
-                  </tr>
-                ) : (
-                  transactions.slice(0, 5).map((tx) => {
-                    const isDebit = tx.transactionType === 'DEBIT' || tx.amount < 0;
-                    return (
-                      <tr key={tx.transactionId} className="hover:bg-slate-50/80 transition cursor-pointer" onClick={() => navigate(`/customer/transactions`)}>
-                        <td className="py-3.5 font-mono font-bold text-slate-700">
-                          TXN-{tx.transactionId}
-                        </td>
-                        <td className="py-3.5">
-                          <div className="flex items-center gap-2.5">
-                            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-600 font-bold text-xs uppercase border border-slate-200">
-                              {tx.payeeName?.charAt(0) || 'T'}
-                            </div>
-                            <span className="font-bold text-slate-900">{tx.payeeName || 'Store Receiver'}</span>
-                          </div>
-                        </td>
-                        <td className={`py-3.5 font-bold font-mono ${isDebit ? 'text-red-500' : 'text-emerald-600'}`}>
-                          {isDebit ? '-' : '+'}{formatCurrency(Math.abs(tx.amount || 0), tx.currency)}
-                        </td>
-                        <td className="py-3.5 text-slate-500 font-medium">
-                          {formatDate(tx.timestamp)}
-                        </td>
-                        <td className="py-3.5 text-right">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-700 border border-emerald-200">
-                            Completed
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-slate-100 text-center">
-            <button
-              type="button"
-              onClick={() => navigate('/customer/transactions')}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 transition"
-            >
-              <span>View All Transactions</span>
-              <ChevronRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Right Column: My Alerts */}
-        <div className="lg:col-span-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between">
+        {/* Accounts Overview Table Panel */}
+        <div className="lg:col-span-8 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <h2 className="text-base font-extrabold text-slate-900">My Alerts</h2>
+              <div>
+                <h2 className="text-lg font-extrabold text-slate-900">Accounts Overview</h2>
+                <p className="text-xs font-semibold text-slate-500 mt-0.5">Summary of all your linked accounts</p>
+              </div>
               <button
                 type="button"
-                onClick={() => navigate('/alerts')}
-                className="text-xs font-bold text-blue-600 hover:text-blue-700 transition"
+                onClick={() => navigate('/customer/dashboard')}
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition shadow-sm"
               >
-                View All
+                View All Accounts
               </button>
             </div>
 
-            <div className="space-y-3 mt-4">
-              {alertsLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-16 bg-slate-100 rounded-xl animate-pulse"></div>
-                ))
-              ) : alerts.length === 0 ? (
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-500 font-medium">
-                  No critical alerts on your account. All transfers verified safe!
-                </div>
-              ) : (
-                alerts.slice(0, 3).map((a) => (
-                  <div
-                    key={a.alertId}
-                    onClick={() => navigate('/alerts')}
-                    className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-100/80 hover:border-slate-300 transition cursor-pointer flex items-start justify-between gap-3 group"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg ${
-                        a.severity === 'CRITICAL' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
-                      }`}>
-                        <AlertTriangle className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">
-                          {a.ruleName || 'High Amount Transaction'}
-                        </h4>
-                        <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1 font-medium">
-                          {a.alertMessage || 'High amount transaction detected'}
-                        </p>
-                        <p className="text-[10px] text-slate-400 font-mono mt-1">
-                          {formatDate(a.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 group-hover:translate-x-0.5 transition shrink-0" />
-                  </div>
-                ))
-              )}
+            {/* Table */}
+            <div className="overflow-x-auto mt-4">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                    <th className="pb-3 pl-2">Account Name</th>
+                    <th className="pb-3">Account Number</th>
+                    <th className="pb-3">Type</th>
+                    <th className="pb-3">Balance</th>
+                    <th className="pb-3">Status</th>
+                    <th className="pb-3 text-right pr-2">Alerts</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {accountsList.map((acc, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/80 transition">
+                      <td className="py-3.5 pl-2">
+                        <div className="flex items-center gap-3">
+                          <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${acc.iconColor} font-bold text-xs shrink-0`}>
+                            <CreditCard className="h-4 w-4" />
+                          </div>
+                          <span className="font-extrabold text-slate-900">{acc.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 font-mono font-bold text-slate-700">{acc.number}</td>
+                      <td className="py-3.5 text-slate-600 font-semibold">{acc.type}</td>
+                      <td className={`py-3.5 font-bold font-mono ${acc.balance < 0 ? 'text-slate-900' : 'text-slate-900'}`}>
+                        {formatCurrency(acc.balance)}
+                      </td>
+                      <td className="py-3.5">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100/80 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-700">
+                          {acc.status}
+                        </span>
+                      </td>
+                      <td className="py-3.5 text-right pr-2">
+                        {acc.alerts > 0 ? (
+                          <span className="inline-flex items-center gap-1 font-bold text-slate-700 hover:text-blue-600 cursor-pointer">
+                            <span>{acc.alerts}</span>
+                            <span className="w-2 h-2 rounded-full bg-rose-500 inline-block"></span>
+                            <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 font-bold text-slate-400">
+                            <span>0</span>
+                            <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <div className="mt-6 pt-3 border-t border-slate-100 text-center">
+          <div className="mt-5 pt-3 text-center border-t border-slate-100">
             <button
               type="button"
-              onClick={() => navigate('/alerts')}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 transition"
+              onClick={() => navigate('/customer/dashboard')}
+              className="rounded-xl border border-slate-200 bg-white px-5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-sm"
             >
-              <span>Manage Alerts</span>
-              <ChevronRight className="h-3.5 w-3.5" />
+              Manage Accounts
             </button>
           </div>
         </div>
 
-      </div>
+        {/* Alerts Summary Donut & Banner Panel */}
+        <div className="lg:col-span-4 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm flex flex-col justify-between">
+          <div>
+            <h2 className="text-lg font-extrabold text-slate-900 border-b border-slate-100 pb-4">
+              Alerts Summary
+            </h2>
 
-      {/* ── ROW 3: SPENDING OVERVIEW & QUICK ACTIONS (50% / 50%) ── */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        
-        {/* Spending Overview Panel */}
-        <div className="lg:col-span-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <h2 className="text-base font-extrabold text-slate-900">Spending Overview</h2>
-            <select className="rounded-lg bg-slate-100 border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 outline-none">
-              <option>Last 7 Days</option>
-              <option>Last 30 Days</option>
-            </select>
+            {/* Donut Chart Visual & Legend Breakdown */}
+            <div className="mt-6 flex items-center justify-between gap-4">
+              
+              {/* Donut Ring Chart SVG */}
+              <div className="relative h-36 w-36 shrink-0 flex items-center justify-center">
+                <svg className="h-full w-full -rotate-90" viewBox="0 0 42 42">
+                  <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#f1f5f9" strokeWidth="5" />
+                  
+                  {/* High Risk (Red) */}
+                  <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#ef4444" strokeWidth="5" strokeDasharray="30, 100" strokeDashoffset="0" strokeLinecap="round" />
+                  
+                  {/* Medium Risk (Orange) */}
+                  <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#f97316" strokeWidth="5" strokeDasharray="40, 100" strokeDashoffset="-32" strokeLinecap="round" />
+                  
+                  {/* Low Risk (Yellow) */}
+                  <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#eab308" strokeWidth="5" strokeDasharray="15, 100" strokeDashoffset="-74" strokeLinecap="round" />
+                  
+                  {/* Info (Blue) */}
+                  <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#3b82f6" strokeWidth="5" strokeDasharray="10, 100" strokeDashoffset="-90" strokeLinecap="round" />
+                </svg>
+
+                {/* Donut Center Content */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span className="text-3xl font-black text-slate-900 leading-none">8</span>
+                  <span className="text-[10px] font-extrabold text-slate-500 uppercase mt-1">Total Alerts</span>
+                </div>
+              </div>
+
+              {/* Legend List */}
+              <div className="space-y-3 text-xs font-bold text-slate-700 flex-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                    <span>High Risk</span>
+                  </div>
+                  <span className="font-black text-slate-900">{highRiskCount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                    <span>Medium Risk</span>
+                  </div>
+                  <span className="font-black text-slate-900">{mediumRiskCount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+                    <span>Low Risk</span>
+                  </div>
+                  <span className="font-black text-slate-900">{lowRiskCount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                    <span>Info</span>
+                  </div>
+                  <span className="font-black text-slate-900">{infoRiskCount}</span>
+                </div>
+              </div>
+
+            </div>
           </div>
 
-          <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          {/* High Risk Alerts Banner */}
+          <div className="mt-6 rounded-2xl bg-rose-50/70 border border-rose-100 p-4 flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-orange-500/15 border border-orange-500/30 text-orange-600 flex items-center justify-center shrink-0">
+              <AlertTriangle className="h-5 w-5" />
+            </div>
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Spent</p>
-              <h3 className="text-3xl font-black text-slate-900 mt-1">
-                {formatCurrency(totalSpent > 0 ? totalSpent : 2450.75)}
-              </h3>
-              <p className="text-xs font-bold text-emerald-600 mt-1 flex items-center gap-1">
-                <TrendingUp className="h-3.5 w-3.5" /> ↑ 8.3% from previous 7 days
+              <h4 className="text-xs font-black text-rose-900">
+                2 high risk alerts need your attention.
+              </h4>
+              <p className="text-[11px] text-slate-600 font-medium mt-1 leading-relaxed">
+                Review them now to keep your accounts secure.
               </p>
               <button
                 type="button"
-                onClick={() => navigate('/admin/reports')}
-                className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition shadow-sm"
+                onClick={() => navigate('/alerts')}
+                className="mt-2 text-xs font-extrabold text-blue-600 hover:text-blue-700 transition flex items-center gap-1 cursor-pointer"
               >
-                View Report
+                <span>View Alerts</span>
+                <ChevronRight className="h-3.5 w-3.5" />
               </button>
             </div>
-
-            {/* SVG Donut Chart & Category Legend */}
-            <div className="flex items-center gap-4">
-              <div className="relative h-28 w-28 shrink-0">
-                <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" strokeWidth="4" />
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#3b82f6" strokeWidth="4" strokeDasharray="51, 100" />
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#10b981" strokeWidth="4" strokeDasharray="24, 100" strokeDashoffset="-51" />
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f59e0b" strokeWidth="4" strokeDasharray="14, 100" strokeDashoffset="-75" />
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#8b5cf6" strokeWidth="4" strokeDasharray="10, 100" strokeDashoffset="-89" />
-                </svg>
-              </div>
-
-              <div className="space-y-1.5 text-xs font-semibold text-slate-600">
-                <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-blue-500"></span>
-                  <span>Shopping</span>
-                  <span className="font-bold text-slate-900 ml-auto">$1,250.50</span>
-                  <span className="text-[10px] text-slate-400">51%</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                  <span>Bills & Utilities</span>
-                  <span className="font-bold text-slate-900 ml-auto">$600.00</span>
-                  <span className="text-[10px] text-slate-400">24%</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-amber-500"></span>
-                  <span>Entertainment</span>
-                  <span className="font-bold text-slate-900 ml-auto">$350.25</span>
-                  <span className="text-[10px] text-slate-400">14%</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-purple-500"></span>
-                  <span>Others</span>
-                  <span className="font-bold text-slate-900 ml-auto">$250.00</span>
-                  <span className="text-[10px] text-slate-400">10%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions Panel (2x2 Grid) */}
-        <div className="lg:col-span-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-base font-extrabold text-slate-900 border-b border-slate-100 pb-4">Quick Actions</h2>
-
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            
-            {/* Action 1: Report an Issue */}
-            <button
-              type="button"
-              onClick={() => navigate('/alerts')}
-              className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-blue-50/50 hover:border-blue-300 hover:shadow-md transition text-left group cursor-pointer"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600 group-hover:scale-105 transition">
-                <AlertCircle className="h-5 w-5" />
-              </div>
-              <h3 className="text-xs font-bold text-slate-900 mt-3 group-hover:text-blue-600 transition">
-                Report an Issue
-              </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5 font-medium">Report suspicious activity</p>
-            </button>
-
-            {/* Action 2: Download Statement */}
-            <button
-              type="button"
-              onClick={handleDownloadStatement}
-              className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-emerald-50/50 hover:border-emerald-300 hover:shadow-md transition text-left group cursor-pointer"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 group-hover:scale-105 transition">
-                <Download className="h-5 w-5" />
-              </div>
-              <h3 className="text-xs font-bold text-slate-900 mt-3 group-hover:text-emerald-600 transition">
-                {statementSuccess ? 'Downloaded!' : 'Download Statement'}
-              </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5 font-medium">Get your transaction report</p>
-            </button>
-
-            {/* Action 3: Update Profile */}
-            <button
-              type="button"
-              onClick={() => navigate('/customer/send-money')}
-              className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-purple-50/50 hover:border-purple-300 hover:shadow-md transition text-left group cursor-pointer"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-purple-600 group-hover:scale-105 transition">
-                <User className="h-5 w-5" />
-              </div>
-              <h3 className="text-xs font-bold text-slate-900 mt-3 group-hover:text-purple-600 transition">
-                Send Money Portal
-              </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5 font-medium">Instant transfer & payees</p>
-            </button>
-
-            {/* Action 4: Security Settings */}
-            <button
-              type="button"
-              onClick={() => navigate('/admin/settings')}
-              className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-amber-50/50 hover:border-amber-300 hover:shadow-md transition text-left group cursor-pointer"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600 group-hover:scale-105 transition">
-                <Shield className="h-5 w-5" />
-              </div>
-              <h3 className="text-xs font-bold text-slate-900 mt-3 group-hover:text-amber-600 transition">
-                Security Settings
-              </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5 font-medium">Manage account security</p>
-            </button>
-
           </div>
         </div>
 
       </div>
 
-      {/* ── ROW 4: RECENT ACTIVITY TIMELINE & STAY SAFE BANNER (65% / 35%) ── */}
+      {/* ── BOTTOM ROW: RECENT ACTIVITY & QUICK ACTIONS (55% / 45%) ── */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         
-        {/* Recent Activity Timeline Panel */}
-        <div className="lg:col-span-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        {/* Recent Activity List Panel */}
+        <div className="lg:col-span-7 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <h2 className="text-base font-extrabold text-slate-900">Recent Activity</h2>
+            <h2 className="text-lg font-extrabold text-slate-900">Recent Activity</h2>
             <button
               type="button"
               onClick={() => navigate('/customer/transactions')}
-              className="text-xs font-bold text-blue-600 hover:text-blue-700 transition"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition shadow-sm"
             >
-              View All
+              View All Activity
             </button>
           </div>
 
           <div className="space-y-4 mt-5">
             
-            {/* Timeline item 1 */}
-            <div className="flex items-start gap-3.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shrink-0">
-                <CheckCircle2 className="h-4 w-4" />
-              </div>
-              <div className="flex-1 border-b border-slate-100 pb-3 flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900">Transaction TXN-8756234 completed</h4>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">Amazon Store • $120.00</p>
+            {/* Activity Item 1 */}
+            <div className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                  <Bell className="h-5 w-5" />
                 </div>
-                <span className="text-[11px] text-slate-400 font-medium">May 21, 2024 10:25 AM</span>
+                <div>
+                  <h4 className="text-xs font-extrabold text-slate-900">High risk transaction detected</h4>
+                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    Business Account • $1,250.00 • May 21, 2024 10:25 AM
+                  </p>
+                </div>
               </div>
+              <span className="px-2.5 py-1 rounded-md bg-rose-100/80 text-rose-700 font-extrabold text-[11px]">
+                High Risk
+              </span>
             </div>
 
-            {/* Timeline item 2 */}
-            <div className="flex items-start gap-3.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-600 shrink-0">
-                <Bell className="h-4 w-4" />
-              </div>
-              <div className="flex-1 border-b border-slate-100 pb-3 flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900">Alert: High amount transaction</h4>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">Transaction of $1,200.00 detected</p>
+            {/* Activity Item 2 */}
+            <div className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                  <User className="h-5 w-5" />
                 </div>
-                <span className="text-[11px] text-slate-400 font-medium">May 21, 2024 10:24 AM</span>
+                <div>
+                  <h4 className="text-xs font-extrabold text-slate-900">New login detected</h4>
+                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    Chrome on Windows • May 21, 2024 09:47 AM
+                  </p>
+                </div>
               </div>
+              <span className="px-2.5 py-1 rounded-md bg-blue-100/80 text-blue-700 font-extrabold text-[11px]">
+                Info
+              </span>
             </div>
 
-            {/* Timeline item 3 */}
-            <div className="flex items-start gap-3.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 shrink-0">
-                <Info className="h-4 w-4" />
-              </div>
-              <div className="flex-1 border-b border-slate-100 pb-3 flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900">Login successful</h4>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">Logged in from Chrome on Windows</p>
+            {/* Activity Item 3 */}
+            <div className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                  <SlidersHorizontal className="h-5 w-5" />
                 </div>
-                <span className="text-[11px] text-slate-400 font-medium">May 21, 2024 09:41 AM</span>
+                <div>
+                  <h4 className="text-xs font-extrabold text-slate-900">Transaction completed</h4>
+                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    Primary Checking • $320.00 • May 20, 2024 04:30 PM
+                  </p>
+                </div>
               </div>
+              <span className="px-2.5 py-1 rounded-md bg-emerald-100/80 text-emerald-700 font-extrabold text-[11px]">
+                Low Risk
+              </span>
             </div>
 
-            {/* Timeline item 4 */}
-            <div className="flex items-start gap-3.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-purple-600 shrink-0">
-                <Download className="h-4 w-4" />
-              </div>
-              <div className="flex-1 border-b border-slate-100 pb-3 flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900">Statement downloaded</h4>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">May 2024 monthly statement</p>
+            {/* Activity Item 4 */}
+            <div className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                  <Bell className="h-5 w-5" />
                 </div>
-                <span className="text-[11px] text-slate-400 font-medium">May 20, 2024 08:30 PM</span>
+                <div>
+                  <h4 className="text-xs font-extrabold text-slate-900">Unusual activity detected</h4>
+                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    Savings Account • May 20, 2024 11:15 AM
+                  </p>
+                </div>
               </div>
+              <span className="px-2.5 py-1 rounded-md bg-orange-100/80 text-orange-700 font-extrabold text-[11px]">
+                Medium Risk
+              </span>
+            </div>
+
+            {/* Activity Item 5 */}
+            <div className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold text-slate-900">Monthly statement generated</h4>
+                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    Credit Card • May 19, 2024 08:00 AM
+                  </p>
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded-md bg-blue-100/80 text-blue-700 font-extrabold text-[11px]">
+                Info
+              </span>
             </div>
 
           </div>
         </div>
 
-        {/* Stay Safe with Hawkeye Card Banner */}
-        <div className="lg:col-span-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/90 via-indigo-50/60 to-blue-50/80 p-6 flex flex-col items-center justify-center text-center shadow-sm relative overflow-hidden">
-          <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-3xl shadow-xl shadow-blue-600/30 mb-4 transform hover:scale-105 transition">
-            <ShieldCheck className="h-8 w-8" />
+        {/* Quick Actions Panel (6 Cards: 2 Cols x 3 Rows) */}
+        <div className="lg:col-span-5 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-extrabold text-slate-900 border-b border-slate-100 pb-4">
+            Quick Actions
+          </h2>
+
+          <div className="grid grid-cols-2 gap-4 mt-5">
+            
+            {/* Card 1: Send Money */}
+            <button
+              type="button"
+              onClick={() => navigate('/customer/send-money')}
+              className="p-4 rounded-2xl border border-slate-100 bg-[#f8fafc] hover:bg-blue-50/50 hover:border-blue-300 hover:shadow-md transition text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-105 transition">
+                <Send className="h-5 w-5" />
+              </div>
+              <h3 className="text-xs font-extrabold text-slate-900 mt-3 group-hover:text-blue-600 transition">
+                Send Money
+              </h3>
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
+                Transfer money between your accounts
+              </p>
+            </button>
+
+            {/* Card 2: Download Report */}
+            <button
+              type="button"
+              onClick={handleDownloadStatement}
+              className="p-4 rounded-2xl border border-slate-100 bg-[#f8fafc] hover:bg-blue-50/50 hover:border-blue-300 hover:shadow-md transition text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-105 transition">
+                <FileText className="h-5 w-5" />
+              </div>
+              <h3 className="text-xs font-extrabold text-slate-900 mt-3 group-hover:text-blue-600 transition">
+                {statementSuccess ? 'Downloaded!' : 'Download Report'}
+              </h3>
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
+                Get your transaction reports
+              </p>
+            </button>
+
+            {/* Card 3: Manage Alerts */}
+            <button
+              type="button"
+              onClick={() => navigate('/alerts')}
+              className="p-4 rounded-2xl border border-slate-100 bg-[#f8fafc] hover:bg-purple-50/50 hover:border-purple-300 hover:shadow-md transition text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center group-hover:scale-105 transition">
+                <Bell className="h-5 w-5" />
+              </div>
+              <h3 className="text-xs font-extrabold text-slate-900 mt-3 group-hover:text-purple-600 transition">
+                Manage Alerts
+              </h3>
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
+                Customize alert preferences
+              </p>
+            </button>
+
+            {/* Card 4: Add Account */}
+            <button
+              type="button"
+              onClick={() => navigate('/customer/send-money')}
+              className="p-4 rounded-2xl border border-slate-100 bg-[#f8fafc] hover:bg-purple-50/50 hover:border-purple-300 hover:shadow-md transition text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center group-hover:scale-105 transition">
+                <PlusCircle className="h-5 w-5" />
+              </div>
+              <h3 className="text-xs font-extrabold text-slate-900 mt-3 group-hover:text-purple-600 transition">
+                Add Account
+              </h3>
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
+                Link a new account to Hawkeye
+              </p>
+            </button>
+
+            {/* Card 5: Account Settings */}
+            <button
+              type="button"
+              onClick={() => navigate('/admin/settings')}
+              className="p-4 rounded-2xl border border-slate-100 bg-[#f8fafc] hover:bg-[#f1f5f9] hover:border-slate-300 hover:shadow-md transition text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center group-hover:scale-105 transition">
+                <Settings className="h-5 w-5" />
+              </div>
+              <h3 className="text-xs font-extrabold text-slate-900 mt-3 group-hover:text-purple-600 transition">
+                Account Settings
+              </h3>
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
+                Manage account preferences
+              </p>
+            </button>
+
+            {/* Card 6: Help Center */}
+            <button
+              type="button"
+              onClick={() => navigate('/admin/settings')}
+              className="p-4 rounded-2xl border border-slate-100 bg-[#f8fafc] hover:bg-[#f1f5f9] hover:border-slate-300 hover:shadow-md transition text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-105 transition">
+                <HelpCircle className="h-5 w-5" />
+              </div>
+              <h3 className="text-xs font-extrabold text-slate-900 mt-3 group-hover:text-blue-600 transition">
+                Help Center
+              </h3>
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-snug">
+                Get help and support when you need it
+              </p>
+            </button>
+
           </div>
-
-          <h3 className="text-lg font-black text-slate-900">Stay Safe with Hawkeye</h3>
-          <p className="text-xs text-slate-600 font-medium mt-2 leading-relaxed max-w-xs">
-            We monitor your transactions 24/7 to keep you protected against fraud and unauthorized activity.
-          </p>
-
-          <button
-            type="button"
-            onClick={() => navigate('/admin/settings')}
-            className="mt-5 rounded-xl bg-white border border-blue-200 px-6 py-2.5 text-xs font-extrabold text-blue-600 hover:bg-blue-600 hover:text-white transition shadow-sm"
-          >
-            Learn More
-          </button>
         </div>
 
+      </div>
+
+      {/* ── FOOTER ROW ── */}
+      <div className="flex items-center justify-between text-xs font-semibold text-slate-400 pt-6 border-t border-slate-200/80">
+        <span>© 2024 Hawkeye. All rights reserved.</span>
+        <span className="flex items-center gap-1.5">
+          <Lock className="h-3.5 w-3.5 text-slate-400" />
+          <span>Secure • Encrypted • Protected</span>
+        </span>
       </div>
 
     </div>
