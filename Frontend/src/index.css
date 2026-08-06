@@ -618,37 +618,57 @@
 
 /* Feature pills row */
 .hw-features {
-  display: flex;
-  gap: 1.25rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  justify-content: center;
+  justify-items: center;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
   position: relative;
   z-index: 1;
+  max-width: 720px;
+  width: 100%;
 }
 
 .hw-feature-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  font-size: 0.72rem;
+  justify-content: center;
+  gap: 0.6rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: #94a3b8;
+  color: #e2e8f0;
   text-align: center;
   line-height: 1.25;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1.5px solid rgba(51, 65, 85, 0.9);
+  padding: 1.1rem 0.85rem;
+  border-radius: 18px;
+  transition: all 0.25s ease;
+  width: 100%;
+}
+
+.hw-feature-item:hover {
+  border-color: rgba(0, 210, 255, 0.5);
+  background: rgba(15, 23, 42, 0.95);
+  transform: translateY(-3px);
 }
 
 .hw-feature-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: rgba(108,138,255,0.12);
-  border: 1.5px solid rgba(108,138,255,0.25);
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(0, 210, 255, 0.18);
+  border: 1.5px solid rgba(0, 210, 255, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 1.45rem;
   color: #00d2ff;
-  box-shadow: 0 4px 12px rgba(0, 210, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 210, 255, 0.2);
 }
 
 .hw-left-footer {
@@ -690,29 +710,29 @@
   height: 50px !important;
 }
 
-/* ── RIGHT LOGIN PANEL (45% width — Slightly Lighter Slate Navy for Smooth Low Contrast) ── */
+/* ── RIGHT LOGIN PANEL (45% width — Lighter Slate Grey Background) ── */
 .hw-login-right {
   flex: 45;
   width: 45%;
-  background: linear-gradient(135deg, #192438 0%, #253550 50%, #1a263b 100%);
+  background: linear-gradient(135deg, #2a374d 0%, #3a4b64 50%, #283549 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem 2rem;
+  padding: 2.2rem 2.2rem;
   position: relative;
   overflow-y: auto;
   border-left: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .hw-login-card {
-  background: #ffffff;
-  border: 1.5px solid #cbd5e1;
-  border-radius: 24px;
-  padding: 2.2rem 2.2rem;
+  background: #dbeafe;
+  border: 1.5px solid #93c5fd;
+  border-radius: 28px;
+  padding: 2.8rem 2.8rem;
   width: 100%;
-  max-width: 480px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+  max-width: 560px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(25px);
   position: relative;
   z-index: 2;
@@ -726,13 +746,13 @@
 .hw-card-title {
   font-size: 1.85rem;
   font-weight: 900;
-  color: #ffffff;
+  color: #0f172a;
   letter-spacing: -0.5px;
 }
 
 .hw-card-subtitle {
   font-size: 0.9rem;
-  color: #94a3b8;
+  color: #334155;
   font-weight: 600;
   margin-top: 0.35rem;
 }

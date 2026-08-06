@@ -12,6 +12,7 @@ import UnauthorizedPage   from '@/features/auth/pages/UnauthorizedPage';
 
 // Customer pages
 import CustomerDashboard    from '@/features/customer/pages/CustomerDashboard';
+import MyAccountsPage       from '@/features/customer/pages/MyAccountsPage';
 import SendMoneyPage        from '@/features/customer/pages/SendMoneyPage';
 import TransactionListPage  from '@/features/customer/pages/TransactionListPage';
 import TransactionDetailPage from '@/features/customer/pages/TransactionDetailPage';
@@ -64,6 +65,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/customer/dashboard" replace /> },
       { path: 'dashboard',          element: <CustomerDashboard /> },
+      { path: 'accounts',           element: <MyAccountsPage /> },
       { path: 'send-money',         element: <SendMoneyPage /> },
       { path: 'transactions',       element: <TransactionListPage /> },
       { path: 'transactions/:id',   element: <TransactionDetailPage /> },

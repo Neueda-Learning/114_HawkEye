@@ -6,7 +6,7 @@
  *  Row 3 – Recent High Severity Alerts | Top Triggered Rules | System Health
  *  Row 4 – Transaction Volume Overview (area) | Monthly Fraud Trend (bar+line) | Real-time Activity Feed
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
 import {
@@ -19,12 +19,13 @@ import {
   Activity, AlertTriangle, ShieldCheck, CheckCircle2,
   TrendingUp, TrendingDown,
   Database, Cpu, Bell, Shield,
-  ChevronRight, Search, ClipboardList,
+  ChevronRight, ClipboardList,
   Calendar,
 } from 'lucide-react';
 import { getAlerts, getAlertStats } from '@/lib/api/alerts';
 import { getTransactions }          from '@/lib/api/transactions';
 import { getRules }                 from '@/lib/api/rules';
+import type { Alert, Rule, TransactionResponse } from '@/lib/types';
 import dayjs from 'dayjs';
 
 /* ── colour constants ─────────────────────────────────────────────────────── */
@@ -46,6 +47,41 @@ function fmt(iso: string) {
   if (diff < 1440)return dayjs(iso).format('HH:mm A');
   if (diff < 2880)return 'Yesterday';
   return dayjs(iso).format('MMM D, YYYY');
+}
+
+type PagedChunk<T> = {
+  content: T[];
+  totalPages: number;
+  last: boolean;
+};
+
+async function fetchAllPages<T>(
+  fetchPage: (page: number, size: number) => Promise<PagedChunk<T>>,
+  size = 100,
+  maxPages = 10,
+) {
+  const items: T[] = [];
+  for (let page = 0; page < maxPages; page += 1) {
+    const result = await fetchPage(page, size);
+    items.push(...result.content);
+    if (result.last || page >= result.totalPages - 1) {
+      break;
+    }
+  }
+  return items;
+}
+
+function fmtAxisCount(value: number) {
+  if (Math.abs(value) >= 1000) {
+    return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}k`;
+  }
+  return `${value}`;
+}
+
+function queryStatus(isSuccess: boolean, isError: boolean): 'Healthy' | 'Degraded' | 'Checking' {
+  if (isSuccess) return 'Healthy';
+  if (isError) return 'Degraded';
+  return 'Checking';
 }
 
 /* ── Sparkline inside KPI card ────────────────────────────────────────────── */
@@ -111,14 +147,33 @@ function DonutCentre({ cx, cy, total }: { cx: number; cy: number; total: number 
 }
 
 /* ── System health row ────────────────────────────────────────────────────── */
-function SvcRow({ name, icon }: { name: string; icon: React.ReactNode }) {
+function SvcRow({
+  name,
+  icon,
+  status,
+  detail,
+}: {
+  name: string;
+  icon: React.ReactNode;
+  status: 'Healthy' | 'Degraded' | 'Checking';
+  detail?: string;
+}) {
+  const badgeClasses = status === 'Healthy'
+    ? 'bg-emerald-50 text-emerald-700'
+    : status === 'Degraded'
+      ? 'bg-red-50 text-red-700'
+      : 'bg-gray-100 text-gray-500';
+
   return (
     <div className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
       <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
         <span className="text-gray-400">{icon}</span>
-        <span className="font-medium">{name}</span>
+        <div>
+          <span className="font-medium">{name}</span>
+          {detail && <p className="text-[11px] text-gray-400">{detail}</p>}
+        </div>
       </div>
-      <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">Healthy</span>
+      <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${badgeClasses}`}>{status}</span>
     </div>
   );
 }
@@ -144,7 +199,12 @@ export default function AdminDashboard() {
   const [trendPeriod, setTrendPeriod]     = useState<'Daily' | 'Weekly'>('Daily');
   const [volPeriod,   setVolPeriod]       = useState<'Weekly' | 'Monthly'>('Weekly');
   const [fraudPeriod, setFraudPeriod]     = useState<'Monthly' | 'Yearly'>('Monthly');
+  const [startDate, setStartDate] = useState(dayjs().subtract(6, 'day').format('YYYY-MM-DD'));
+  const [endDate, setEndDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [, setNow] = useState(dayjs());
+
+  const calendarStartIso = dayjs(startDate).startOf('day').format('YYYY-MM-DDTHH:mm:ss');
+  const calendarEndIso = dayjs(endDate).endOf('day').format('YYYY-MM-DDTHH:mm:ss');
 
   // Tick clock every 30 s so feed timestamps refresh
   useEffect(() => {
@@ -153,80 +213,225 @@ export default function AdminDashboard() {
   }, []);
 
   /* ── API queries ─────────────────────────────────────────────────────── */
-  const { data: allAlerts }    = useQuery({ queryKey: ['alerts','all-db'],     queryFn: () => getAlerts({ size: 1 }), refetchInterval: 10000 });
-  const { data: highAlerts }   = useQuery({ queryKey: ['alerts','high-db'],    queryFn: () => getAlerts({ severity: 'HIGH', size: 1 }), refetchInterval: 10000 });
-  const { data: closedAlerts } = useQuery({ queryKey: ['alerts','closed-db'],  queryFn: () => getAlerts({ alertStatus: 'CLOSED', size: 1 }), refetchInterval: 10000 });
-  const { data: investAlerts } = useQuery({ queryKey: ['alerts','invest-db'],  queryFn: () => getAlerts({ alertStatus: 'INVESTIGATING', size: 1 }), refetchInterval: 10000 });
-  const { data: txData }       = useQuery({ queryKey: ['txns','db'],           queryFn: () => getTransactions({ size: 1 }) });
-  const { data: activeRules }  = useQuery({ queryKey: ['rules','active-db'],   queryFn: () => getRules({ status: 'ACTIVE',   size: 1 }) });
-  const { data: inactRules }   = useQuery({ queryKey: ['rules','inactive-db'], queryFn: () => getRules({ status: 'INACTIVE', size: 1 }) });
-  const { data: recentAlerts } = useQuery({ queryKey: ['alerts','recent-db'],  queryFn: () => getAlerts({ size: 5, sort: 'createdAt,desc' }), refetchInterval: 10000 });
-  const { data: alertStats }   = useQuery({ queryKey: ['alerts','stats-db'],   queryFn: getAlertStats, refetchInterval: 10000 });
+  const txSummaryQuery = useQuery({
+    queryKey: ['txns', 'summary-db', startDate, endDate],
+    queryFn: () => getTransactions({ size: 1, startDate: calendarStartIso, endDate: calendarEndIso }),
+    refetchInterval: 10000,
+  });
+  const transactionsQuery = useQuery({
+    queryKey: ['txns', 'dashboard-db', startDate, endDate],
+    queryFn: () => fetchAllPages<TransactionResponse>((page, size) => getTransactions({
+      page,
+      size,
+      sort: 'timestamp,desc',
+      startDate: calendarStartIso,
+      endDate: calendarEndIso,
+    })),
+    refetchInterval: 10000,
+  });
+  const rulesQuery = useQuery({
+    queryKey: ['rules', 'dashboard-db'],
+    queryFn: () => fetchAllPages<Rule>((page, size) => getRules({ page, size })),
+    refetchInterval: 10000,
+  });
+  const alertsQuery = useQuery({
+    queryKey: ['alerts', 'dashboard-db'],
+    queryFn: () => fetchAllPages<Alert>((page, size) => getAlerts({ page, size })),
+    refetchInterval: 10000,
+  });
+  const { data: alertStats } = useQuery({ queryKey: ['alerts', 'stats-db'], queryFn: getAlertStats, refetchInterval: 10000 });
+
+  const transactionsRows = transactionsQuery.data ?? [];
+  const rulesRows = rulesQuery.data ?? [];
+  const alertsRows = alertsQuery.data ?? [];
 
   /* ── Derived counts ──────────────────────────────────────────────────── */
-  const totalTx    = txData?.totalElements       ?? 0;
-  const totalAlrts = allAlerts?.totalElements    ?? 0;
-  const totalHigh  = highAlerts?.totalElements   ?? 0;
-  const totalClosed= closedAlerts?.totalElements ?? 0;
-  const totalInvest= investAlerts?.totalElements ?? 0;
-  const actRules   = activeRules?.totalElements  ?? 0;
-  const inactRulesC= inactRules?.totalElements   ?? 0;
+  const totalTx = txSummaryQuery.data?.totalElements ?? transactionsRows.length;
+  const totalAlrts = alertStats?.total ?? alertsRows.length;
+  const totalHigh = (alertStats?.bySeverity?.HIGH ?? 0) + (alertStats?.bySeverity?.CRITICAL ?? 0);
+  const totalClosed = alertStats?.closed ?? 0;
+  const totalInvest = alertStats?.investigating ?? 0;
+  const actRules = rulesRows.filter((rule) => rule.status === 'ACTIVE').length;
+  const inactRulesC = rulesRows.filter((rule) => rule.status === 'INACTIVE').length;
 
-  /* ── Donut slices ────────────────────────────────────────────────────── */
+  /* ── Donut slices — built from flat backend AlertStatsResponseDTO fields ── */
   const sevData = alertStats?.bySeverity
-    ? Object.entries(alertStats.bySeverity).map(([k,v]) => ({ name: k, value: v as number }))
-      : [];
-  const staData = alertStats?.byStatus
-    ? Object.entries(alertStats.byStatus).map(([k,v]) => ({ name: k, value: v as number }))
-      : [];
-  const sevTotal = sevData.reduce((s,d) => s + d.value, 0);
-  const staTotal = staData.reduce((s,d) => s + d.value, 0);
+    ? Object.entries(alertStats.bySeverity)
+        .map(([k, v]) => ({ name: k, value: v as number }))
+        .filter((d) => d.value > 0)
+    : [];
+  const staData = alertStats
+    ? [
+        { name: 'OPEN', value: alertStats.open },
+        { name: 'ACKNOWLEDGED', value: alertStats.acknowledged },
+        { name: 'INVESTIGATING', value: alertStats.investigating },
+        { name: 'CLOSED', value: alertStats.closed },
+        { name: 'DISMISSED', value: alertStats.dismissed },
+      ].filter((d) => d.value > 0)
+    : [];
+  const sevTotal = sevData.reduce((s, d) => s + d.value, 0);
+  const staTotal = staData.reduce((s, d) => s + d.value, 0);
 
   /* ── Trend data (transactions + alerts combined) ─────────────────────── */
-  const trendData = [
-    { date: dayjs().subtract(2, 'day').format('MMM D'), count: totalTx, alerts: totalAlrts },
-    { date: dayjs().subtract(1, 'day').format('MMM D'), count: totalTx, alerts: totalAlrts },
-    { date: dayjs().format('MMM D'), count: totalTx, alerts: totalAlrts },
-  ];
+  const trendData = useMemo(() => {
+    if (trendPeriod === 'Weekly') {
+      const weeks = Array.from({ length: 6 }, (_, idx) => dayjs().startOf('week').subtract(5 - idx, 'week'));
+      return weeks.map((weekStart) => {
+        const weekEnd = weekStart.endOf('week');
+        return {
+          date: weekStart.format('MMM D'),
+          count: transactionsRows.filter((txn) => {
+            const ts = dayjs(txn.timestamp);
+            return ts.isValid() && (ts.isAfter(weekStart) || ts.isSame(weekStart)) && (ts.isBefore(weekEnd) || ts.isSame(weekEnd));
+          }).length,
+          alerts: alertsRows.filter((alert) => {
+            const ts = dayjs(alert.createdAt);
+            return ts.isValid() && (ts.isAfter(weekStart) || ts.isSame(weekStart)) && (ts.isBefore(weekEnd) || ts.isSame(weekEnd));
+          }).length,
+        };
+      });
+    }
+
+    const days = Array.from({ length: 7 }, (_, idx) => dayjs().startOf('day').subtract(6 - idx, 'day'));
+    return days.map((dayStart) => {
+      const dayEnd = dayStart.endOf('day');
+      return {
+        date: dayStart.format('MMM D'),
+        count: transactionsRows.filter((txn) => {
+          const ts = dayjs(txn.timestamp);
+          return ts.isValid() && (ts.isAfter(dayStart) || ts.isSame(dayStart)) && (ts.isBefore(dayEnd) || ts.isSame(dayEnd));
+        }).length,
+        alerts: alertsRows.filter((alert) => {
+          const ts = dayjs(alert.createdAt);
+          return ts.isValid() && (ts.isAfter(dayStart) || ts.isSame(dayStart)) && (ts.isBefore(dayEnd) || ts.isSame(dayEnd));
+        }).length,
+      };
+    });
+  }, [alertsRows, transactionsRows, trendPeriod]);
 
   /* ── Volume area data ─────────────────────────────────────────────────── */
-  const volData = [
-    { date: dayjs().subtract(2, 'day').format('MMM D'), count: totalTx },
-    { date: dayjs().subtract(1, 'day').format('MMM D'), count: totalTx },
-    { date: dayjs().format('MMM D'), count: totalTx },
-  ];
+  const volData = useMemo(() => {
+    if (volPeriod === 'Monthly') {
+      const months = Array.from({ length: 6 }, (_, idx) => dayjs().startOf('month').subtract(5 - idx, 'month'));
+      return months.map((monthStart) => {
+        const monthEnd = monthStart.endOf('month');
+        return {
+          date: monthStart.format('MMM'),
+          count: transactionsRows.filter((txn) => {
+            const ts = dayjs(txn.timestamp);
+            return ts.isValid() && (ts.isAfter(monthStart) || ts.isSame(monthStart)) && (ts.isBefore(monthEnd) || ts.isSame(monthEnd));
+          }).length,
+        };
+      });
+    }
+
+    const days = Array.from({ length: 7 }, (_, idx) => dayjs().startOf('day').subtract(6 - idx, 'day'));
+    return days.map((dayStart) => {
+      const dayEnd = dayStart.endOf('day');
+      return {
+        date: dayStart.format('MMM D'),
+        count: transactionsRows.filter((txn) => {
+          const ts = dayjs(txn.timestamp);
+          return ts.isValid() && (ts.isAfter(dayStart) || ts.isSame(dayStart)) && (ts.isBefore(dayEnd) || ts.isSame(dayEnd));
+        }).length,
+      };
+    });
+  }, [transactionsRows, volPeriod]);
 
   /* ── Fraud trend (bar = high severity, line = total) ─────────────────── */
-  const fraudData = [
-    { month: 'Jan', high: 48,  total: 320 },
-    { month: 'Feb', high: 55,  total: 380 },
-    { month: 'Mar', high: 62,  total: 420 },
-    { month: 'Apr', high: 50,  total: 360 },
-    { month: 'May', high: 67,  total: 450 },
-    { month: 'Jun', high: 75,  total: 510 },
-  ];
+  const fraudData = useMemo(() => {
+    const highSeverity = new Set(['HIGH', 'CRITICAL']);
+
+    if (fraudPeriod === 'Yearly') {
+      const years = Array.from({ length: 5 }, (_, idx) => dayjs().startOf('year').subtract(4 - idx, 'year'));
+      return years.map((yearStart) => {
+        const yearEnd = yearStart.endOf('year');
+        const alertsInWindow = alertsRows.filter((alert) => {
+          const ts = dayjs(alert.createdAt);
+          return ts.isValid() && (ts.isAfter(yearStart) || ts.isSame(yearStart)) && (ts.isBefore(yearEnd) || ts.isSame(yearEnd));
+        });
+        return {
+          month: yearStart.format('YYYY'),
+          high: alertsInWindow.filter((alert) => highSeverity.has(alert.severity)).length,
+          total: alertsInWindow.length,
+        };
+      });
+    }
+
+    const months = Array.from({ length: 6 }, (_, idx) => dayjs().startOf('month').subtract(5 - idx, 'month'));
+    return months.map((monthStart) => {
+      const monthEnd = monthStart.endOf('month');
+      const alertsInWindow = alertsRows.filter((alert) => {
+        const ts = dayjs(alert.createdAt);
+        return ts.isValid() && (ts.isAfter(monthStart) || ts.isSame(monthStart)) && (ts.isBefore(monthEnd) || ts.isSame(monthEnd));
+      });
+      return {
+        month: monthStart.format('MMM'),
+        high: alertsInWindow.filter((alert) => highSeverity.has(alert.severity)).length,
+        total: alertsInWindow.length,
+      };
+    });
+  }, [alertsRows, fraudPeriod]);
 
   /* ── Top rules ────────────────────────────────────────────────────────── */
-  const topRules = [
-    { name: 'Amount Threshold Rule',  count: 134 },
-    { name: 'Velocity Rule',          count: 87  },
-    { name: 'New Payee Rule',         count: 56  },
-    { name: 'Daily Limit Rule',       count: 51  },
-    { name: 'Weekend Transaction Rule', count: 34 },
-  ];
-  const maxRule = Math.max(...topRules.map(r => r.count));
+  const topRules = useMemo(() => {
+    const counts = new Map<string, number>();
+    rulesRows.forEach((rule) => counts.set(rule.ruleName, 0));
+    alertsRows.forEach((alert) => {
+      const ruleName = alert.ruleName || `Rule #${alert.ruleId}`;
+      counts.set(ruleName, (counts.get(ruleName) ?? 0) + 1);
+    });
+
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+      .slice(0, 5);
+  }, [alertsRows, rulesRows]);
+  const maxRule = Math.max(1, ...topRules.map((rule) => rule.count));
 
   /* ── Recent alerts list ───────────────────────────────────────────────── */
-  const recentList = recentAlerts?.content ?? [];
+  const recentList = useMemo(
+    () => [...alertsRows].sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf()).slice(0, 5),
+    [alertsRows],
+  );
 
   /* ── Real-time activity feed ──────────────────────────────────────────── */
-  const feed: FeedItem[] = [
-    { iconBg: 'bg-red-50',    icon: <AlertTriangle className="h-3.5 w-3.5 text-red-500" />,   text: 'New high severity alert generated', ref: 'TXN-10023', time: dayjs().subtract(30,'minute').toISOString() },
-    { iconBg: 'bg-blue-50',   icon: <Search className="h-3.5 w-3.5 text-blue-500" />,         text: 'Investigation started',             ref: 'ALERT-238', time: dayjs().subtract(32,'minute').toISOString() },
-    { iconBg: 'bg-emerald-50',icon: <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />, text: 'Rule updated',                      ref: 'RULE-045',  time: dayjs().subtract(35,'minute').toISOString() },
-    { iconBg: 'bg-orange-50', icon: <Activity className="h-3.5 w-3.5 text-orange-500" />,     text: 'New transaction received',          ref: 'TXN-10045', time: dayjs().subtract(37,'minute').toISOString() },
-    { iconBg: 'bg-indigo-50', icon: <ClipboardList className="h-3.5 w-3.5 text-indigo-500" />,text: 'User login',                        ref: 'admin.user',time: dayjs().subtract(40,'minute').toISOString() },
-  ];
+  const feed: FeedItem[] = useMemo(() => {
+    const alertItems = alertsRows.slice(0, 5).map((alert) => ({
+      iconBg: alert.severity === 'HIGH' || alert.severity === 'CRITICAL' ? 'bg-red-50' : 'bg-amber-50',
+      icon: <AlertTriangle className={`h-3.5 w-3.5 ${alert.severity === 'HIGH' || alert.severity === 'CRITICAL' ? 'text-red-500' : 'text-amber-500'}`} />,
+      text: `${alert.ruleName || 'Alert'} created`,
+      ref: `ALERT-${alert.alertId}`,
+      time: alert.createdAt,
+    }));
+
+    const transactionItems = transactionsRows.slice(0, 5).map((txn) => ({
+      iconBg: 'bg-blue-50',
+      icon: <Activity className="h-3.5 w-3.5 text-blue-500" />,
+      text: `Transaction from ${txn.accountId} to ${txn.payeeName}`,
+      ref: `TXN-${txn.transactionId}`,
+      time: txn.timestamp || txn.createdAt,
+    }));
+
+    const ruleItems = rulesRows.slice(0, 5).map((rule) => ({
+      iconBg: 'bg-emerald-50',
+      icon: <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />,
+      text: `${rule.ruleName} (${rule.status.toLowerCase()})`,
+      ref: `RULE-${rule.ruleId}`,
+      time: rule.updatedAt,
+    }));
+
+    return [...alertItems, ...transactionItems, ...ruleItems]
+      .sort((a, b) => dayjs(b.time).valueOf() - dayjs(a.time).valueOf())
+      .slice(0, 5);
+  }, [alertsRows, transactionsRows, rulesRows]);
+
+  const systemStatuses = {
+    database: queryStatus(txSummaryQuery.isSuccess && alertsQuery.isSuccess && rulesQuery.isSuccess, txSummaryQuery.isError || alertsQuery.isError || rulesQuery.isError),
+    transactions: queryStatus(transactionsQuery.isSuccess, transactionsQuery.isError),
+    rules: queryStatus(rulesQuery.isSuccess, rulesQuery.isError),
+    alerts: queryStatus(alertsQuery.isSuccess && Boolean(alertStats), alertsQuery.isError),
+  };
 
   /* ── Sparkline seeds ──────────────────────────────────────────────────── */
   const txSpark   = [3200,3800,3100,4200,4700,4100,4400];
@@ -275,8 +480,22 @@ export default function AdminDashboard() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600 shadow-sm dark:border-gray-700 dark:bg-gray-900">
             <Calendar className="h-3.5 w-3.5 text-gray-400" />
-            {dayjs().subtract(6,'day').format('MMM D, YYYY')} – {dayjs().format('MMM D, YYYY')}
+            {dayjs(startDate).format('MMM D, YYYY')} - {dayjs(endDate).format('MMM D, YYYY')}
           </div>
+          <input
+            type="date"
+            value={startDate}
+            max={endDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="rounded-xl border border-gray-200 bg-white px-2 py-2 text-xs text-gray-600 shadow-sm outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+          />
+          <input
+            type="date"
+            value={endDate}
+            min={startDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="rounded-xl border border-gray-200 bg-white px-2 py-2 text-xs text-gray-600 shadow-sm outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+          />
         </div>
       </div>
 
@@ -417,6 +636,9 @@ export default function AdminDashboard() {
         <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
           <SectionHeader title="Top Triggered Rules" linkTo="/admin/rules" />
           <div className="space-y-3">
+            {topRules.length === 0 && (
+              <p className="text-xs text-gray-400">No rule activity found yet.</p>
+            )}
             {topRules.map((r, idx) => {
               const pct   = ((r.count / maxRule) * 100).toFixed(0);
               const color = RULE_CLR[idx % RULE_CLR.length];
@@ -439,11 +661,11 @@ export default function AdminDashboard() {
         {/* System Health */}
         <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
           <h2 className="mb-3 text-sm font-bold text-gray-900 dark:text-white">System Health</h2>
-          <SvcRow name="Database"              icon={<Database className="h-4 w-4" />} />
-          <SvcRow name="Transaction Service"   icon={<Activity className="h-4 w-4" />} />
-          <SvcRow name="Rule Engine Service"   icon={<Cpu className="h-4 w-4" />} />
-          <SvcRow name="Alert Service"         icon={<Bell className="h-4 w-4" />} />
-          <SvcRow name="Monitoring Rules Service" icon={<Shield className="h-4 w-4" />} />
+          <SvcRow name="Database" icon={<Database className="h-4 w-4" />} status={systemStatuses.database} detail={`${totalTx} tx • ${totalAlrts} alerts`} />
+          <SvcRow name="Transaction Service" icon={<Activity className="h-4 w-4" />} status={systemStatuses.transactions} detail={`${totalTx} records loaded`} />
+          <SvcRow name="Rule Engine Service" icon={<Cpu className="h-4 w-4" />} status={systemStatuses.rules} detail={`${actRules} active rules`} />
+          <SvcRow name="Alert Service" icon={<Bell className="h-4 w-4" />} status={systemStatuses.alerts} detail={`${totalAlrts} total alerts`} />
+          <SvcRow name="Monitoring Rules Service" icon={<Shield className="h-4 w-4" />} status={systemStatuses.rules} detail={`${rulesRows.length} rules visible`} />
         </div>
       </div>
 
@@ -466,7 +688,7 @@ export default function AdminDashboard() {
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis dataKey="date" tick={{ fontSize:10, fill:'#9ca3af' }} />
-              <YAxis tick={{ fontSize:10, fill:'#9ca3af' }} tickFormatter={(v:number) => `${(v/1000).toFixed(0)}k`} />
+              <YAxis tick={{ fontSize:10, fill:'#9ca3af' }} tickFormatter={(v:number) => fmtAxisCount(v)} />
               <Tooltip contentStyle={ttStyle} formatter={(v:number) => [`${v.toLocaleString()}`, 'Transactions']} />
               <Area type="monotone" dataKey="count" stroke="#2563eb" strokeWidth={2}
                     fill="url(#volGrad)" dot={{ r:3, fill:'#2563eb' }} name="Transactions" />
@@ -501,6 +723,7 @@ export default function AdminDashboard() {
         <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
           <SectionHeader title="Real-time Activity Feed" linkTo="/alerts" />
           <div className="space-y-0.5">
+            {feed.length === 0 && <p className="px-2 py-2 text-xs text-gray-400">No recent database activity yet.</p>}
             {feed.map((item, idx) => (
               <div key={idx} className="flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-gray-50 dark:hover:bg-gray-800">
                 <div className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full ${item.iconBg}`}>
@@ -523,6 +746,3 @@ export default function AdminDashboard() {
   );
 }
 
-// Silence unused import (Search is used inside feed icon JSX above)
-const _Search = Search;
-void _Search;

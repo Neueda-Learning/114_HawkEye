@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard, ArrowRightLeft, Bell, FileText, BarChart2,
   Activity, LogOut, ChevronLeft,
-  ShieldCheck, Sun, Moon, Settings, User
+  ShieldCheck, Sun, Moon, Settings, CreditCard, Send
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAlerts } from '@/lib/api/alerts';
@@ -151,46 +152,59 @@ export function AdminSidebar({ collapsed, onToggle, isDark, onThemeToggle }: Sid
 export function CustomerSidebarNav() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  const { data: alertsData } = useQuery({
+    queryKey: ['alerts', 'sidebar-count'],
+    queryFn: () => getAlerts({ size: 1 }),
+    refetchInterval: 10000,
+  });
+
+  const alertsCount = alertsData?.totalElements ?? 8;
 
   const items = [
-    { to: '/customer/dashboard',    label: 'Dashboard',       icon: <LayoutDashboard className="h-5 w-5" /> },
-    { to: '/customer/transactions', label: 'My Transactions', icon: <ArrowRightLeft className="h-5 w-5" /> },
-    { to: '/alerts',                label: 'My Alerts',       icon: <Bell className="h-5 w-5" />, badge: 3 },
-    { to: '/admin/reports',         label: 'Reports',         icon: <BarChart2 className="h-5 w-5" /> },
-    { to: '/customer/send-money',   label: 'Send Money',      icon: <User className="h-5 w-5" /> },
-    { to: '/admin/settings',        label: 'Settings',        icon: <Settings className="h-5 w-5" /> },
+    { to: '/customer/dashboard',    label: 'Dashboard',        icon: <LayoutDashboard className="h-4.5 w-4.5" /> },
+    { to: '/customer/accounts',     label: 'My Accounts',      icon: <CreditCard className="h-4.5 w-4.5" /> },
+    { to: '/customer/transactions', label: 'My Transactions',  icon: <ArrowRightLeft className="h-4.5 w-4.5" /> },
+    { to: '/customer/send-money',   label: 'Send Money',       icon: <Send className="h-4.5 w-4.5" /> },
+    { to: '/alerts',                label: 'Alerts',           icon: <Bell className="h-4.5 w-4.5" />, badge: alertsCount },
+    { to: '/admin/reports',         label: 'Reports',          icon: <BarChart2 className="h-4.5 w-4.5" /> },
+    { to: '/admin/settings',        label: 'Settings',         icon: <Settings className="h-4.5 w-4.5" /> },
   ];
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-gray-800 bg-[#070d1a] text-white">
-      <div className="flex h-16 items-center gap-3 border-b border-gray-800/60 px-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md">
+    <aside className="flex h-full w-64 flex-col border-r border-slate-800/80 bg-[#0a1122] text-white shrink-0 font-sans z-30">
+      
+      {/* Brand Header */}
+      <div className="flex h-16 items-center gap-3 border-b border-slate-800/80 px-5">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20">
           <ShieldCheck className="h-5 w-5" />
         </div>
         <div>
-          <span className="text-base font-extrabold tracking-wide text-white uppercase">HAWKEYE</span>
-          <p className="text-[9px] text-gray-400 font-medium">Transaction Monitoring & Alert System</p>
+          <span className="text-base font-extrabold tracking-wider text-white uppercase">HAWKEYE</span>
+          <p className="text-[9px] text-slate-400 font-medium leading-none mt-0.5">Transaction Monitoring & Alert System</p>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1.5 p-3.5">
-        {items.map((item) => (
+      {/* Navigation Menu */}
+      <nav className="flex-1 space-y-1 p-3.5">
+        {items.map((item, idx) => (
           <NavLink
-            key={item.to}
+            key={idx}
             to={item.to}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-150',
+                'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all duration-150',
                 isActive
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-900/30 font-bold'
-                  : 'text-gray-300 hover:bg-gray-800/60 hover:text-white',
+                  ? 'bg-[#1a2948] text-white border border-blue-500/30 shadow-md shadow-blue-900/20'
+                  : 'text-slate-300 hover:bg-slate-800/60 hover:text-white',
               )
             }
           >
             {item.icon}
             <span className="flex-1">{item.label}</span>
-            {item.badge && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
+            {item.badge !== undefined && (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-extrabold text-white shadow-sm">
                 {item.badge}
               </span>
             )}
@@ -198,37 +212,47 @@ export function CustomerSidebarNav() {
         ))}
       </nav>
 
-      {/* Sidebar Promo Card */}
-      <div className="mx-3.5 mb-3 p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-center">
-        <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center mx-auto mb-2 text-lg">
-          <ShieldCheck className="h-5 w-5" />
+      {/* Sidebar Promo Security Card */}
+      <div className="mx-3.5 mb-4 p-4 rounded-2xl bg-[#101a30] border border-slate-800 text-center relative overflow-hidden">
+        <div className="w-10 h-10 rounded-2xl bg-blue-600/20 border border-blue-500/30 text-blue-400 flex items-center justify-center mx-auto mb-2 text-lg shadow-sm">
+          <ShieldCheck className="h-5 w-5 text-blue-400" />
         </div>
-        <h4 className="text-xs font-bold text-white">We're watching</h4>
-        <p className="text-[10px] text-slate-400 mt-0.5">so you don't have to.</p>
-        <p className="text-[9px] text-slate-500 mt-1">Hawkeye keeps your transactions secure.</p>
+        <h4 className="text-xs font-black text-white">Your Security, Our Priority</h4>
+        <p className="text-[10px] text-slate-400 mt-1 leading-relaxed font-medium">
+          We continuously monitor your accounts 24/7 to keep you safe.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigate('/admin/settings')}
+          className="mt-3 w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold py-1.5 transition shadow-sm"
+        >
+          Learn More
+        </button>
       </div>
 
-      {/* User Footer Profile */}
-      <div className="border-t border-gray-800/60 p-3.5">
-        {user && (
-          <div className="flex items-center gap-3 rounded-xl bg-slate-900/60 px-3 py-2 border border-slate-800">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-xs font-bold text-white">
-              {user.name?.charAt(0) || 'J'}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-bold text-white">{user.name || 'John Doe'}</p>
-              <p className="truncate text-[10px] text-gray-400">{user.email || 'john.doe@email.com'}</p>
-            </div>
-            <button
-              onClick={() => { logout(); navigate('/login'); }}
-              className="text-gray-400 hover:text-red-400 transition"
-              aria-label="Logout"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
+      {/* User Profile Footer */}
+      <div className="border-t border-slate-800/80 p-3.5 relative">
+        <div 
+          onClick={() => setShowProfileMenu(!showProfileMenu)}
+          className="flex items-center gap-3 rounded-xl bg-slate-900/80 px-3 py-2 border border-slate-800 hover:border-slate-700 transition cursor-pointer"
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-xs font-extrabold text-white shadow-sm">
+            {user?.name?.charAt(0) || 'J'}
           </div>
-        )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-bold text-white leading-tight">{user?.name || 'John Doe'}</p>
+            <p className="truncate text-[10px] text-slate-400 font-medium">{user?.email || 'john.doe@email.com'}</p>
+          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); logout(); navigate('/login'); }}
+            className="text-slate-400 hover:text-red-400 transition"
+            title="Logout"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </div>
       </div>
+
     </aside>
   );
 }

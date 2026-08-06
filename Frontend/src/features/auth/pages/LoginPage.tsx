@@ -167,22 +167,22 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Hero Tagline & Interactive Auto-Cycling Showcase */}
-        <div className="my-auto py-3 z-10 space-y-4">
+        {/* Hero Tagline & Interactive Auto-Cycling Showcase (Centered in Middle) */}
+        <div className="my-auto py-4 z-10 space-y-6 flex flex-col items-center justify-center text-center w-full">
           
-          <div>
-            <h1 className="text-4xl lg:text-[2.75rem] font-black tracking-tight text-white leading-[1.12]">
+          <div className="text-center mx-auto space-y-2">
+            <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-black tracking-tight text-white leading-[1.12] text-center mx-auto">
               Monitor. Detect.<br />
               <span className="hw-tagline-accent">Protect.</span>
             </h1>
-            <p className="text-xs sm:text-sm font-semibold text-slate-200 mt-2.5 leading-relaxed max-w-xl">
+            <p className="text-sm sm:text-base font-semibold text-slate-200 leading-relaxed max-w-2xl text-center mx-auto">
               Comprehensive transaction surveillance engine featuring automated rules evaluation,
               real-time alert triage, and customer self-service banking.
             </p>
           </div>
 
           {/* Feature Showcase Tabs (Auto-Cycling hands-free) */}
-          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-900/90 border border-slate-700/80 backdrop-blur-md w-full max-w-xl shadow-xl">
+          <div className="flex items-center gap-2.5 p-2 rounded-2xl bg-slate-900/90 border border-slate-700/80 backdrop-blur-md w-full max-w-2xl shadow-xl mx-auto">
             {[
               { id: 'alerts', label: 'Alert Triage', icon: 'fa-triangle-exclamation' },
               { id: 'rules', label: 'Rules Engine', icon: 'fa-sliders' },
@@ -195,13 +195,13 @@ export default function LoginPage() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex-1 relative flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                  className={`flex-1 relative flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${
                     isActive
                       ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/40 ring-1 ring-blue-400'
                       : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                   }`}
                 >
-                  <i className={`fa-solid ${tab.icon} ${isActive ? 'text-cyan-300 text-sm' : 'text-slate-400'}`}></i>
+                  <i className={`fa-solid ${tab.icon} ${isActive ? 'text-cyan-300 text-base' : 'text-slate-400'}`}></i>
                   <span>{tab.label}</span>
 
                   {/* Active tab progress bar */}
@@ -214,7 +214,7 @@ export default function LoginPage() {
           </div>
 
           {/* Showcase Display Card */}
-          <div className="p-5 rounded-2xl bg-slate-900/95 border border-slate-700/90 backdrop-blur-xl shadow-2xl space-y-3.5 w-full max-w-xl min-h-[205px]">
+          <div className="p-6 rounded-2xl bg-slate-900/95 border border-slate-700/90 backdrop-blur-xl shadow-2xl space-y-4 w-full max-w-2xl min-h-[230px] text-left mx-auto">
             
             {activeTab === 'alerts' && (
               <div className="space-y-3 animate-fade-in">
@@ -353,23 +353,23 @@ export default function LoginPage() {
 
           </div>
 
-          {/* 4 Feature Badges Row */}
-          <div className="hw-features pt-1">
-            <div className="hw-feature-item">
-              <div className="hw-feature-icon"><i className="fa-solid fa-shield-halved"></i></div>
-              <span>Real-time<br/>Monitoring</span>
+          {/* 4 Feature Badges Row (Centered in Middle) */}
+          <div className="hw-features pt-1 max-w-2xl w-full mx-auto justify-center justify-items-center items-center text-center">
+            <div className="hw-feature-item flex flex-col items-center justify-center text-center mx-auto">
+              <div className="hw-feature-icon mx-auto"><i className="fa-solid fa-eye"></i></div>
+              <span className="text-center font-bold">Real-time<br/>Monitoring</span>
             </div>
-            <div className="hw-feature-item">
-              <div className="hw-feature-icon"><i className="fa-solid fa-bell"></i></div>
-              <span>Smart<br/>Alerts</span>
+            <div className="hw-feature-item flex flex-col items-center justify-center text-center mx-auto">
+              <div className="hw-feature-icon mx-auto"><i className="fa-solid fa-bell"></i></div>
+              <span className="text-center font-bold">Smart<br/>Alerts</span>
             </div>
-            <div className="hw-feature-item">
-              <div className="hw-feature-icon"><i className="fa-solid fa-chart-line"></i></div>
-              <span>Advanced<br/>Analytics</span>
+            <div className="hw-feature-item flex flex-col items-center justify-center text-center mx-auto">
+              <div className="hw-feature-icon mx-auto"><i className="fa-solid fa-chart-line"></i></div>
+              <span className="text-center font-bold">Advanced<br/>Analytics</span>
             </div>
-            <div className="hw-feature-item">
-              <div className="hw-feature-icon"><i className="fa-solid fa-lock"></i></div>
-              <span>Secure<br/>& Reliable</span>
+            <div className="hw-feature-item flex flex-col items-center justify-center text-center mx-auto">
+              <div className="hw-feature-icon mx-auto"><i className="fa-solid fa-lock"></i></div>
+              <span className="text-center font-bold">Secure<br/>& Reliable</span>
             </div>
           </div>
 
@@ -396,79 +396,71 @@ export default function LoginPage() {
       <div className="hw-login-right">
         <div className="hw-login-card">
           
-          {/* STEP 1: ROLE SELECTION CARDS (User: customer@hawkeye.com | Admin: admin@hawkeye.com) */}
+          {/* STEP 1: ROLE SELECTION CARDS (Enlarged Right Hand Side Palettes) */}
           {selectedRole === null && (
-            <div className="animate-fade-in space-y-5">
+            <div className="animate-fade-in space-y-6">
               <div className="hw-card-header text-center">
-                <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center mx-auto mb-2.5 text-xl shadow-sm">
-                  <i className="fa-solid fa-shield-halved"></i>
+                <div className="w-14 h-14 rounded-2xl bg-blue-600/10 border border-blue-500/30 text-blue-600 flex items-center justify-center mx-auto mb-3 text-2xl shadow-sm">
+                  <i className="fa-solid fa-eye"></i>
                 </div>
-                <h2 className="hw-card-title text-xl font-extrabold text-slate-900">Welcome to HawkEye</h2>
-                <p className="hw-card-subtitle text-xs text-slate-500 font-medium">Transaction Monitoring & Alert System</p>
+                <h2 className="text-3xl font-black text-slate-900 tracking-tight">Welcome to HawkEye</h2>
+                <p className="text-sm text-slate-700 font-semibold mt-1.5">Transaction Monitoring & Alert System</p>
               </div>
 
-              <div className="flex items-center justify-center gap-3 my-2">
-                <div className="h-[1px] bg-slate-200 flex-1"></div>
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Select Portal</span>
-                <div className="h-[1px] bg-slate-200 flex-1"></div>
+              <div className="flex items-center justify-center gap-3 my-2.5">
+                <div className="h-[1px] bg-slate-300 flex-1"></div>
+                <span className="text-xs font-black text-slate-600 uppercase tracking-widest">Select Portal</span>
+                <div className="h-[1px] bg-slate-300 flex-1"></div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3.5">
+              <div className="grid grid-cols-1 gap-4">
                 
-                {/* User Portal Option Card (customer@hawkeye.com) */}
+                {/* User Portal Option Card (Enlarged) */}
                 <button
                   type="button"
                   onClick={() => handleRoleSelect('USER')}
-                  className="group relative p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/10 hover:-translate-y-0.5 transition-all duration-300 text-left cursor-pointer"
+                  className="group relative p-5 sm:p-6 rounded-2xl border-2 border-slate-600/80 bg-[#202c3d] hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-500/25 hover:-translate-y-1 transition-all duration-300 text-left cursor-pointer"
                 >
-                  <div className="flex items-start gap-3.5">
-                    <div className="w-11 h-11 rounded-xl bg-blue-500 text-white flex items-center justify-center text-lg shrink-0 group-hover:scale-105 transition-transform shadow-md shadow-blue-500/20">
+                  <div className="flex items-start gap-5 sm:gap-6">
+                    <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl sm:text-2xl shrink-0 group-hover:scale-105 transition-transform shadow-lg shadow-blue-500/30 mt-0.5">
                       <i className="fa-solid fa-user"></i>
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="font-extrabold text-slate-900 text-base group-hover:text-blue-600 transition-colors">
+                        <span className="font-extrabold text-white text-lg sm:text-xl group-hover:text-blue-300 transition-colors">
                           User Portal
                         </span>
-                        <i className="fa-solid fa-arrow-right text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all text-xs"></i>
+                        <i className="fa-solid fa-arrow-right text-slate-300 group-hover:text-blue-300 group-hover:translate-x-1.5 transition-all text-sm ml-2 shrink-0"></i>
                       </div>
-                      <p className="text-xs text-slate-600 font-medium mt-0.5 leading-snug">
+                      <p className="text-xs sm:text-sm text-slate-200 font-medium mt-1.5 leading-relaxed">
                         Customer dashboard, instant money transfer, payee management & history.
                       </p>
-                      <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-[11px] font-mono text-blue-700 font-bold">
-                        <i className="fa-solid fa-envelope text-[10px]"></i>
-                        <span>customer@hawkeye.com</span>
-                      </div>
                     </div>
                   </div>
                 </button>
 
-                {/* Admin Portal Option Card (admin@hawkeye.com) */}
+                {/* Admin Portal Option Card (Enlarged) */}
                 <button
                   type="button"
                   onClick={() => handleRoleSelect('ADMIN')}
-                  className="group relative p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-purple-600 hover:shadow-lg hover:shadow-purple-600/10 hover:-translate-y-0.5 transition-all duration-300 text-left cursor-pointer"
+                  className="group relative p-5 sm:p-6 rounded-2xl border-2 border-slate-600/80 bg-[#202c3d] hover:border-purple-400 hover:shadow-2xl hover:shadow-purple-500/25 hover:-translate-y-1 transition-all duration-300 text-left cursor-pointer"
                 >
-                  <div className="flex items-start gap-3.5">
-                    <div className="w-11 h-11 rounded-xl bg-purple-600 text-white flex items-center justify-center text-lg shrink-0 group-hover:scale-105 transition-transform shadow-md shadow-purple-600/20">
-                      <i className="fa-solid fa-shield-halved"></i>
+                  <div className="flex items-start gap-5 sm:gap-6">
+                    <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-purple-600 text-white flex items-center justify-center text-xl sm:text-2xl shrink-0 group-hover:scale-105 transition-transform shadow-lg shadow-purple-500/30 mt-0.5">
+                      <i className="fa-solid fa-eye"></i>
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="font-extrabold text-slate-900 text-base group-hover:text-purple-600 transition-colors">
+                        <span className="font-extrabold text-white text-lg sm:text-xl group-hover:text-purple-300 transition-colors">
                           Admin Portal
                         </span>
-                        <i className="fa-solid fa-arrow-right text-slate-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all text-xs"></i>
+                        <i className="fa-solid fa-arrow-right text-slate-300 group-hover:text-purple-300 group-hover:translate-x-1.5 transition-all text-sm ml-2 shrink-0"></i>
                       </div>
-                      <p className="text-xs text-slate-600 font-medium mt-0.5 leading-snug">
+                      <p className="text-xs sm:text-sm text-slate-200 font-medium mt-1.5 leading-relaxed">
                         Rules engine configuration, real-time alert triage, metrics & system setup.
                       </p>
-                      <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-purple-50 border border-purple-200 text-[11px] font-mono text-purple-700 font-bold">
-                        <i className="fa-solid fa-envelope text-[10px]"></i>
-                        <span>admin@hawkeye.com</span>
-                      </div>
                     </div>
                   </div>
                 </button>
@@ -482,11 +474,11 @@ export default function LoginPage() {
             <div className="animate-fade-in space-y-6">
               
               {/* Back to selection header */}
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3.5">
+              <div className="flex items-center justify-between border-b border-slate-300 pb-3.5">
                 <button
                   type="button"
                   onClick={handleBackToRoleSelection}
-                  className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                  className="flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-slate-900 transition-colors cursor-pointer"
                 >
                   <i className="fa-solid fa-arrow-left text-blue-600"></i>
                   <span>Back to Role Selection</span>
@@ -494,8 +486,8 @@ export default function LoginPage() {
 
                 <span className={`px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${
                   selectedRole === 'ADMIN'
-                    ? 'bg-purple-100 text-purple-700 border border-purple-200'
-                    : 'bg-blue-100 text-blue-700 border border-blue-200'
+                    ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                    : 'bg-blue-100 text-blue-800 border border-blue-300'
                 }`}>
                   {selectedRole === 'ADMIN' ? 'ADMIN PORTAL' : 'USER PORTAL'}
                 </span>
@@ -505,7 +497,7 @@ export default function LoginPage() {
                 <h3 className="text-xl font-extrabold text-slate-900">
                   {selectedRole === 'ADMIN' ? 'Administrator Authentication' : 'User Account Sign In'}
                 </h3>
-                <p className="text-xs text-slate-500 mt-1 font-medium">
+                <p className="text-xs text-slate-600 mt-1 font-medium">
                   Credentials pre-loaded for 1-click authentication. Click login below to proceed.
                 </p>
               </div>
@@ -532,7 +524,7 @@ export default function LoginPage() {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       placeholder="Email Address"
-                      className="w-full rounded-xl bg-slate-50 border border-slate-300 pl-10 pr-4 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
+                      className="w-full rounded-xl bg-[#202c3d] border border-slate-600/80 pl-10 pr-4 py-3 text-sm text-white font-semibold outline-none focus:border-blue-500 focus:bg-[#162130] focus:ring-4 focus:ring-blue-500/20 transition-all shadow-inner"
                     />
                   </div>
                 </div>
@@ -550,14 +542,14 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       placeholder="Password"
-                      className="w-full rounded-xl bg-slate-50 border border-slate-300 pl-10 pr-12 py-3 text-sm text-slate-900 font-semibold outline-none focus:border-blue-600 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
+                      className="w-full rounded-xl bg-[#202c3d] border border-slate-600/80 pl-10 pr-10 py-3 text-sm text-white font-semibold outline-none focus:border-blue-500 focus:bg-[#162130] focus:ring-4 focus:ring-blue-500/20 transition-all shadow-inner"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-800 text-sm cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 text-sm transition-colors cursor-pointer"
                     >
-                      <i className={`fa-solid ${showPassword ? 'fa-eye' : 'fa-eye-slash'}`}></i>
+                      <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                     </button>
                   </div>
                 </div>

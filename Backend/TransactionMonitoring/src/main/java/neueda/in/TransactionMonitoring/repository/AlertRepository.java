@@ -2,6 +2,7 @@ package neueda.in.TransactionMonitoring.repository;
 
 import neueda.in.TransactionMonitoring.entity.Alert;
 import neueda.in.TransactionMonitoring.enums.AlertStatus;
+import neueda.in.TransactionMonitoring.enums.Severity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
@@ -21,5 +22,8 @@ public interface AlertRepository extends JpaRepository<Alert, Long>, JpaSpecific
 
     // Fetch open alerts count (used by dashboard — Person 2 but shared)
     long countByAlertStatus(AlertStatus alertStatus);
+
+    // Fetch alerts count by severity (used by stats endpoint)
+    long countBySeverity(Severity severity);
 }
 
