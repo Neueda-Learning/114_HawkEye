@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
-  User, Mail, Phone, Calendar, MapPin, Edit3, Shield, Lock, Smartphone,
-  CheckCircle2, Bell, Download, HelpCircle, ExternalLink, Camera,
-  ChevronRight, Key, ShieldCheck, Clock, CreditCard, AlertTriangle
+  User, Mail, Phone, Calendar, MapPin, Edit3, Lock, Smartphone,
+  CheckCircle2, Bell, Download, HelpCircle, Camera,
+  ChevronRight, Key, ShieldCheck, Clock, CreditCard, AlertTriangle, X
 } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { getTransactions } from '@/lib/api/transactions';
@@ -14,6 +14,30 @@ import { toast } from '@/components/common/Toast';
 export default function CustomerProfilePage() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
+
+  // Dynamic Profile Form State
+  const [profileData, setProfileData] = useState({
+    name: user?.name || 'fourgrads',
+    email: user?.email || 'fourgrads@email.com',
+    phone: '+91 98765 43210',
+    dob: '1990-03-15',
+    address: 'Pune, Maharashtra, India 411001',
+    avatarColor: 'bg-purple-100 text-purple-600',
+  });
+
+  // Security & 2FA State
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
+  const [lastPasswordChanged] = useState('May 12, 2024');
+
+  // Modal Open States
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isUpdatePasswordOpen, setIsUpdatePasswordOpen] = useState(false);
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [isLoginActivityOpen, setIsLoginActivityOpen] = useState(false);
+
+  // Form Temp Edit State
+  const [editForm, setEditForm] = useState({ ...profileData });
+  const [passwordForm, setPasswordForm] = useState({ current: '', next: '', confirm: '' });
 
   // Notification Preferences Toggles State
   const [prefs, setPrefs] = useState({
@@ -36,8 +60,46 @@ export default function CustomerProfilePage() {
     queryFn: () => getTransactions({ accountId: user?.accountId, size: 5, sort: 'timestamp,desc' }),
   });
 
-  const userName = user?.name || 'fourgrads';
-  const userEmail = user?.email || 'fourgrads@email.com';
+  // Save Profile Handler
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileData({ ...editForm });
+    setIsEditProfileOpen(false);
+    toast.success('Profile information updated successfully!');
+    toast.email(
+      'Profile Update Confirmation Dispatched',
+      `An automated confirmation email has been dispatched to ${editForm.email} confirming your updated profile details.`,
+      editForm.email
+    );
+  };
+
+  // Save Password Handler
+  const handleSavePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordForm.next !== passwordForm.confirm) {
+      toast.error('Passwords do not match', 'New password and confirm password must match.');
+      return;
+    }
+    if (passwordForm.next.length < 6) {
+      toast.error('Weak password', 'Password must be at least 6 characters.');
+      return;
+    }
+    setIsUpdatePasswordOpen(false);
+    setPasswordForm({ current: '', next: '', confirm: '' });
+    toast.success('Password updated successfully!');
+    toast.email(
+      'Security Alert: Password Changed',
+      `Your account password was updated. If you did not make this change, please contact Hawkeye Support immediately.`,
+      profileData.email
+    );
+  };
+
+  // Toggle 2FA Handler
+  const handleToggle2FA = () => {
+    const next = !twoFactorEnabled;
+    setTwoFactorEnabled(next);
+    toast.success(`Two-Factor Authentication (2FA) is now ${next ? 'Enabled' : 'Disabled'}`);
+  };
 
   return (
     <div className="space-y-6 pb-12 animate-fade-in font-sans text-slate-800 bg-[#f8fafc] p-6 -m-6 min-h-screen">
@@ -47,13 +109,13 @@ export default function CustomerProfilePage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
           {/* Avatar with Camera Overlay */}
           <div className="relative">
-            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-purple-100/80 border-4 border-white shadow-md flex items-center justify-center text-purple-600 text-3xl font-extrabold">
-              <User className="w-12 h-12 text-purple-600" />
+            <div className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full ${profileData.avatarColor} border-4 border-white shadow-md flex items-center justify-center text-3xl font-extrabold`}>
+              <User className="w-12 h-12" />
             </div>
             <button
               type="button"
-              onClick={() => toast.info('Photo upload dialog opened')}
-              className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-md hover:bg-slate-700 transition"
+              onClick={() => setIsPhotoModalOpen(true)}
+              className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-md hover:bg-slate-700 transition cursor-pointer"
               title="Change Photo"
             >
               <Camera className="w-4 h-4" />
@@ -63,7 +125,7 @@ export default function CustomerProfilePage() {
           {/* Name & Details */}
           <div className="space-y-2">
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{userName}</h1>
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{profileData.name}</h1>
               <span className="inline-flex items-center px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-extrabold">
                 Customer ID: HWK102938
               </span>
@@ -72,11 +134,11 @@ export default function CustomerProfilePage() {
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 text-xs font-semibold text-slate-600">
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-slate-400" />
-                <span>{userEmail}</span>
+                <span>{profileData.email}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-slate-400" />
-                <span>+91 98765 43210</span>
+                <span>{profileData.phone}</span>
               </div>
             </div>
           </div>
@@ -104,7 +166,7 @@ export default function CustomerProfilePage() {
             <Clock className="w-5 h-5 text-blue-500 shrink-0" />
             <div>
               <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Last Login</p>
-              <p className="text-xs font-extrabold text-slate-800 mt-0.5">May 21, 2024 10:30 AM</p>
+              <p className="text-xs font-extrabold text-slate-800 mt-0.5">Just now</p>
             </div>
           </div>
         </div>
@@ -120,8 +182,11 @@ export default function CustomerProfilePage() {
               <h2 className="text-base font-extrabold text-slate-900">Personal Information</h2>
               <button
                 type="button"
-                onClick={() => toast.info('Edit Profile form opened')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-purple-200 bg-purple-50 text-purple-700 text-xs font-extrabold hover:bg-purple-100 transition"
+                onClick={() => {
+                  setEditForm({ ...profileData });
+                  setIsEditProfileOpen(true);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-purple-200 bg-purple-50 text-purple-700 text-xs font-extrabold hover:bg-purple-100 transition cursor-pointer"
               >
                 <Edit3 className="w-3.5 h-3.5" />
                 Edit Profile
@@ -135,7 +200,7 @@ export default function CustomerProfilePage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Full Name</p>
-                  <p className="text-sm font-bold text-slate-900 mt-0.5">{userName}</p>
+                  <p className="text-sm font-bold text-slate-900 mt-0.5">{profileData.name}</p>
                 </div>
               </div>
 
@@ -145,7 +210,7 @@ export default function CustomerProfilePage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Email Address</p>
-                  <p className="text-sm font-bold text-slate-900 mt-0.5">{userEmail}</p>
+                  <p className="text-sm font-bold text-slate-900 mt-0.5">{profileData.email}</p>
                 </div>
               </div>
 
@@ -155,7 +220,7 @@ export default function CustomerProfilePage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Phone Number</p>
-                  <p className="text-sm font-bold text-slate-900 mt-0.5">+91 98765 43210</p>
+                  <p className="text-sm font-bold text-slate-900 mt-0.5">{profileData.phone}</p>
                 </div>
               </div>
 
@@ -165,7 +230,7 @@ export default function CustomerProfilePage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Date of Birth</p>
-                  <p className="text-sm font-bold text-slate-900 mt-0.5">15 March 1990</p>
+                  <p className="text-sm font-bold text-slate-900 mt-0.5">{profileData.dob}</p>
                 </div>
               </div>
 
@@ -175,7 +240,7 @@ export default function CustomerProfilePage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Address</p>
-                  <p className="text-sm font-bold text-slate-900 mt-0.5">Pune, Maharashtra, India 411001</p>
+                  <p className="text-sm font-bold text-slate-900 mt-0.5">{profileData.address}</p>
                 </div>
               </div>
             </div>
@@ -190,7 +255,7 @@ export default function CustomerProfilePage() {
               <button
                 type="button"
                 onClick={() => navigate('/customer/accounts')}
-                className="text-xs font-bold text-purple-600 hover:text-purple-700 transition"
+                className="text-xs font-bold text-purple-600 hover:text-purple-700 transition cursor-pointer"
               >
                 View All
               </button>
@@ -198,10 +263,9 @@ export default function CustomerProfilePage() {
 
             <div className="space-y-3.5 mt-5">
               {[
-                { name: 'Primary Checking', number: '•••• 1234', balance: 45250.75, color: 'bg-purple-100 text-purple-600' },
-                { name: 'Savings Account', number: '•••• 5678', balance: 28560.00, color: 'bg-blue-100 text-blue-600' },
-                { name: 'Business Account', number: '•••• 9012', balance: 32120.30, color: 'bg-amber-100 text-amber-600' },
-                { name: 'Credit Card', number: '•••• 3456', balance: -3210.45, color: 'bg-emerald-100 text-emerald-600', isCredit: true },
+                { name: 'Primary Checking', number: 'ACC-001 (•••• 0001)', balance: 48500.75, color: 'bg-purple-100 text-purple-600' },
+                { name: 'Savings Reserve', number: 'ACC-001-SAV (•••• 5678)', balance: 24850.00, color: 'bg-blue-100 text-blue-600' },
+                { name: 'Business Account', number: 'ACC-001-BUS (•••• 9012)', balance: 18420.50, color: 'bg-amber-100 text-amber-600' },
               ].map((acc, i) => (
                 <div
                   key={i}
@@ -218,12 +282,10 @@ export default function CustomerProfilePage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`text-xs font-black font-mono ${acc.balance < 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+                    <p className="text-xs font-black font-mono text-slate-900">
                       {formatCurrency(acc.balance)}
                     </p>
-                    <p className="text-[9px] font-bold text-slate-400">
-                      {acc.isCredit ? 'Outstanding Balance' : 'Available Balance'}
-                    </p>
+                    <p className="text-[9px] font-bold text-slate-400">Available Balance</p>
                   </div>
                 </div>
               ))}
@@ -231,8 +293,8 @@ export default function CustomerProfilePage() {
           </div>
 
           <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between bg-slate-50 p-3.5 rounded-xl">
-            <span className="text-xs font-extrabold text-slate-600">Total Balance (All Accounts)</span>
-            <span className="text-sm font-black text-slate-900 font-mono">₹1,25,560.60</span>
+            <span className="text-xs font-extrabold text-slate-600">Total Portfolio Balance</span>
+            <span className="text-sm font-black text-slate-900 font-mono">₹91,771.25</span>
           </div>
         </div>
       </div>
@@ -246,10 +308,10 @@ export default function CustomerProfilePage() {
             <h2 className="text-base font-extrabold text-slate-900">Security</h2>
             <button
               type="button"
-              onClick={() => toast.info('Security settings opened')}
-              className="text-xs font-bold text-purple-600 hover:text-purple-700 transition"
+              onClick={() => setIsUpdatePasswordOpen(true)}
+              className="text-xs font-bold text-purple-600 hover:text-purple-700 transition cursor-pointer"
             >
-              Update
+              Update Security
             </button>
           </div>
 
@@ -262,13 +324,16 @@ export default function CustomerProfilePage() {
                 </div>
                 <div>
                   <p className="text-xs font-extrabold text-slate-900">Password</p>
-                  <p className="text-[10px] text-slate-400 font-medium">•••••••• • Last changed: May 12, 2024</p>
+                  <p className="text-[10px] text-slate-400 font-medium">•••••••• • Last changed: {lastPasswordChanged}</p>
                 </div>
               </div>
-              <ChevronRight
-                className="w-4 h-4 text-slate-400 cursor-pointer hover:text-slate-600"
-                onClick={() => toast.info('Password update dialog opened')}
-              />
+              <button
+                type="button"
+                onClick={() => setIsUpdatePasswordOpen(true)}
+                className="px-3 py-1 rounded-xl bg-purple-50 text-purple-700 text-xs font-extrabold hover:bg-purple-100 transition cursor-pointer"
+              >
+                Change
+              </button>
             </div>
 
             {/* Two Factor Authentication */}
@@ -278,45 +343,39 @@ export default function CustomerProfilePage() {
                   <ShieldCheck className="w-4.5 h-4.5" />
                 </div>
                 <div>
-                  <p className="text-xs font-extrabold text-slate-900">Two Factor Authentication</p>
+                  <p className="text-xs font-extrabold text-slate-900">Two Factor Authentication (2FA)</p>
+                  <p className="text-[10px] text-slate-400 font-medium">Extra security layer for your account</p>
                 </div>
               </div>
-              <span
-                onClick={() => toast.info('2FA settings opened')}
-                className="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md cursor-pointer hover:bg-emerald-100 transition"
+              <button
+                type="button"
+                onClick={handleToggle2FA}
+                className={`text-xs font-extrabold px-3 py-1 rounded-xl cursor-pointer transition ${
+                  twoFactorEnabled ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                }`}
               >
-                Enabled
-              </span>
-            </div>
-
-            {/* Recent Login */}
-            <div className="flex items-center justify-between py-3 border-b border-slate-50">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                  <Smartphone className="w-4.5 h-4.5" />
-                </div>
-                <div>
-                  <p className="text-xs font-extrabold text-slate-900">Recent Login</p>
-                  <p className="text-[10px] text-slate-400 font-medium">Chrome on Windows • Pune, India • May 21, 2024 10:30 AM</p>
-                </div>
-              </div>
+                {twoFactorEnabled ? 'Enabled' : 'Disabled'}
+              </button>
             </div>
 
             {/* Login Activity */}
             <div className="flex items-center justify-between py-3">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                   <Clock className="w-4.5 h-4.5" />
                 </div>
                 <div>
-                  <p className="text-xs font-extrabold text-slate-900">Login Activity</p>
-                  <p className="text-[10px] text-slate-400 font-medium">View recent logins</p>
+                  <p className="text-xs font-extrabold text-slate-900">Recent Login History</p>
+                  <p className="text-[10px] text-slate-400 font-medium">View active sessions & locations</p>
                 </div>
               </div>
-              <ChevronRight
-                className="w-4 h-4 text-slate-400 cursor-pointer hover:text-slate-600"
-                onClick={() => toast.info('Viewing login activity history...')}
-              />
+              <button
+                type="button"
+                onClick={() => setIsLoginActivityOpen(true)}
+                className="text-xs font-bold text-purple-600 hover:text-purple-700 transition cursor-pointer"
+              >
+                View History
+              </button>
             </div>
           </div>
         </div>
@@ -327,10 +386,10 @@ export default function CustomerProfilePage() {
             <h2 className="text-base font-extrabold text-slate-900">Notification Preferences</h2>
             <button
               type="button"
-              onClick={() => toast.info('Notification settings page opened')}
-              className="text-xs font-bold text-purple-600 hover:text-purple-700 transition"
+              onClick={() => navigate('/customer/settings')}
+              className="text-xs font-bold text-purple-600 hover:text-purple-700 transition cursor-pointer"
             >
-              Manage
+              Manage All
             </button>
           </div>
 
@@ -358,7 +417,7 @@ export default function CustomerProfilePage() {
                   <button
                     type="button"
                     onClick={() => togglePref(item.key as keyof typeof prefs, item.label)}
-                    className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors duration-200 ${
+                    className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors duration-200 cursor-pointer ${
                       active ? 'bg-purple-600 justify-end' : 'bg-slate-200 justify-start'
                     }`}
                   >
@@ -381,7 +440,7 @@ export default function CustomerProfilePage() {
             <button
               type="button"
               onClick={() => navigate('/customer/transactions')}
-              className="text-xs font-bold text-purple-600 hover:text-purple-700 transition"
+              className="text-xs font-bold text-purple-600 hover:text-purple-700 transition cursor-pointer"
             >
               View All
             </button>
@@ -394,7 +453,7 @@ export default function CustomerProfilePage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-extrabold text-slate-900">Login Successful</p>
-                <p className="text-[10px] text-slate-400 font-medium">Pune, India • May 21, 2024 10:30 AM</p>
+                <p className="text-[10px] text-slate-400 font-medium">Chrome on Windows • Pune, India • Just now</p>
               </div>
               <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Success</span>
             </div>
@@ -404,10 +463,10 @@ export default function CustomerProfilePage() {
                 <CreditCard className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-extrabold text-slate-900">Transaction Completed</p>
-                <p className="text-[10px] text-slate-400 font-medium">Amazon Store • -₹1,250.00</p>
+                <p className="text-xs font-extrabold text-slate-900">DEBIT Transaction Executed</p>
+                <p className="text-[10px] text-slate-400 font-medium">Vendor Payee • -₹2,500.00</p>
               </div>
-              <span className="text-[10px] font-bold text-slate-400">May 21, 2024 09:47 AM</span>
+              <span className="text-[10px] font-bold text-slate-400">Today</span>
             </div>
 
             <div className="flex items-center gap-3 py-2 border-b border-slate-50">
@@ -418,18 +477,7 @@ export default function CustomerProfilePage() {
                 <p className="text-xs font-extrabold text-slate-900">High Amount Transaction Alert</p>
                 <p className="text-[10px] text-slate-400 font-medium">Amount: ₹25,000.00</p>
               </div>
-              <span className="text-[10px] font-bold text-slate-400">May 20, 2024 04:15 PM</span>
-            </div>
-
-            <div className="flex items-center gap-3 py-2">
-              <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
-                <User className="w-4 h-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-extrabold text-slate-900">Profile Updated</p>
-                <p className="text-[10px] text-slate-400 font-medium">Email address changed</p>
-              </div>
-              <span className="text-[10px] font-bold text-slate-400">May 18, 2024 11:20 AM</span>
+              <span className="text-[10px] font-bold text-slate-400">Yesterday</span>
             </div>
           </div>
         </div>
@@ -440,7 +488,7 @@ export default function CustomerProfilePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-5">
             <div
-              onClick={() => toast.info('Password update dialog opened')}
+              onClick={() => setIsUpdatePasswordOpen(true)}
               className="p-4 rounded-xl border border-slate-100 bg-purple-50/40 hover:bg-purple-50 transition cursor-pointer flex items-center justify-between group"
             >
               <div className="flex items-center gap-3">
@@ -456,7 +504,7 @@ export default function CustomerProfilePage() {
             </div>
 
             <div
-              onClick={() => toast.success('Statement download started!')}
+              onClick={() => toast.success('Account statement PDF downloaded successfully!')}
               className="p-4 rounded-xl border border-slate-100 bg-emerald-50/40 hover:bg-emerald-50 transition cursor-pointer flex items-center justify-between group"
             >
               <div className="flex items-center gap-3">
@@ -488,7 +536,7 @@ export default function CustomerProfilePage() {
             </div>
 
             <div
-              onClick={() => toast.info('Support chat initiated')}
+              onClick={() => toast.info('Support ticket opened: Priority help desk initiated for fourgrads')}
               className="p-4 rounded-xl border border-slate-100 bg-blue-50/40 hover:bg-blue-50 transition cursor-pointer flex items-center justify-between group"
             >
               <div className="flex items-center gap-3">
@@ -506,37 +554,272 @@ export default function CustomerProfilePage() {
         </div>
       </div>
 
-      {/* ── SECURITY / PRIVACY BANNER ── */}
-      <div className="rounded-2xl border border-purple-100 bg-gradient-to-r from-purple-50/80 to-indigo-50/60 p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-purple-600/15 border border-purple-500/30 text-purple-600 flex items-center justify-center shrink-0">
-            <Shield className="h-5 w-5" />
-          </div>
-          <div>
-            <h4 className="text-sm font-extrabold text-slate-900">Your privacy and security are important to us.</h4>
-            <p className="text-xs font-semibold text-slate-500 mt-0.5">
-              We never share your information with third parties.
-            </p>
+      {/* ── MODAL 1: EDIT PROFILE FORM ── */}
+      {isEditProfileOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <Edit3 className="w-5 h-5 text-purple-600" />
+                <h3 className="text-lg font-extrabold text-slate-900">Edit Personal Profile</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditProfileOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="space-y-4 text-xs font-bold text-slate-700">
+              <div>
+                <label className="block text-[11px] font-extrabold uppercase text-slate-400 mb-1">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-purple-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-extrabold uppercase text-slate-400 mb-1">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-purple-600"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-extrabold uppercase text-slate-400 mb-1">Phone Number</label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-purple-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-extrabold uppercase text-slate-400 mb-1">Date of Birth</label>
+                  <input
+                    type="date"
+                    required
+                    value={editForm.dob}
+                    onChange={(e) => setEditForm({ ...editForm, dob: e.target.value })}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-purple-600"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-extrabold uppercase text-slate-400 mb-1">Residential Address</label>
+                <textarea
+                  rows={2}
+                  required
+                  value={editForm.address}
+                  onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-purple-600"
+                ></textarea>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsEditProfileOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-purple-600 text-white font-extrabold hover:bg-purple-700 cursor-pointer shadow-sm"
+                >
+                  Save Profile Updates
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => toast.info('Opening Privacy Policy...')}
-          className="shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl border border-purple-200 bg-white text-xs font-extrabold text-purple-700 hover:bg-purple-600 hover:text-white transition shadow-sm"
-        >
-          Privacy Policy
-          <ExternalLink className="h-3.5 w-3.5" />
-        </button>
-      </div>
+      )}
 
-      {/* ── FOOTER ── */}
-      <div className="flex items-center justify-between text-xs font-semibold text-slate-400 pt-4 border-t border-slate-200/80">
-        <span>© 2024 Hawkeye. All rights reserved.</span>
-        <span className="flex items-center gap-1.5">
-          <Lock className="h-3.5 w-3.5" />
-          <span>Secure • Encrypted • Protected</span>
-        </span>
-      </div>
+      {/* ── MODAL 2: UPDATE SECURITY & PASSWORD ── */}
+      {isUpdatePasswordOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <Key className="w-5 h-5 text-purple-600" />
+                <h3 className="text-lg font-extrabold text-slate-900">Update Password & Security</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsUpdatePasswordOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSavePassword} className="space-y-4 text-xs font-bold text-slate-700">
+              <div>
+                <label className="block text-[11px] font-extrabold uppercase text-slate-400 mb-1">Current Password</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  value={passwordForm.current}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-purple-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-extrabold uppercase text-slate-400 mb-1">New Password</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Enter new password"
+                  value={passwordForm.next}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, next: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-purple-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-extrabold uppercase text-slate-400 mb-1">Confirm New Password</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Confirm new password"
+                  value={passwordForm.confirm}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-purple-600"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsUpdatePasswordOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-purple-600 text-white font-extrabold hover:bg-purple-700 cursor-pointer shadow-sm"
+                >
+                  Update Password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL 3: AVATAR / PHOTO CHANGE ── */}
+      {isPhotoModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl space-y-5 text-center">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-extrabold text-slate-900">Choose Profile Theme Avatar</h3>
+              <button onClick={() => setIsPhotoModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 py-2">
+              {[
+                { color: 'bg-purple-100 text-purple-600', label: 'Purple' },
+                { color: 'bg-blue-100 text-blue-600', label: 'Blue' },
+                { color: 'bg-emerald-100 text-emerald-600', label: 'Emerald' },
+                { color: 'bg-amber-100 text-amber-600', label: 'Amber' },
+                { color: 'bg-rose-100 text-rose-600', label: 'Rose' },
+                { color: 'bg-indigo-100 text-indigo-600', label: 'Indigo' },
+              ].map((theme, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => {
+                    setProfileData({ ...profileData, avatarColor: theme.color });
+                    setIsPhotoModalOpen(false);
+                    toast.success(`Profile theme avatar updated to ${theme.label}!`);
+                  }}
+                  className={`w-16 h-16 mx-auto rounded-full ${theme.color} border-2 border-slate-200 flex items-center justify-center text-xl font-bold hover:scale-105 transition cursor-pointer`}
+                >
+                  <User className="w-7 h-7" />
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsPhotoModalOpen(false);
+                toast.success('Custom avatar uploaded successfully!');
+              }}
+              className="w-full py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-xs font-extrabold hover:bg-slate-100 cursor-pointer"
+            >
+              Upload Custom Image File
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL 4: RECENT LOGIN HISTORY ── */}
+      {isLoginActivityOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <Clock className="w-5 h-5 text-blue-600" />
+                <h3 className="text-lg font-extrabold text-slate-900">Recent Login Sessions</h3>
+              </div>
+              <button onClick={() => setIsLoginActivityOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+              {[
+                { device: 'Chrome on Windows 11', location: 'Pune, Maharashtra', ip: '103.22.45.12', time: 'Just now', status: 'Active' },
+                { device: 'Mobile App (iOS)', location: 'Pune, Maharashtra', ip: '103.22.45.99', time: 'Yesterday 04:20 PM', status: 'Ended' },
+                { device: 'Edge on Windows 11', location: 'Mumbai, Maharashtra', ip: '49.36.12.50', time: '18 May 2024 11:05 AM', status: 'Ended' },
+              ].map((sess, idx) => (
+                <div key={idx} className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50">
+                  <div>
+                    <p className="text-xs font-extrabold text-slate-900">{sess.device}</p>
+                    <p className="text-[10px] text-slate-400 font-medium">{sess.location} • {sess.ip}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded ${sess.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+                      {sess.status}
+                    </span>
+                    <p className="text-[9px] text-slate-400 font-bold mt-1">{sess.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-end pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsLoginActivityOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
