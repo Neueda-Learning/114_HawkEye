@@ -109,10 +109,8 @@ pipeline {
         }
       }
       steps {
-        script {
-          sh 'chmod +x deploy/*.sh'
-          sh 'deploy/deploy_backend.sh "$WORKSPACE"'
-          sh 'deploy/deploy_frontend.sh "$WORKSPACE"'
+        dir('deploy') {
+          sh 'docker compose -f docker-compose.app.yml up -d --build'
         }
       }
     }

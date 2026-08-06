@@ -1,8 +1,10 @@
 # HawkEye Docker-based CD deployment
 
 This deployment flow is designed for Jenkins running on the same Linux EC2 host as the application.
+The application stack is self-contained in Docker Compose and includes a MySQL container for the backend.
 
 ## What gets deployed
+- MySQL container -> `hawkeye-mysql`
 - Backend container -> `hawkeye-backend`
 - Frontend container -> `hawkeye-frontend`
 - Frontend served by nginx in the frontend container on port `4173`
@@ -56,6 +58,17 @@ Open these ports in the EC2 security group if you want external access:
 - `8082` for backend API direct access (optional)
 
 Note: existing Jenkins may already use `8080`, so the deployed backend container is exposed on `8082`.
+MySQL stays on the internal Docker network by default and is not exposed publicly.
+
+## Database defaults
+The Compose stack provisions a MySQL 8 database with these defaults unless overridden through environment variables or a `.env` file in `deploy/`:
+
+- Database: `txnd`
+- Application user: `hawkeye`
+- Application password: `HawkEye@123`
+- Root password: `rootpass`
+
+You can override them by creating `deploy/.env` before running the deployment.
 
 ## Jenkins job requirements
 Use your existing Pipeline job with:
@@ -67,6 +80,7 @@ On the EC2 host:
 
 ```bash
 docker ps
+docker logs hawkeye-mysql --tail 100
 docker logs hawkeye-backend --tail 100
 docker logs hawkeye-frontend --tail 100
 ss -tulpn | grep -E '4173|8082'
