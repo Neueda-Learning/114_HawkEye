@@ -612,12 +612,12 @@ export default function LoginPage() {
         </div>
 
         {/* ── RIGHT PANEL FOOTER ── */}
-        <div className="hw-right-footer mt-6 flex flex-col items-center gap-1 text-xs text-slate-600">
-          <div className="flex items-center gap-2 font-bold text-slate-700">
-            <i className="fa-solid fa-shield-halved text-blue-600"></i>
+        <div className="hw-right-footer mt-6 flex flex-col items-center gap-1 text-xs text-slate-300">
+          <div className="flex items-center gap-2 font-bold text-slate-200">
+            <i className="fa-solid fa-shield-halved text-cyan-400"></i>
             <span>256-Bit TLS Encryption • Security Top Priority</span>
           </div>
-          <div className="text-[11px] text-slate-500 font-medium">
+          <div className="text-[11px] text-slate-400 font-medium">
             Protected by HawkEye Zero-Trust Architecture
           </div>
         </div>
