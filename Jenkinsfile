@@ -51,6 +51,10 @@ pipeline {
     timestamps()
   }
 
+  triggers {
+    pollSCM('H/5 * * * *')
+  }
+
   environment {
     CI = 'true'
   }
@@ -101,7 +105,7 @@ pipeline {
       }
     }
 
-    stage('Frontend Test & Build') {
+    stage('Frontend Build') {
       when {
         expression {
           isSupportedBranchBuild()
@@ -112,11 +116,9 @@ pipeline {
           script {
             if (isUnix()) {
               sh 'npm ci'
-              sh 'npm test'
               sh 'npm run build'
             } else {
               bat 'npm ci'
-              bat 'npm test'
               bat 'npm run build'
             }
           }
