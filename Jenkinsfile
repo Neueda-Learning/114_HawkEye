@@ -1,3 +1,34 @@
+def supportedBranches() {
+  ['main', 'dev', 'ci-cd-pipeline']
+}
+
+def normalizeBranchName(String branchName) {
+  if (!branchName) {
+    return ''
+  }
+
+  branchName
+    .replaceFirst(/^refs\/heads\//, '')
+    .replaceFirst(/^origin\//, '')
+    .trim()
+}
+
+def resolvedBranchName() {
+  normalizeBranchName(env.BRANCH_NAME ?: env.GIT_LOCAL_BRANCH ?: env.GIT_BRANCH ?: '')
+}
+
+def resolvedChangeTarget() {
+  normalizeBranchName(env.CHANGE_TARGET ?: '')
+}
+
+def isSupportedBranchBuild() {
+  def allowedBranches = supportedBranches()
+  def branchName = resolvedBranchName()
+  def changeTarget = resolvedChangeTarget()
+
+  allowedBranches.contains(branchName) || (changeTarget && allowedBranches.contains(changeTarget))
+}
+
 pipeline {
   agent any
 
@@ -19,31 +50,19 @@ pipeline {
 
     stage('Unsupported Branch') {
       when {
-        not {
-          anyOf {
-            branch 'main'
-            branch 'dev'
-            branch 'ci-cd-pipeline'
-            changeRequest target: 'main'
-            changeRequest target: 'dev'
-            changeRequest target: 'ci-cd-pipeline'
-          }
+        expression {
+          !isSupportedBranchBuild()
         }
       }
       steps {
-        echo 'Jenkins CI is configured to run only for main and dev branches.'
+        echo "Jenkins CI is configured to run only for ${supportedBranches().join(', ')} branches. Resolved branch: '${resolvedBranchName()}', change target: '${resolvedChangeTarget()}'."
       }
     }
 
     stage('Backend Test & Build') {
       when {
-        anyOf {
-          branch 'main'
-          branch 'dev'
-          branch 'ci-cd-pipeline'
-          changeRequest target: 'main'
-          changeRequest target: 'dev'
-          changeRequest target: 'ci-cd-pipeline'
+        expression {
+          isSupportedBranchBuild()
         }
       }
       steps {
@@ -72,13 +91,8 @@ pipeline {
 
     stage('Frontend Test & Build') {
       when {
-        anyOf {
-          branch 'main'
-          branch 'dev'
-          branch 'ci-cd-pipeline'
-          changeRequest target: 'main'
-          changeRequest target: 'dev'
-          changeRequest target: 'ci-cd-pipeline'
+        expression {
+          isSupportedBranchBuild()
         }
       }
       steps {
