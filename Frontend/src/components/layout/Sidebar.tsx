@@ -164,7 +164,7 @@ export function CustomerSidebarNav() {
 
   const items = [
     { to: '/customer/dashboard',    label: 'Overview',      icon: <LayoutDashboard className="h-4.5 w-4.5" /> },
-    { to: '/customer/dashboard',    label: 'My Accounts',   icon: <CreditCard className="h-4.5 w-4.5" /> },
+    { to: '/customer/accounts',     label: 'My Accounts',   icon: <CreditCard className="h-4.5 w-4.5" /> },
     { to: '/customer/transactions', label: 'Transactions',  icon: <ArrowRightLeft className="h-4.5 w-4.5" /> },
     { to: '/alerts',                label: 'Alerts',        icon: <Bell className="h-4.5 w-4.5" />, badge: alertsCount },
     { to: '/admin/reports',         label: 'Reports',       icon: <BarChart2 className="h-4.5 w-4.5" /> },
