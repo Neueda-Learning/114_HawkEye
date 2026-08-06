@@ -170,12 +170,11 @@ export default function LoginPage() {
         {/* Hero Tagline & Interactive Auto-Cycling Showcase (Centered in Middle) */}
         <div className="my-auto py-4 z-10 space-y-6 flex flex-col items-center justify-center text-center w-full">
           
-          <div className="text-center mx-auto">
-            <h1 className="text-5xl lg:text-[3.5rem] font-black tracking-tight text-white leading-[1.1] text-center">
-              Monitor. Detect.<br />
-              <span className="hw-tagline-accent">Protect.</span>
+          <div className="text-center mx-auto space-y-2">
+            <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-black tracking-tight text-white leading-tight text-center mx-auto">
+              Monitor. <span className="text-slate-200">Detect.</span> <span className="hw-tagline-accent">Protect.</span>
             </h1>
-            <p className="text-sm sm:text-base font-semibold text-slate-200 mt-3 leading-relaxed max-w-2xl text-center mx-auto">
+            <p className="text-sm sm:text-base font-semibold text-slate-200 leading-relaxed max-w-2xl text-center mx-auto">
               Comprehensive transaction surveillance engine featuring automated rules evaluation,
               real-time alert triage, and customer self-service banking.
             </p>
@@ -353,23 +352,23 @@ export default function LoginPage() {
 
           </div>
 
-          {/* 4 Feature Badges Row */}
-          <div className="hw-features pt-1 max-w-2xl w-full mx-auto">
-            <div className="hw-feature-item">
-              <div className="hw-feature-icon"><i className="fa-solid fa-shield-halved"></i></div>
-              <span>Real-time<br/>Monitoring</span>
+          {/* 4 Feature Badges Row (Centered in Middle) */}
+          <div className="hw-features pt-1 max-w-2xl w-full mx-auto justify-center justify-items-center items-center text-center">
+            <div className="hw-feature-item flex flex-col items-center justify-center text-center mx-auto">
+              <div className="hw-feature-icon mx-auto"><i className="fa-solid fa-shield-halved"></i></div>
+              <span className="text-center font-bold">Real-time<br/>Monitoring</span>
             </div>
-            <div className="hw-feature-item">
-              <div className="hw-feature-icon"><i className="fa-solid fa-bell"></i></div>
-              <span>Smart<br/>Alerts</span>
+            <div className="hw-feature-item flex flex-col items-center justify-center text-center mx-auto">
+              <div className="hw-feature-icon mx-auto"><i className="fa-solid fa-bell"></i></div>
+              <span className="text-center font-bold">Smart<br/>Alerts</span>
             </div>
-            <div className="hw-feature-item">
-              <div className="hw-feature-icon"><i className="fa-solid fa-chart-line"></i></div>
-              <span>Advanced<br/>Analytics</span>
+            <div className="hw-feature-item flex flex-col items-center justify-center text-center mx-auto">
+              <div className="hw-feature-icon mx-auto"><i className="fa-solid fa-chart-line"></i></div>
+              <span className="text-center font-bold">Advanced<br/>Analytics</span>
             </div>
-            <div className="hw-feature-item">
-              <div className="hw-feature-icon"><i className="fa-solid fa-lock"></i></div>
-              <span>Secure<br/>& Reliable</span>
+            <div className="hw-feature-item flex flex-col items-center justify-center text-center mx-auto">
+              <div className="hw-feature-icon mx-auto"><i className="fa-solid fa-lock"></i></div>
+              <span className="text-center font-bold">Secure<br/>& Reliable</span>
             </div>
           </div>
 

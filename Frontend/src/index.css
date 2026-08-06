@@ -618,17 +618,25 @@
 
 /* Feature pills row */
 .hw-features {
-  display: flex;
-  gap: 1.25rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  justify-content: center;
+  justify-items: center;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
   position: relative;
   z-index: 1;
+  max-width: 720px;
+  width: 100%;
 }
 
 .hw-feature-item {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   font-size: 0.82rem;
   font-weight: 700;
@@ -640,6 +648,7 @@
   padding: 0.85rem 0.5rem;
   border-radius: 16px;
   transition: all 0.25s ease;
+  width: 100%;
 }
 
 .hw-feature-item:hover {
