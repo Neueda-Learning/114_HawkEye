@@ -127,10 +127,10 @@ export default function CustomerAlertsPage() {
   const lowCount    = stats?.bySeverity?.LOW ?? 0;
   const totalAlerts = totalElements;
 
-  const openCount   = stats?.byStatus?.OPEN ?? 0;
-  const ackCount    = stats?.byStatus?.ACKNOWLEDGED ?? 0;
-  const invCount    = stats?.byStatus?.INVESTIGATING ?? 0;
-  const closedCount = stats?.byStatus?.CLOSED ?? 0;
+  const openCount   = stats?.open ?? stats?.byStatus?.OPEN ?? 0;
+  const ackCount    = stats?.acknowledged ?? stats?.byStatus?.ACKNOWLEDGED ?? 0;
+  const invCount    = stats?.investigating ?? stats?.byStatus?.INVESTIGATING ?? 0;
+  const closedCount = stats?.closed ?? stats?.byStatus?.CLOSED ?? 0;
 
   const donutSegs = useMemo(
     () => buildDonutSegments(highCount + critCount, medCount, lowCount),
