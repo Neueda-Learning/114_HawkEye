@@ -126,6 +126,12 @@ public class AlertService {
 		long investigating = alertRepository.countByAlertStatus(AlertStatus.INVESTIGATING);
 		long closed = alertRepository.countByAlertStatus(AlertStatus.CLOSED);
 		long dismissed = alertRepository.countByAlertStatus(AlertStatus.DISMISSED);
+
+		Map<String, Long> bySeverity = new java.util.LinkedHashMap<>();
+		for (neueda.in.TransactionMonitoring.enums.Severity sev : neueda.in.TransactionMonitoring.enums.Severity.values()) {
+			bySeverity.put(sev.name(), alertRepository.countBySeverity(sev));
+		}
+
 		return AlertStatsResponseDTO.builder()
 				.open(open)
 				.acknowledged(acknowledged)
@@ -133,6 +139,7 @@ public class AlertService {
 				.closed(closed)
 				.dismissed(dismissed)
 				.total(open + acknowledged + investigating + closed + dismissed)
+				.bySeverity(bySeverity)
 				.build();
 	}
 

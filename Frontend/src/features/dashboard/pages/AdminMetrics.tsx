@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line
@@ -82,6 +83,11 @@ export default function AdminMetrics() {
   const [currency, setCurrency] = useState('');
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState<any | null>(null);
+  const [startDate, setStartDate] = useState(dayjs().subtract(6, 'day').format('YYYY-MM-DD'));
+  const [endDate, setEndDate] = useState(dayjs().format('YYYY-MM-DD'));
+
+  const calendarStartIso = dayjs(startDate).startOf('day').format('YYYY-MM-DDTHH:mm:ss');
+  const calendarEndIso = dayjs(endDate).endOf('day').format('YYYY-MM-DDTHH:mm:ss');
 
   // New Transaction Form State
   const [newAccountId, setNewAccountId] = useState('ACC-100234');
@@ -93,29 +99,31 @@ export default function AdminMetrics() {
 
   // API Query
   const { data: pagedData } = useQuery({
-    queryKey: ['transactions', page, status, transactionType],
+    queryKey: ['transactions', page, status, transactionType, startDate, endDate],
     queryFn: () => getTransactions({
       page,
       size: pageSize,
       status: status || undefined,
       transactionType: transactionType || undefined,
+      startDate: calendarStartIso,
+      endDate: calendarEndIso,
       sort: 'createdAt,desc',
     }),
   });
 
   const { data: debitCountData } = useQuery({
-    queryKey: ['transactions', 'count', 'DEBIT'],
-    queryFn: () => getTransactions({ page: 0, size: 1, transactionType: 'DEBIT' }),
+    queryKey: ['transactions', 'count', 'DEBIT', startDate, endDate],
+    queryFn: () => getTransactions({ page: 0, size: 1, transactionType: 'DEBIT', startDate: calendarStartIso, endDate: calendarEndIso }),
   });
 
   const { data: creditCountData } = useQuery({
-    queryKey: ['transactions', 'count', 'CREDIT'],
-    queryFn: () => getTransactions({ page: 0, size: 1, transactionType: 'CREDIT' }),
+    queryKey: ['transactions', 'count', 'CREDIT', startDate, endDate],
+    queryFn: () => getTransactions({ page: 0, size: 1, transactionType: 'CREDIT', startDate: calendarStartIso, endDate: calendarEndIso }),
   });
 
   const { data: completedCountData } = useQuery({
-    queryKey: ['transactions', 'count', 'COMPLETED'],
-    queryFn: () => getTransactions({ page: 0, size: 1, status: 'COMPLETED' }),
+    queryKey: ['transactions', 'count', 'COMPLETED', startDate, endDate],
+    queryFn: () => getTransactions({ page: 0, size: 1, status: 'COMPLETED', startDate: calendarStartIso, endDate: calendarEndIso }),
   });
 
   // Mutation to create new transaction
@@ -219,8 +227,22 @@ export default function AdminMetrics() {
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-600 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
             <Calendar className="h-4 w-4 text-gray-400" />
-            <span>May 15, 2024 - May 21, 2024</span>
+            <span>{dayjs(startDate).format('MMM D, YYYY')} - {dayjs(endDate).format('MMM D, YYYY')}</span>
           </div>
+          <input
+            type="date"
+            value={startDate}
+            max={endDate}
+            onChange={(e) => { setStartDate(e.target.value); setPage(0); }}
+            className="rounded-xl border border-gray-200 bg-white px-2 py-2 text-xs text-gray-600 shadow-sm outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+          />
+          <input
+            type="date"
+            value={endDate}
+            min={startDate}
+            onChange={(e) => { setEndDate(e.target.value); setPage(0); }}
+            className="rounded-xl border border-gray-200 bg-white px-2 py-2 text-xs text-gray-600 shadow-sm outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+          />
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />

@@ -1,0 +1,12 @@
+name: HawkEye CI (moved to Jenkins)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  moved-to-jenkins:
+    name: Moved to Jenkins
+    runs-on: ubuntu-latest
+    steps:
+      - name: Info
+        run: echo "This repository now uses Jenkins via the root Jenkinsfile."
