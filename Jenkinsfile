@@ -10,11 +10,25 @@ def normalizeBranchName(String branchName) {
   branchName
     .replaceFirst(/^refs\/heads\//, '')
     .replaceFirst(/^origin\//, '')
+    .replaceFirst(/^\*\//, '')
     .trim()
 }
 
+def configuredScmBranchName() {
+  try {
+    normalizeBranchName(scm?.branches?.getAt(0)?.name ?: '')
+  } catch (ignored) {
+    ''
+  }
+}
+
 def resolvedBranchName() {
-  normalizeBranchName(env.BRANCH_NAME ?: env.GIT_LOCAL_BRANCH ?: env.GIT_BRANCH ?: '')
+  [
+    env.BRANCH_NAME,
+    env.GIT_LOCAL_BRANCH,
+    env.GIT_BRANCH,
+    configuredScmBranchName(),
+  ].collect { normalizeBranchName(it ?: '') }.find { it } ?: ''
 }
 
 def resolvedChangeTarget() {
@@ -55,7 +69,7 @@ pipeline {
         }
       }
       steps {
-        echo "Jenkins CI is configured to run only for ${supportedBranches().join(', ')} branches. Resolved branch: '${resolvedBranchName()}', change target: '${resolvedChangeTarget()}'."
+        echo "Jenkins CI is configured to run only for ${supportedBranches().join(', ')} branches. Resolved branch: '${resolvedBranchName()}', change target: '${resolvedChangeTarget()}', SCM branch: '${configuredScmBranchName()}'."
       }
     }
 
