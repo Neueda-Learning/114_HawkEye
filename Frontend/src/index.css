@@ -683,11 +683,11 @@
   height: 68px !important;
 }
 
-/* ── RIGHT LOGIN PANEL (45% width — Darker Slate Navy Background with Light Login Card) ── */
+/* ── RIGHT LOGIN PANEL (45% width — Slightly Lighter Slate Navy for Smooth Low Contrast) ── */
 .hw-login-right {
   flex: 45;
   width: 45%;
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  background: linear-gradient(135deg, #192438 0%, #253550 50%, #1a263b 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
