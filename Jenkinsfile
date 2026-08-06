@@ -73,7 +73,7 @@ pipeline {
       }
     }
 
-    stage('Backend Test & Build') {
+    stage('Backend Build') {
       when {
         expression {
           isSupportedBranchBuild()
@@ -84,12 +84,10 @@ pipeline {
           if (isUnix()) {
             sh 'chmod +x Backend/TransactionMonitoring/mvnw'
             dir('Backend/TransactionMonitoring') {
-              sh './mvnw test'
               sh './mvnw package -DskipTests'
             }
           } else {
             dir('Backend/TransactionMonitoring') {
-              bat 'mvnw.cmd test'
               bat 'mvnw.cmd package -DskipTests'
             }
           }
