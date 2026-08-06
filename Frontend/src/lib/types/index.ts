@@ -186,10 +186,15 @@ export interface AlertAuditEntry {
 }
 
 export interface AlertStats {
-  byStatus: Record<AlertStatus, number>;
-  bySeverity: Record<Severity, number>;
-  dailyTrend: { date: string; count: number }[];
-  avgResolutionTimeMinutes: number;
+  // Flat status counts returned by backend AlertStatsResponseDTO
+  open: number;
+  acknowledged: number;
+  investigating: number;
+  closed: number;
+  dismissed: number;
+  total: number;
+  // Severity breakdown map e.g. { LOW: 2, MEDIUM: 5, HIGH: 1, CRITICAL: 0 }
+  bySeverity: Record<string, number>;
 }
 
 // ─── Rule ─────────────────────────────────────────────────────────────────────
