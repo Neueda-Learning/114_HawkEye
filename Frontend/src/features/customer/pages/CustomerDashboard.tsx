@@ -35,14 +35,14 @@ export default function CustomerDashboard() {
   const alerts = alertsData?.content ?? [];
 
   // Metrics calculation
-  const totalTransactionsCount = txData?.totalElements ?? (transactions.length > 0 ? transactions.length : 1243);
-  const totalAlertsCount = alertsData?.totalElements ?? (alerts.length > 0 ? alerts.length : 8);
+  const totalTransactionsCount = txData?.totalElements ?? transactions.length;
+  const totalAlertsCount = alertsData?.totalElements ?? alerts.length;
 
   // Breakdown counts for Donut Chart
-  const highRiskCount = alerts.filter((a) => a.severity === 'HIGH' || a.severity === 'CRITICAL').length || 2;
-  const mediumRiskCount = alerts.filter((a) => a.severity === 'MEDIUM').length || 4;
-  const lowRiskCount = alerts.filter((a) => a.severity === 'LOW').length || 1;
-  const infoRiskCount = alerts.filter((a) => (a.severity as string) === 'INFO' || !a.severity).length || 1;
+  const highRiskCount = alerts.filter((a) => a.severity === 'HIGH' || a.severity === 'CRITICAL').length;
+  const mediumRiskCount = alerts.filter((a) => a.severity === 'MEDIUM').length;
+  const lowRiskCount = alerts.filter((a) => a.severity === 'LOW').length;
+  const infoRiskCount = alerts.filter((a) => (a.severity as string) === 'INFO' || !a.severity).length;
 
   // Download Statement action
   const handleDownloadStatement = () => {

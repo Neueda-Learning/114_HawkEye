@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowRightLeft, Bell, Calendar, ChevronDown, ChevronLeft, ChevronRight,
   Search, Filter, ArrowUpRight, ArrowDownLeft, Send, TrendingUp,
-  CheckCircle2, Clock, XCircle, RefreshCcw, MoreVertical, Shield, Lock,
+  CheckCircle2, Clock, XCircle, RefreshCcw, Shield, Lock, Eye,
 } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { getTransactions } from '@/lib/api/transactions';
@@ -360,7 +360,7 @@ export default function MyTransactionsPage() {
                         onClick={(e) => { e.stopPropagation(); navigate(`/customer/transactions/${tx.transactionId}`); }}
                         className="p-1.5 rounded-lg hover:bg-slate-100 transition text-slate-400"
                       >
-                        <MoreVertical className="h-4 w-4" />
+                        <Eye className="h-4 w-4 text-blue-600 hover:text-blue-700" />
                       </button>
                     </td>
                   </tr>
