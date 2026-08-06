@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard, ArrowRightLeft, Bell, FileText, BarChart2,
   Activity, LogOut, ChevronLeft,
-  ShieldCheck, Sun, Moon, Settings, CreditCard
+  ShieldCheck, Sun, Moon, Settings, CreditCard, Send
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAlerts } from '@/lib/api/alerts';
@@ -163,12 +163,13 @@ export function CustomerSidebarNav() {
   const alertsCount = alertsData?.totalElements ?? 8;
 
   const items = [
-    { to: '/customer/dashboard',    label: 'Overview',      icon: <LayoutDashboard className="h-4.5 w-4.5" /> },
-    { to: '/customer/accounts',     label: 'My Accounts',   icon: <CreditCard className="h-4.5 w-4.5" /> },
-    { to: '/customer/transactions', label: 'Transactions',  icon: <ArrowRightLeft className="h-4.5 w-4.5" /> },
-    { to: '/alerts',                label: 'Alerts',        icon: <Bell className="h-4.5 w-4.5" />, badge: alertsCount },
-    { to: '/admin/reports',         label: 'Reports',       icon: <BarChart2 className="h-4.5 w-4.5" /> },
-    { to: '/admin/settings',        label: 'Settings',      icon: <Settings className="h-4.5 w-4.5" /> },
+    { to: '/customer/dashboard',    label: 'Dashboard',        icon: <LayoutDashboard className="h-4.5 w-4.5" /> },
+    { to: '/customer/accounts',     label: 'My Accounts',      icon: <CreditCard className="h-4.5 w-4.5" /> },
+    { to: '/customer/transactions', label: 'My Transactions',  icon: <ArrowRightLeft className="h-4.5 w-4.5" /> },
+    { to: '/customer/send-money',   label: 'Send Money',       icon: <Send className="h-4.5 w-4.5" /> },
+    { to: '/alerts',                label: 'Alerts',           icon: <Bell className="h-4.5 w-4.5" />, badge: alertsCount },
+    { to: '/admin/reports',         label: 'Reports',          icon: <BarChart2 className="h-4.5 w-4.5" /> },
+    { to: '/admin/settings',        label: 'Settings',         icon: <Settings className="h-4.5 w-4.5" /> },
   ];
 
   return (
