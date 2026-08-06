@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: HawkEye CI
 
 on:
   push:
@@ -34,6 +34,7 @@ jobs:
       - name: Backend Build
         run: |
           cd Backend/TransactionMonitoring
+          chmod +x mvnw
           ./mvnw clean package -DskipTests
 
 
