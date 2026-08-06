@@ -1,7 +1,3 @@
-def supportedBranches() {
-  ['main', 'dev', 'ci-cd-pipeline']
-}
-
 def normalizeBranchName(String branchName) {
   if (!branchName) {
     return ''
@@ -35,14 +31,6 @@ def resolvedChangeTarget() {
   normalizeBranchName(env.CHANGE_TARGET ?: '')
 }
 
-def isSupportedBranchBuild() {
-  def allowedBranches = supportedBranches()
-  def branchName = resolvedBranchName()
-  def changeTarget = resolvedChangeTarget()
-
-  allowedBranches.contains(branchName) || (changeTarget && allowedBranches.contains(changeTarget))
-}
-
 pipeline {
   agent any
 
@@ -66,23 +54,7 @@ pipeline {
       }
     }
 
-    stage('Unsupported Branch') {
-      when {
-        expression {
-          !isSupportedBranchBuild()
-        }
-      }
-      steps {
-        echo "Jenkins CI is configured to run only for ${supportedBranches().join(', ')} branches. Resolved branch: '${resolvedBranchName()}', change target: '${resolvedChangeTarget()}', SCM branch: '${configuredScmBranchName()}'."
-      }
-    }
-
     stage('Backend Build') {
-      when {
-        expression {
-          isSupportedBranchBuild()
-        }
-      }
       steps {
         script {
           if (isUnix()) {
@@ -106,11 +78,6 @@ pipeline {
     }
 
     stage('Frontend Build') {
-      when {
-        expression {
-          isSupportedBranchBuild()
-        }
-      }
       steps {
         dir('Frontend') {
           script {
