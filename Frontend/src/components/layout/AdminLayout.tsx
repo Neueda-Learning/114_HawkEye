@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AdminSidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { Footer } from './Footer';
 
 const PAGE_TITLES: Record<string, string> = {
   '/admin/dashboard':     'Dashboard',
@@ -49,13 +50,13 @@ export default function AdminLayout() {
         isDark={isDark}
         onThemeToggle={toggleTheme}
       />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-y-auto">
         <Topbar title={title} />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 p-6">
           <Outlet />
         </main>
+        <Footer />
       </div>
     </div>
   );
 }
-

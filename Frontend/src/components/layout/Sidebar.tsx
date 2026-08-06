@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard, ArrowRightLeft, Bell, FileText, BarChart2,
   Users, Activity, LogOut, ChevronLeft, ChevronRight,
-  ShieldCheck, Sun, Moon, Settings,
+  ShieldCheck, Sun, Moon, Settings, User, HelpCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAlerts } from '@/lib/api/alerts';
@@ -53,7 +53,7 @@ export function AdminSidebar({ collapsed, onToggle, isDark, onThemeToggle }: Sid
   return (
     <aside
       className={cn(
-        'flex h-full flex-col border-r border-gray-200 bg-[#0B132B] text-white transition-all duration-300 dark:border-gray-800 dark:bg-gray-950',
+        'flex h-full flex-col border-r border-gray-800 bg-[#070d1a] text-white transition-all duration-300 dark:border-gray-800 dark:bg-gray-950',
         collapsed ? 'w-16' : 'w-60',
       )}
     >
@@ -153,54 +153,75 @@ export function CustomerSidebarNav() {
   const navigate = useNavigate();
 
   const items = [
-    { to: '/customer/dashboard',    label: 'Dashboard',     icon: <LayoutDashboard className="h-5 w-5" /> },
-    { to: '/customer/send-money',   label: 'Send Money',    icon: <ArrowRightLeft className="h-5 w-5" /> },
-    { to: '/customer/transactions', label: 'Transactions',  icon: <BarChart2 className="h-5 w-5" /> },
+    { to: '/customer/dashboard',    label: 'Dashboard',       icon: <LayoutDashboard className="h-5 w-5" /> },
+    { to: '/customer/transactions', label: 'My Transactions', icon: <ArrowRightLeft className="h-5 w-5" /> },
+    { to: '/alerts',                label: 'My Alerts',       icon: <Bell className="h-5 w-5" />, badge: 3 },
+    { to: '/admin/reports',         label: 'Reports',         icon: <BarChart2 className="h-5 w-5" /> },
+    { to: '/customer/send-money',   label: 'Send Money',      icon: <User className="h-5 w-5" /> },
+    { to: '/admin/settings',        label: 'Settings',        icon: <Settings className="h-5 w-5" /> },
   ];
 
   return (
-    <aside className="flex h-full w-60 flex-col border-r border-gray-800 bg-[#0B132B] text-white">
-      <div className="flex h-16 items-center gap-2.5 border-b border-gray-800/60 px-5">
+    <aside className="flex h-full w-64 flex-col border-r border-gray-800 bg-[#070d1a] text-white">
+      <div className="flex h-16 items-center gap-3 border-b border-gray-800/60 px-5">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md">
           <ShieldCheck className="h-5 w-5" />
         </div>
         <div>
-          <span className="text-base font-bold text-white">TMAS</span>
-          <p className="text-[9px] text-gray-400">Customer Portal</p>
+          <span className="text-base font-extrabold tracking-wide text-white uppercase">HAWKEYE</span>
+          <p className="text-[9px] text-gray-400 font-medium">Transaction Monitoring & Alert System</p>
         </div>
       </div>
-      <nav className="flex-1 space-y-1.5 p-3">
+
+      <nav className="flex-1 space-y-1.5 p-3.5">
         {items.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+                'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-150',
                 isActive
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-900/30 font-bold'
                   : 'text-gray-300 hover:bg-gray-800/60 hover:text-white',
               )
             }
           >
             {item.icon}
-            {item.label}
+            <span className="flex-1">{item.label}</span>
+            {item.badge && (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
+                {item.badge}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>
-      <div className="border-t border-gray-800/60 p-3">
+
+      {/* Sidebar Promo Card */}
+      <div className="mx-3.5 mb-3 p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-center">
+        <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center mx-auto mb-2 text-lg">
+          <ShieldCheck className="h-5 w-5" />
+        </div>
+        <h4 className="text-xs font-bold text-white">We're watching</h4>
+        <p className="text-[10px] text-slate-400 mt-0.5">so you don't have to.</p>
+        <p className="text-[9px] text-slate-500 mt-1">Hawkeye keeps your transactions secure.</p>
+      </div>
+
+      {/* User Footer Profile */}
+      <div className="border-t border-gray-800/60 p-3.5">
         {user && (
-          <div className="flex items-center gap-2 rounded-lg px-3 py-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-900 text-xs font-bold text-blue-200">
-              {user.name.charAt(0)}
+          <div className="flex items-center gap-3 rounded-xl bg-slate-900/60 px-3 py-2 border border-slate-800">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-xs font-bold text-white">
+              {user.name?.charAt(0) || 'J'}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-semibold text-white">{user.name}</p>
-              <p className="truncate text-xs text-gray-400">Customer</p>
+              <p className="truncate text-xs font-bold text-white">{user.name || 'John Doe'}</p>
+              <p className="truncate text-[10px] text-gray-400">{user.email || 'john.doe@email.com'}</p>
             </div>
             <button
               onClick={() => { logout(); navigate('/login'); }}
-              className="text-gray-400 hover:text-red-400"
+              className="text-gray-400 hover:text-red-400 transition"
               aria-label="Logout"
             >
               <LogOut className="h-4 w-4" />

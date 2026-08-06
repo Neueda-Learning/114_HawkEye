@@ -8,6 +8,10 @@ export const MOCK_USERS: Record<string, { password: string; user: AuthUser }> = 
     password: 'password123',
     user: { id: 'U001', email: 'customer@hawkeye.com', name: 'John Smith', role: 'CUSTOMER', accountId: 'ACC-001' },
   },
+  'user@hawkeye.com': {
+    password: 'password123',
+    user: { id: 'U001', email: 'user@hawkeye.com', name: 'John Smith', role: 'CUSTOMER', accountId: 'ACC-001' },
+  },
   'analyst@hawkeye.com': {
     password: 'password123',
     user: { id: 'U002', email: 'analyst@hawkeye.com', name: 'Sarah Chen', role: 'ANALYST' },
