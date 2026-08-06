@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom';
 
 export function Footer() {
   return (
-    <footer className="w-full bg-[#070d1a] border-t border-slate-800 text-slate-400 text-xs py-3 px-6 sm:px-10 mt-auto shrink-0 z-20">
+    <footer className="w-full bg-[#1a2436] border-t border-slate-700/80 text-slate-300 text-xs py-3 px-6 sm:px-10 mt-auto shrink-0 z-20 shadow-lg">
       <div className="max-w-7xl mx-auto space-y-2.5">
         
         {/* Row 1: Brand, Quick Enterprise Nav & Compliance Badges */}
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-3 pb-2 border-b border-slate-800/60">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-3 pb-2 border-b border-slate-700/60">
           
           {/* Brand & Mission Tag */}
           <div className="flex items-center gap-2.5">
@@ -20,27 +20,27 @@ export function Footer() {
                 v2.4.0
               </span>
               <span className="hidden sm:inline text-slate-600">|</span>
-              <span className="hidden sm:inline text-[11px] text-slate-400 font-medium">
+              <span className="hidden sm:inline text-[11px] text-slate-300 font-medium">
                 Transaction Surveillance & AML Platform
               </span>
             </div>
           </div>
 
           {/* Essential Quick Links */}
-          <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] font-semibold text-slate-400">
+          <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] font-semibold text-slate-300">
             <Link to="/customer/dashboard" className="hover:text-cyan-400 transition-colors">User Portal</Link>
-            <span className="text-slate-700">•</span>
+            <span className="text-slate-600">•</span>
             <Link to="/admin/dashboard" className="hover:text-cyan-400 transition-colors">Admin Console</Link>
-            <span className="text-slate-700">•</span>
-            <span className="hover:text-slate-200 transition-colors cursor-pointer flex items-center gap-1">
+            <span className="text-slate-600">•</span>
+            <span className="hover:text-white transition-colors cursor-pointer flex items-center gap-1">
               <ShieldAlert className="h-3 w-3 text-amber-400" /> Security
             </span>
-            <span className="text-slate-700">•</span>
-            <span className="hover:text-slate-200 transition-colors cursor-pointer">Privacy & GDPR</span>
-            <span className="text-slate-700">•</span>
-            <span className="hover:text-slate-200 transition-colors cursor-pointer">Terms</span>
-            <span className="text-slate-700">•</span>
-            <span className="hover:text-slate-200 transition-colors cursor-pointer flex items-center gap-1">
+            <span className="text-slate-600">•</span>
+            <span className="hover:text-white transition-colors cursor-pointer">Privacy & GDPR</span>
+            <span className="text-slate-600">•</span>
+            <span className="hover:text-white transition-colors cursor-pointer">Terms</span>
+            <span className="text-slate-600">•</span>
+            <span className="hover:text-white transition-colors cursor-pointer flex items-center gap-1">
               <Mail className="h-3 w-3 text-cyan-400" /> support@hawkeye.com
             </span>
           </div>
@@ -51,11 +51,11 @@ export function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px]">
           
           <div className="flex items-center gap-3">
-            <p className="text-slate-400 font-medium">
+            <p className="text-slate-300 font-medium">
               © 2026 HawkEye Platform Inc. All rights reserved.
             </p>
-            <span className="hidden md:inline text-slate-700">•</span>
-            <div className="hidden md:flex items-center gap-2 text-[10px] text-slate-400 font-medium">
+            <span className="hidden md:inline text-slate-600">•</span>
+            <div className="hidden md:flex items-center gap-2 text-[10px] text-slate-300 font-medium">
               <span className="inline-flex items-center gap-1">
                 <Lock className="h-3 w-3 text-cyan-400" /> 256-Bit TLS
               </span>
