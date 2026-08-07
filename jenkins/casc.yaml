@@ -1,0 +1,40 @@
+jenkins:
+  systemMessage: "HawkEye Jenkins configured from repository files"
+  numExecutors: 2
+  mode: NORMAL
+  scmCheckoutRetryCount: 2
+  markupFormatter: plainText
+  quietPeriod: 0
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+  crumbIssuer:
+    standard:
+      excludeClientIPFromCrumb: false
+  securityRealm:
+    local:
+      allowsSignup: false
+      enableCaptcha: false
+      users:
+        - id: "${JENKINS_ADMIN_ID:-admin}"
+          name: "${JENKINS_ADMIN_ID:-admin}"
+          password: "${JENKINS_ADMIN_PASSWORD:-admin123!ChangeMe}"
+  remotingSecurity:
+    enabled: true
+  globalNodeProperties:
+    - envVars:
+        env:
+          - key: "CI"
+            value: "true"
+unclassified:
+  location:
+    url: "${JENKINS_URL:-http://localhost:8080/}"
+    adminAddress: "${JENKINS_ADMIN_EMAIL:-admin@example.com}"
+  gitSCM:
+    createAccountBasedOnEmail: false
+    globalConfigEmail: "jenkins@example.com"
+    globalConfigName: "Jenkins"
+
+
+
+

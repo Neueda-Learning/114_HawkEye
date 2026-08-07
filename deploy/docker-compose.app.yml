@@ -1,0 +1,109 @@
+# docker-compose.app.yml
+#
+# Run from the repo root (HawkEye/) like this:
+#   docker compose -f deploy/docker-compose.app.yml up -d --build
+#
+# Secrets are read from deploy/.env  (copy deploy/.env.example → deploy/.env and fill in values)
+# Docker Compose automatically loads .env from the same directory as the compose file.
+
+services:
+
+  # ──────────────────────────────────────────
+  # MySQL 8 Database
+  # ──────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: hawkeye-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      # Named volume keeps data across container restarts and redeployments
+      - hawkeye-mysql-data:/var/lib/mysql
+    networks:
+      - hawkeye-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    # MySQL port is NOT published to the host — only accessible within the Docker network.
+    # Uncomment the line below only if you need direct external access for debugging:
+    # ports:
+    #   - "3306:3306"
+
+  # ──────────────────────────────────────────
+  # Spring Boot Backend
+  # ──────────────────────────────────────────
+  backend:
+    build:
+      context: ../Backend/TransactionMonitoring
+      dockerfile: Dockerfile
+    container_name: hawkeye-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy   # waits until MySQL is accepting connections
+    ports:
+      - "8082:8080"                  # EC2:8082 → container:8080 (ask admin to open 8082)
+    environment:
+      # ── Database ──────────────────────────────────────────────────────────
+      # IMPORTANT: Use the Docker service name "mysql" — NOT localhost.
+      # "localhost" inside the backend container refers to itself, not MySQL.
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+
+      # ── Email / SMTP ──────────────────────────────────────────────────────
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH}
+      MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS}
+      MAIL_SMTP_STARTTLS_REQUIRED: ${MAIL_SMTP_STARTTLS_REQUIRED}
+      MAIL_SMTP_TIMEOUT: ${MAIL_SMTP_TIMEOUT}
+
+      # ── Notification recipients ───────────────────────────────────────────
+      NOTIFICATION_EMAIL_ENABLED: ${NOTIFICATION_EMAIL_ENABLED}
+      NOTIFICATION_EMAIL_FROM: ${NOTIFICATION_EMAIL_FROM}
+      NOTIFICATION_EMAIL_TO: ${NOTIFICATION_EMAIL_TO}
+      NOTIFICATION_TX_RECIPIENTS: ${NOTIFICATION_TX_RECIPIENTS}
+      NOTIFICATION_ALERT_RECIPIENTS: ${NOTIFICATION_ALERT_RECIPIENTS}
+      NOTIFICATION_RULE_RECIPIENTS: ${NOTIFICATION_RULE_RECIPIENTS}
+    networks:
+      - hawkeye-net
+
+  # ──────────────────────────────────────────
+  # React Frontend (served by nginx)
+  # ──────────────────────────────────────────
+  frontend:
+    build:
+      context: ../Frontend
+      dockerfile: Dockerfile
+    container_name: hawkeye-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8081:80"                     # EC2:8081 → container:80 (frontend access port)
+    networks:
+      - hawkeye-net
+
+# ──────────────────────────────────────────
+# Shared Docker network
+# All three services can reach each other by container/service name
+# ──────────────────────────────────────────
+networks:
+  hawkeye-net:
+    driver: bridge
+
+# ──────────────────────────────────────────
+# Persistent volume for MySQL data
+# ──────────────────────────────────────────
+volumes:
+  hawkeye-mysql-data:

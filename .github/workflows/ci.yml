@@ -1,0 +1,51 @@
+name: HawkEye CI
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+
+  pull_request:
+    branches:
+      - dev
+      - main
+
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+
+      - name: Backend Build
+        run: |
+          cd Backend/TransactionMonitoring
+          chmod +x mvnw
+          ./mvnw clean package -DskipTests
+
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+
+      - name: Frontend Build
+        run: |
+          cd Frontend
+          npm ci
+          npm run build
