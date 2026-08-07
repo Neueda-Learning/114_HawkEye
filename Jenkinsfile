@@ -3,7 +3,7 @@ pipeline {
     agent any
 
     environment {
-        GIT_URL      = 'https://github.com/Neueda-Learning/HawkEye'
+        GIT_URL      = 'https://github.com/Neueda-Learning/114_HawkEye'
         BRANCH       = 'dev'
         COMPOSE_FILE = 'deploy/docker-compose.app.yml'
     }
