@@ -4,7 +4,7 @@ pipeline {
 
     environment {
         GIT_URL      = 'https://github.com/Neueda-Learning/114_HawkEye'
-        BRANCH       = 'dev'
+        BRANCH       = 'main'
         COMPOSE_FILE = 'deploy/docker-compose.app.yml'
     }
 
